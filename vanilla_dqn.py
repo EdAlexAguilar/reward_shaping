@@ -197,6 +197,8 @@ if __name__ == "__main__":
                 best_reward = running_mean_reward
             if best_reward > SOLVED_REWARD_BOUND:
                 print(f'Solved in {time.time()-tot_time:.1f}Sec!')
+                if not os.path.exists('cartpole_models'):
+                    os.mkdir('cartpole_models')
                 dqn.save(f'cartpole_models/vanilla_dqn_model_solution.h5')
                 break
         if len(buffer) < MIN_BUFFER_TRAINING:
