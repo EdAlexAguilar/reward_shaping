@@ -2,6 +2,7 @@
 Reward Shaping Experiments with Temporal Logic for Hierarchical Objectives 
 
 Packages Needed (I just installed the latest for most)
+
 python 3.8.0 (or higher)
 
 gym==0.18.0
