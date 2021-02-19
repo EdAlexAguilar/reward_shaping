@@ -43,8 +43,6 @@ class Environment(cp_env.CartPoleEnv):
     """
     def __init__(self, x_threshold=2.5, theta_threshold_deg=24, max_steps=200, goal=False):
         super().__init__(x_threshold, theta_threshold_deg, max_steps, goal)
-        self.var_theta = 10
-        self.var_dist = 0.5
         self.safe_angle_tolerance = 30*math.pi/360
 
     def linear_decay(self, z, z0, scale, max_val=1, min_val=0):
@@ -58,15 +56,9 @@ class Environment(cp_env.CartPoleEnv):
         else:
             return 0.0
 
-    # Example Reward Modification
+    # Example Reward Modification if goal=True
     def reward(self):
-        """Be careful with dimension of self.state
-        if goal=True: state includes target
-        else: state = x, x_dot, theta, theta_dot"""
-        if self.goal:
-            x, x_dot, theta, theta_dot, target = self.state
-        else:
-            x, x_dot, theta, theta_dot = self.state
+        x, x_dot, theta, theta_dot = self.state
         r0 = self.linear_decay(theta, 0, self.safe_angle_tolerance)
         id0 = 1 if (abs(theta) < self.safe_angle_tolerance) else 0
         r1 = self.linear_decay(x, target, 1)
@@ -75,8 +67,8 @@ class Environment(cp_env.CartPoleEnv):
     '''
 
 
-def DQN(goal=False):
-    state_dim = 5 if goal else 4
+def DQN():
+    state_dim = 4
     kern_init=tf.keras.initializers.VarianceScaling(scale=2.0, mode='fan_in',
                                                     distribution='truncated_normal')
     model = tf.keras.models.Sequential([
@@ -158,10 +150,10 @@ def calculate_loss(model, ref_model, batch, gamma=GAMMA):
 if __name__ == "__main__":
     # Vanilla version does not have a goal
     # If set to true, modify the reward function of the environment
-    goal = False
-    env = Environment(goal=goal)
-    dqn = DQN(goal=goal)
-    ref_dqn = DQN(goal=goal) # Also referred to as a "target network"
+    GOAL = False
+    env = Environment(goal=GOAL)
+    dqn = DQN()
+    ref_dqn = DQN() # Also referred to as a "target network"
     buffer = MemoryBuffer(BUFFER_SIZE)
     agent = Agent(env, buffer)
     optimizer = tf.keras.optimizers.Adam(learning_rate=INIT_LR)

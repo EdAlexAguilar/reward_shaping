@@ -85,7 +85,6 @@ class CartPoleEnv(gym.Env):
         self.x_threshold = x_threshold
         self._max_episode_steps = max_steps
         self.goal = goal
-        self.target = 0 # numerical value of goal position
         self.step_count = 0
 
         # Angle limit set to 2 * theta_threshold_radians so failing observation
@@ -103,8 +102,8 @@ class CartPoleEnv(gym.Env):
         self.seed()
         self.viewer = None
         self.state = None
-        self.state_dim = 5 if goal else 4
         self.steps_beyond_done = None
+        self.state_dim = 4 # dimension of state-space
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
@@ -114,10 +113,7 @@ class CartPoleEnv(gym.Env):
         err_msg = "%r (%s) invalid" % (action, type(action))
         assert self.action_space.contains(action), err_msg
         self.step_count += 1
-        if self.goal:
-            x, x_dot, theta, theta_dot, target = self.state
-        else:
-            x, x_dot, theta, theta_dot = self.state
+        x, x_dot, theta, theta_dot = self.state
         force = self.force_mag if action == 1 else -self.force_mag
         costheta = math.cos(theta)
         sintheta = math.sin(theta)
@@ -137,10 +133,7 @@ class CartPoleEnv(gym.Env):
             theta_dot = theta_dot + self.tau * thetaacc
             theta = theta + self.tau * theta_dot
 
-        if self.goal:
-            self.state = (x, x_dot, theta, theta_dot, target)
-        else:
-            self.state = (x, x_dot, theta, theta_dot)
+        self.state = (x, x_dot, theta, theta_dot)
 
         done = bool(
             x < -self.x_threshold
@@ -152,16 +145,26 @@ class CartPoleEnv(gym.Env):
         return np.array(self.state), self.reward(), done, {}
 
     def reward(self):
+        """
+        Vanilla Reward - To be overridden
+        """
         if abs(self.state[2]) < self.theta_threshold_radians:
             return 1.0
         else:
             return 0.0
 
     def reset(self):
+        """
+        If goal is True, then x_init is in [-1.5,-0.5] U [0.5,1.5]
+        """
         self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(self.state_dim,))
         self.steps_beyond_done = None
         if self.goal:
-            self.target = self.state[4]
+            start = self.np_random.uniform(low=0.5, high=1.5)
+            if self.state[0] > 0:
+                self.state[0] = start
+            else:
+                self.state[0] = -start
         self.step_count = 0
         return np.array(self.state)
 
@@ -179,13 +182,13 @@ class CartPoleEnv(gym.Env):
 
         track_interval = 0.5
         track_x_lines = [track_interval*i for i in range(int((world_width - world_width%track_interval)/track_interval+1))]
-        track_x_lines = np.append(np.array(track_x_lines),-np.array(track_x_lines))[1:]
+        track_x_lines = np.append(-np.flip(np.array(track_x_lines[1:])),np.array(track_x_lines))
 
         # COLORS
         cart_color = (0.06, 0.17, 0.26)
         bg_color = (0.75,0.85,0.95)
         track_color = (0.05, 0.05, 0.05)
-        target_color = (0.2, 0.5, 0)
+        # target_color = (0.2, 0.5, 0)
         pole_color = (.5, 0, .18)
         axle_color = (0.95, .75, .15)
 
@@ -200,15 +203,21 @@ class CartPoleEnv(gym.Env):
             self.track = rendering.Line((0, carty), (screen_width, carty))
             self.track.set_color(*track_color)
             self.viewer.add_geom(self.track)
-            for _ , track_x in enumerate(track_x_lines):
-                temp_draw = rendering.Line((screen_width/2 + scale*track_x, carty-20), (screen_width/2 + scale*track_x, carty+5))
+            for line_id , track_x in enumerate(track_x_lines):
+                if line_id%2==0:
+                    temp_draw = rendering.Line((screen_width/2 + scale*track_x, carty-20), (screen_width/2 + scale*track_x, carty+5))
+                else:
+                    temp_draw = rendering.Line((screen_width/2 + scale*track_x, carty-5), (screen_width/2 + scale*track_x, carty+5))
                 temp_draw.set_color(*track_color)
                 self.viewer.add_geom(temp_draw)
+            '''
+            # This was replaced - now goal is to go to center
             if self.goal:
                 target_draw = rendering.make_circle(4)
                 target_draw.add_attr(rendering.Transform(translation=(screen_width/2 + scale*self.target, carty-20)))
                 target_draw.set_color(*target_color)
                 self.viewer.add_geom(target_draw)
+            '''
             # Cart
             l, r, t, b = -cartwidth / 2, cartwidth / 2, cartheight / 2, -cartheight / 2
             axleoffset = cartheight / 4.0
