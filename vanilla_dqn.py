@@ -27,20 +27,6 @@ EPSILON_DECAY_STEPS = 1e4
 
 
 class Environment(cp_env.CartPoleEnv):
-    """
-    State of Environment:
-    if goal is False
-        x, x_dot, theta, theta_dot
-    elif goal is True:
-        x, x_dot, theta, theta_dot, target
-
-    End Conditions
-    x_threshold: if abs(x)>threshold
-    theta_threshold: if abs(theta)>threshold
-    max_steps: if self.step_count > max_steps
-
-    Use this class to override the default reward function.
-    """
     def __init__(self, x_threshold=2.5, theta_threshold_deg=24, max_steps=200, goal=False):
         super().__init__(x_threshold, theta_threshold_deg, max_steps, goal)
         self.safe_angle_tolerance = 30*math.pi/360
@@ -95,7 +81,7 @@ class MemoryBuffer:
     def append(self, exp):
         self.buffer.append(exp)
 
-    def sample(self, batch_size, n=1):
+    def sample(self, batch_size):
         rand_indices = np.random.choice(len(self.buffer), batch_size, replace=False)
         state, action, reward, state_1, done = zip(*[self.buffer[i] for i in rand_indices])
         return np.array(state), np.array(action), np.array(reward), np.array(state_1), \
