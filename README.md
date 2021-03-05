@@ -19,11 +19,13 @@ numpy==1.19.2
 
 For a simple demo:
 
-
+>>>
 run Continuous_Cartpole/cp_cont_reward_testing.py
+
 This should train 3 agents (2 on weighted environments with different weights, 1 on an indicator-type environment)
 Example videos pop up during the training, but could also be recreated via the cp_ppo_videomaker.py
 
+>>>
 run Discrete_Cartpole/vanilla_dqn.py
 
 this will train to vanilla Q-Learning on vanilla cartpole and save the solution (it took 140s on my laptop)
