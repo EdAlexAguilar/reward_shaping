@@ -1,5 +1,5 @@
-import cp_continuous_env
-import cp_ppo_utils
+import cp_continuousobstacle_env
+import ppo_mp as ppo
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import os
@@ -26,7 +26,6 @@ def make_video_ppo_agent(env, agent, x_init=None, save=False, filename='temp', m
         mu, var = tf.stop_gradient(agent(obs_tf))
         action = np.clip(mu.numpy()[0], -1, 1) # No exploration, use mu directly
         obs, reward, is_done, _ = env.step(action)
-        print(f'Battery Level: {obs[4]:.2f}%')
         '''
         if abs(obs[0])<0.05:
             x, x_d, th, th_d, b = env.state
@@ -38,6 +37,7 @@ def make_video_ppo_agent(env, agent, x_init=None, save=False, filename='temp', m
         ims.append([im])
         tot_reward += reward
         if is_done:
+            print(f'Battery Level: {obs[4]:.2f}%')
             break
     print(f'Total Reward: {tot_reward:.2f}')
     if save:
@@ -55,13 +55,32 @@ def make_video_ppo_agent(env, agent, x_init=None, save=False, filename='temp', m
 
 
 if __name__ == "__main__":
-    MAX_STEPS = 500
-    X_THRESHOLD = 2.5
-    THETA_THRESHOLD = 24
-    env = cp_continuous_env.CartPoleContEnv(x_threshold=X_THRESHOLD, theta_threshold_deg=THETA_THRESHOLD,
-                                max_steps=MAX_STEPS)
-    env.reset()
-    filename = (f'ppo_actor_weighted_05_solution.tf')
-    actor = cp_ppo_utils.Actor()
-    actor = tf.keras.models.load_model(filename)
-    make_video_ppo_agent(env, actor, x_init=None, save=False, filename=filename[:-3], max_steps=MAX_STEPS)
+    MAX_STEPS = ppo.MAX_STEPS
+    X_THRESHOLD = ppo.X_THRESHOLD
+    THETA_THRESHOLD = ppo.THETA_THRESHOLD
+    num_agents = int(ppo.CORES)
+
+    # NUM_LEVELS = 6
+    # obstacle_widths = np.linspace(0.01, 0.08, num=NUM_LEVELS)
+    # obstacle_heights = np.linspace(0.005, 0.1, num=NUM_LEVELS)
+    obstacle_widths = [0.08]
+    obstacle_heights = [0.1]
+
+    names = ['weighted_05', 'indicator_narrow_1']
+    params = {names[0]: np.array([0.575, 0.285, 0.14]),
+              names[1]: np.array([ppo.REWARD_THETA_BOUND, ppo.REWARD_X_BOUND])}
+    envs = {names[0]: ppo.EnvironmentWeightedReward(params[names[0]]),
+            names[1]: ppo.EnvironmentIndicatorReward(params[names[1]])}
+
+    actor = ppo.Actor()
+
+    for i in range(num_agents):
+        reward_type = 1 #
+        level = 0
+        env = envs[names[reward_type]]
+        env.set_obstacle_width_height(obstacle_widths[level], obstacle_heights[level])
+
+        load_path= f'{names[reward_type]}_L{level}_{i}'
+
+        actor.load_weights(f'models\ppo_actor_{load_path}.ckpt')
+        make_video_ppo_agent(env, actor, x_init=None, save=False, filename=f'{names[reward_type]}_L{level}', max_steps=MAX_STEPS)

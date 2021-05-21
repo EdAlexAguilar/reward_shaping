@@ -5,6 +5,7 @@ permalink: https://perma.cc/C9ZM-652R
 
 Modification of OpenAI CartPole environment
 -EA Aguilar
+
 """
 
 import math
@@ -13,8 +14,27 @@ from gym import spaces, logger
 from gym.utils import seeding
 import numpy as np
 
+class Obstacle():
+    def __init__(self, left_x, width, height):
+        self.left_x = left_x
+        self.right_x = left_x + width
+        self.height = height
 
-class CartPoleEnv(gym.Env):
+    def intersect(self, x, theta):
+        """
+        x, theta cartpole coords
+        + dist if pole is outside obstacle
+        - dist if pole is inside obstacle
+        # ASSUMES pole self.length = 0.5  # actually half the pole's length
+        """
+        if theta == 0:
+            theta = 1e-5
+        y_left = (1/np.tan(theta))*(self.left_x - x) - (1-self.height)
+        y_right = (1 / np.tan(theta)) * (self.right_x - x) - (1 - self.height)
+        return np.sign(y_left*y_right)*np.min([abs(y_left),abs(y_right)])
+
+
+class CartPoleContObsEnv(gym.Env):
     """
     Description:
         A pole is attached by an un-actuated joint to a cart, which moves along
@@ -33,34 +53,22 @@ class CartPoleEnv(gym.Env):
         1	Cart Velocity             -Inf            Inf
         2	Pole Angle                -24 deg         24 deg
         3	Pole Velocity At Tip      -Inf            Inf
-        if goal=True
-        4   Desired Goal              -2              2
-
+        4   Battery Level Percent       0              1
+        5   Obstacle Left
+        6   Obstacle Right
+        7   Obstacle Height from top
     Actions:
-        Type: Discrete(2)
-        Num	Action
-        0	Push cart to the left
-        1	Push cart to the right
+        Type: Box   (Continuous)
+        Low = -1
+        High = 1
 
-        Note: The amount the velocity that is reduced or increased is not
-        fixed; it depends on the angle the pole is pointing. This is because
-        the center of gravity of the pole increases the amount of energy needed
-        to move the cart underneath it
-
-    Reward:
-        Reward is 1 for every step taken, including the termination step
-
-    Starting State:
-        All observations are assigned a uniform random value in [-0.05..0.05]
 
     Episode Termination:
         Pole Angle is more than limit (default 24) degrees.
         Cart Position is more than limit (default 2.4) (center of the cart reaches the edge of
         the display).
         Episode length is greater than (default 200) steps.
-        Original Solved Requirements:
-        Considered solved when the average reward is greater than or equal to
-        195.0 over 100 consecutive trials.
+        Cartpole Runs out of battery (battery=0)
     """
 
     metadata = {
@@ -68,7 +76,7 @@ class CartPoleEnv(gym.Env):
         'video.frames_per_second': 50
     }
 
-    def __init__(self, x_threshold=2.4, theta_threshold_deg=24, max_steps=200, goal=False):
+    def __init__(self, x_threshold=2.5, theta_threshold_deg=24, max_steps=200):
         # Physical Constants
         self.gravity = 9.8
         self.masscart = 1.0
@@ -76,34 +84,54 @@ class CartPoleEnv(gym.Env):
         self.total_mass = (self.masspole + self.masscart)
         self.length = 0.5  # actually half the pole's length
         self.polemass_length = (self.masspole * self.length)
-        self.force_mag = 10.0
+        self.force_mag = 30.0 # 10.0
         self.tau = 0.02  # seconds between state updates
-        self.kinematics_integrator = 'euler'
+        self.battery_consumption = 0.075
+        self.obstacle_min_width = 0.001
+        self.obstacle_max_width = 0.01
+        self.obstacle_min_height = 0.001
+        self.obstacle_max_height = 0.005
+        self.min_action = -1.0
+        self.max_action = 1.0
 
         # Conditions for Episode Failure
         self.theta_threshold_radians = theta_threshold_deg * math.pi / 360
         self.x_threshold = x_threshold
         self._max_episode_steps = max_steps
-        self.goal = goal
         self.step_count = 0
 
-        # Angle limit set to 2 * theta_threshold_radians so failing observation
-        # is still within bounds.
         high = np.array([self.x_threshold * 2,
                          np.finfo(np.float32).max,
                          self.theta_threshold_radians * 2,
-                         np.finfo(np.float32).max],
+                         np.finfo(np.float32).max,
+                         1,
+                         self.x_threshold*2-self.obstacle_max_width,
+                         self.x_threshold*2,
+                         self.obstacle_max_height],
                         dtype=np.float32)
-        if self.goal:
-            high = np.append(high, self.x_threshold*2)
-        self.action_space = spaces.Discrete(2)
-        self.observation_space = spaces.Box(-high, high, dtype=np.float32)
+        low = np.array([-self.x_threshold * 2,
+                         -np.finfo(np.float32).max,
+                         -self.theta_threshold_radians * 2,
+                         -np.finfo(np.float32).max,
+                         0,
+                        -self.x_threshold*2,
+                        -self.x_threshold*2 + self.obstacle_max_width,
+                        self.obstacle_min_height],
+                        dtype=np.float32)
+
+
+        self.action_space = spaces.Box(
+            low=self.min_action,
+            high=self.max_action,
+            shape=(1,))
+
+        self.observation_space = spaces.Box(low, high, dtype=np.float32)
 
         self.seed()
         self.viewer = None
         self.state = None
         self.steps_beyond_done = None
-        self.state_dim = 4 # dimension of state-space
+        self.state_dim = len(high) # dimension of state-space
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
@@ -113,34 +141,33 @@ class CartPoleEnv(gym.Env):
         err_msg = "%r (%s) invalid" % (action, type(action))
         assert self.action_space.contains(action), err_msg
         self.step_count += 1
-        x, x_dot, theta, theta_dot = self.state
-        force = self.force_mag if action == 1 else -self.force_mag
+        x, x_dot, theta, theta_dot, battery, obst_l, obst_r, obst_h = self.state
+
+        force = float(action*self.force_mag)
+        battery -= float(abs(action)*self.battery_consumption)
+
+        # Physics Step
         costheta = math.cos(theta)
         sintheta = math.sin(theta)
-
         temp = (force + self.polemass_length * theta_dot ** 2 * sintheta) / self.total_mass
         thetaacc = (self.gravity * sintheta - costheta * temp) / (self.length * (4.0 / 3.0 - self.masspole * costheta ** 2 / self.total_mass))
         xacc = temp - self.polemass_length * thetaacc * costheta / self.total_mass
+        x = x + self.tau * x_dot
+        x_dot = x_dot + self.tau * xacc
+        x_dot = x_dot + self.tau * xacc
+        theta = theta + self.tau * theta_dot
+        theta_dot = theta_dot + self.tau * thetaacc
 
-        if self.kinematics_integrator == 'euler':
-            x = x + self.tau * x_dot
-            x_dot = x_dot + self.tau * xacc
-            theta = theta + self.tau * theta_dot
-            theta_dot = theta_dot + self.tau * thetaacc
-        else:  # semi-implicit euler
-            x_dot = x_dot + self.tau * xacc
-            x = x + self.tau * x_dot
-            theta_dot = theta_dot + self.tau * thetaacc
-            theta = theta + self.tau * theta_dot
-
-        self.state = (x, x_dot, theta, theta_dot)
+        self.state = (x, x_dot, theta, theta_dot, battery, obst_l, obst_r, obst_h)
 
         done = bool(
             x < -self.x_threshold
             or x > self.x_threshold
             or theta < -self.theta_threshold_radians
             or theta > self.theta_threshold_radians
-            or self.step_count>self._max_episode_steps)
+            or self.step_count>self._max_episode_steps
+            or battery<=0
+            or np.sign(self.obstacle.intersect(x,theta))==-1)
 
         return np.array(self.state), self.reward(), done, {}
 
@@ -155,17 +182,29 @@ class CartPoleEnv(gym.Env):
 
     def reset(self):
         """
-        If goal is True, then x_init is in [-1.5,-0.5] U [0.5,1.5]
+        x_init is in [-2,-1.2] U [1.2,2.0]
+        obstacles start on same side but closest point is in [0.4,0.7]
+        state = (x, x_dot, theta, theta_dot, battery, obstacle_left_x, obstacle_right_x, obstacle_height)
         """
         self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(self.state_dim,))
         self.steps_beyond_done = None
-        if self.goal:
-            start = self.np_random.uniform(low=0.5, high=1.5)
-            if self.state[0] > 0:
-                self.state[0] = start
-            else:
-                self.state[0] = -start
+        start = self.np_random.uniform(low=1.2, high=2.0)
+        if self.state[0] > 0:
+            self.state[0] = start
+        else:
+            self.state[0] = -start
+        self.state[4] = 1 # Battery Starts at 100%
         self.step_count = 0
+        obstacle_height = self.np_random.uniform(low=self.obstacle_min_height, high=self.obstacle_max_height)
+        self.state[7] = obstacle_height
+        obstacle_width = self.np_random.uniform(low=self.obstacle_min_width, high=self.obstacle_max_width)
+        obstacle_closest_point = self.np_random.uniform(low=0.4, high=0.7)
+        if self.state[0] > 0:
+            self.obstacle = Obstacle(obstacle_closest_point-obstacle_width, obstacle_width, obstacle_height)
+        else:
+            self.obstacle = Obstacle(-obstacle_closest_point, obstacle_width, obstacle_height)
+        self.state[5] = self.obstacle.left_x
+        self.state[6] = self.obstacle.right_x
         return np.array(self.state)
 
     def render(self, mode='human', end=False):
@@ -175,7 +214,7 @@ class CartPoleEnv(gym.Env):
         scale = screen_width/world_width
 
         carty = 100  # TOP OF CART
-        polewidth = 10.0
+        polewidth = 6.0
         polelen = scale * (2 * self.length)
         cartwidth = 50.0
         cartheight = 30.0
@@ -186,11 +225,12 @@ class CartPoleEnv(gym.Env):
 
         # COLORS
         cart_color = (0.06, 0.17, 0.26)
-        bg_color = (0.75,0.85,0.95)
+        bg_color = (0.7, 0.80, 0.90)
         track_color = (0.05, 0.05, 0.05)
         # target_color = (0.2, 0.5, 0)
         pole_color = (.5, 0, .18)
-        axle_color = (0.95, .75, .15)
+        axle_color = (0.9, .7, .1)
+        obstacle_color = (0.05, 0.35, 0.1)
 
         if self.viewer is None:
             from gym.envs.classic_control import rendering
@@ -210,14 +250,7 @@ class CartPoleEnv(gym.Env):
                     temp_draw = rendering.Line((screen_width/2 + scale*track_x, carty-5), (screen_width/2 + scale*track_x, carty+5))
                 temp_draw.set_color(*track_color)
                 self.viewer.add_geom(temp_draw)
-            '''
-            # This was replaced - now goal is to go to center
-            if self.goal:
-                target_draw = rendering.make_circle(4)
-                target_draw.add_attr(rendering.Transform(translation=(screen_width/2 + scale*self.target, carty-20)))
-                target_draw.set_color(*target_color)
-                self.viewer.add_geom(target_draw)
-            '''
+
             # Cart
             l, r, t, b = -cartwidth / 2, cartwidth / 2, cartheight / 2, -cartheight / 2
             axleoffset = cartheight / 4.0
@@ -253,19 +286,16 @@ class CartPoleEnv(gym.Env):
             self.axle.set_color(*axle_color)
             self.viewer.add_geom(self.axle)
             self._pole_geom = pole
+            # Obstacle
+            l, r = self.obstacle.left_x* scale + screen_width / 2.0, self.obstacle.right_x* scale + screen_width / 2.0
+            t, b = axleoffset + polelen + carty - polewidth / 2, axleoffset + (1-self.obstacle.height)*polelen + carty- polewidth / 2
+            obst = rendering.FilledPolygon([(l, b), (l, t), (r, t), (r, b)])
+            obst.set_color(*obstacle_color)
+            self.viewer.add_geom(obst)
 
         if self.state is None:
             return None
 
-        '''
-        if end is True:
-            self.l_eye.set_color(0.77, 0.15, .15, 0.9)
-            #self.viewer.add_geom(self.l_eye)
-            self.r_eye.set_color(0.77, 0.15, .15, 0.9)
-        else:
-            self.l_eye.set_color(0, .78, .53, 0.95)
-            self.r_eye.set_color(0, .78, .53, 0.95)
-        '''
         # Edit the pole polygon vertex
         pole = self._pole_geom
         l, r, t, b = -polewidth / 2, polewidth / 2, polelen - polewidth / 2, -polewidth / 2
