@@ -142,3 +142,7 @@ cython_debug/
 
 # Models
 cartpole_models/
+
+# Others
+.*
+logs/*

@@ -1,0 +1,7 @@
+gym
+tensorflow
+h5py
+matplotlib
+numpy
+stable-baselines3[extra]
+moviepy
