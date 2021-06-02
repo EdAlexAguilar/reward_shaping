@@ -8,9 +8,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # or any {'0', '1', '2'}
 import tensorflow as tf  # to avoid TF import verbosity
 from tensorflow.keras.layers import Dense
 from tensorflow.keras import Model
-import cp_continuousobstacle_env
-import cp_videomaker
-
+from envs import cp_continuousobstacle_env
 
 # Set TF to work on CPU
 tf.config.set_visible_devices([], 'GPU')

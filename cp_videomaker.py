@@ -1,4 +1,3 @@
-import cp_continuousobstacle_env
 import ppo_mp as ppo
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
