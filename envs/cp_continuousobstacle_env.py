@@ -207,6 +207,10 @@ class CartPoleContObsEnv(gym.Env):
         self.state[6] = self.obstacle.right_x
         return np.array(self.state)
 
+    def set_obstacle_width_height(self, width, height):
+        self.obstacle_max_width = width
+        self.obstacle_max_height = height
+
     def render(self, mode='human', end=False):
         screen_width = 600
         screen_height = 400

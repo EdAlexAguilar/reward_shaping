@@ -9,15 +9,20 @@ import numpy as np
 import callbacks
 from envs.cp_continuousobstacle_env import CartPoleContObsEnv
 from envs.reward_envs import HierarchicalRewardWrapper
+from stable_baselines3.common.callbacks import CheckpointCallback
 
 # define problem
 task = "cart_pole"
 reward = "indicator"
 rl_algo = "ppo"
+clip_reward = True
 
 # logging
-logdir = pathlib.Path(f"logs/{task}_{reward}_{rl_algo}_{int(time.time())}")
+logdir = pathlib.Path(f"logs/{task}_{reward}_clip{clip_reward}_{rl_algo}_{int(time.time())}")
+checkpointdir = logdir / "checkpoint"
 logdir.mkdir(parents=True, exist_ok=True)
+checkpointdir.mkdir(parents=True, exist_ok=True)
+
 
 # define simulation parameters
 sim_params = {
@@ -32,13 +37,14 @@ env = CartPoleContObsEnv(x_threshold=sim_params['x_threshold'],
 # hierarchical definition of rewards: safety, target, comfort rules
 if reward == "indicator":
     keep_balance = lambda state: (np.deg2rad(24) - np.abs(state[2])) / np.deg2rad(sim_params['theta_threshold_deg'])
+    # todo: limit speed or actuators
     reach_origin = lambda state: (0.0 - np.abs(state[0])) / sim_params['x_threshold']
     hierarchy = {
         'safety': [keep_balance],
         'target': [reach_origin],
         'comfort': []
     }
-    env = HierarchicalRewardWrapper(env, hierarchy)
+    env = HierarchicalRewardWrapper(env, hierarchy, clip_negative_rewards=clip_reward)
 else:
     raise NotImplementedError()
 
@@ -49,12 +55,15 @@ else:
     raise NotImplementedError()
 
 # trainig
-n_steps = 100_000
+n_steps = 1e6
+eval_every = 1e5
+checkpoint_every = 1e4
 
 eval_env = gym.wrappers.Monitor(env, logdir / "videos")
-video_cb = callbacks.VideoRecorderCallback(eval_env, render_freq=int(n_steps//10), n_eval_episodes=1)
-
-model.learn(total_timesteps=n_steps, callback=video_cb)
+video_cb = callbacks.VideoRecorderCallback(eval_env, render_freq=eval_every, n_eval_episodes=1)
+checkpoint_callback = CheckpointCallback(save_freq=checkpoint_every, save_path=checkpointdir,
+                                         name_prefix='model')
+model.learn(total_timesteps=n_steps, callback=[video_cb, checkpoint_callback])
 
 # evaluation
 obs = env.reset()
