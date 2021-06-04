@@ -10,12 +10,20 @@ import callbacks
 from envs.cp_continuousobstacle_env import CartPoleContObsEnv
 from envs.reward_envs import HierarchicalRewardWrapper
 from stable_baselines3.common.callbacks import CheckpointCallback
+import argparse as parser
 
 # define problem
-task = "cart_pole"
-reward = "indicator"
-rl_algo = "ppo"
-clip_reward = True
+parser = parser.ArgumentParser()
+parser.add_argument("--task", type=str, required=True, choices=['cart_pole'])
+parser.add_argument("--reward", type=str, required=True, choices=['indicator'])
+parser.add_argument("--algo", type=str, required=True, choices=['ppo'])
+parser.add_argument("--clip_reward", type=str, default=False)
+args = parser.parse_args()
+
+task = args.task
+reward = args.reward
+rl_algo = args.algo
+clip_reward = args.clip_reward
 
 # logging
 logdir = pathlib.Path(f"logs/{task}_{reward}_clip{clip_reward}_{rl_algo}_{int(time.time())}")
