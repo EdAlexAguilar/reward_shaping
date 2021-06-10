@@ -162,7 +162,7 @@ class CartPoleContObsEnv(gym.Env):
         sintheta = math.sin(theta)
         temp = (force + self.polemass_length * theta_dot ** 2 * sintheta) / self.total_mass
         thetaacc = (self.gravity * sintheta - costheta * temp) / (
-                    self.length * (4.0 / 3.0 - self.masspole * costheta ** 2 / self.total_mass))
+                self.length * (4.0 / 3.0 - self.masspole * costheta ** 2 / self.total_mass))
         xacc = temp - self.polemass_length * thetaacc * costheta / self.total_mass
         x = x + self.tau * x_dot
         x_dot = x_dot + self.tau * xacc
@@ -341,7 +341,7 @@ class CartPoleContObsEnv(gym.Env):
         # note: translate obstacle center
         # new center:   x: left_x + obstacle_width
         #               y: cart_center_y + pole_length + obstacle_height/2
-        obstx = (self.state[5] + obstacle_width/2.0) * scale + screen_width / 2.0
+        obstx = (self.state[5] + obstacle_width / 2.0) * scale + screen_width / 2.0
         obsty = carty + polelen + (obstacle_height / 2.0 * scale)
         self.obsttrans.set_translation(obstx, obsty)
 
