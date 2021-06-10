@@ -17,16 +17,18 @@ parser = parser.ArgumentParser()
 parser.add_argument("--task", type=str, required=True, choices=['cart_pole'])
 parser.add_argument("--reward", type=str, required=True, choices=['indicator'])
 parser.add_argument("--algo", type=str, required=True, choices=['ppo', 'ppo_sde'])
-parser.add_argument("--clip_reward", type=str, default=False)
+parser.add_argument("--clip_reward", type=bool, default=False)
+parser.add_argument("--shift_reward", type=bool, default=False)
 args = parser.parse_args()
 
 task = args.task
 reward = args.reward
 rl_algo = args.algo
 clip_reward = args.clip_reward
+shift_reward = args.shift_reward
 
 # logging
-logdir = pathlib.Path(f"logs/{task}_{reward}_clip{clip_reward}_{rl_algo}_{int(time.time())}")
+logdir = pathlib.Path(f"logs/{task}_{reward}_clip{clip_reward}_shift{shift_reward}_{rl_algo}_{int(time.time())}")
 checkpointdir = logdir / "checkpoint"
 logdir.mkdir(parents=True, exist_ok=True)
 checkpointdir.mkdir(parents=True, exist_ok=True)
@@ -83,9 +85,9 @@ else:
     raise NotImplementedError()
 
 # trainig
-n_steps = 1e6
-eval_every = 1e5
-checkpoint_every = 1e4
+n_steps = 10e6
+eval_every = 5e5
+checkpoint_every = 5e5
 
 eval_env = gym.wrappers.Monitor(env, logdir / "videos")
 video_cb = callbacks.VideoRecorderCallback(eval_env, render_freq=eval_every, n_eval_episodes=1)
