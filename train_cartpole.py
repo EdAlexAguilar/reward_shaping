@@ -16,7 +16,7 @@ import argparse as parser
 parser = parser.ArgumentParser()
 parser.add_argument("--task", type=str, required=True, choices=['cart_pole'])
 parser.add_argument("--reward", type=str, required=True, choices=['indicator'])
-parser.add_argument("--algo", type=str, required=True, choices=['ppo'])
+parser.add_argument("--algo", type=str, required=True, choices=['ppo', 'ppo_sde'])
 parser.add_argument("--clip_reward", type=str, default=False)
 args = parser.parse_args()
 
@@ -77,6 +77,8 @@ else:
 # define rl agent
 if rl_algo == "ppo":
     model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=logdir)
+elif rl_algo == "ppo_sde":
+    model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=logdir, use_sde=True)
 else:
     raise NotImplementedError()
 
