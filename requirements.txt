@@ -5,3 +5,4 @@ matplotlib
 numpy
 stable-baselines3[extra]
 moviepy
+PyYAML

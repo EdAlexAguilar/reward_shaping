@@ -2,7 +2,7 @@ import pathlib
 import time
 
 import gym
-
+import yaml
 from stable_baselines3 import PPO
 import numpy as np
 
@@ -31,16 +31,34 @@ checkpointdir = logdir / "checkpoint"
 logdir.mkdir(parents=True, exist_ok=True)
 checkpointdir.mkdir(parents=True, exist_ok=True)
 
-
 # define simulation parameters
 sim_params = {
     'x_threshold': 2.5,  # episode ends when the distance from origin goes above this threshold
     'theta_threshold_deg': 24,  # episode ends when the pole angle (w.r.t. vertical axis) goes above this threshold
-    'max_steps': 400,  # episode ends after 400 steps
+    'max_steps': 400,  # episode ends after this nr of steps
+    'cart_min_offset': 1.0,  # initial position sampled with this min distance (offset w.r.t. vertical axis)
+    'cart_max_offset': 2.0,  # initial position sampled with this max distance (offset w.r.t. vertical axis)
+    'obstacle_min_w': 0.25,  # obstacle sizes sampled within these ranges for width, height
+    'obstacle_max_w': 0.25,
+    'obstacle_min_h': 0.1,
+    'obstacle_max_h': 0.1,
+    'obstacle_min_dist': 0.1,  # obstacle initial position is within a given distance from the cart center
+    'obstacle_max_dist': 0.3,  # this distance is between the closest point of the obstacle and the cart center
 }
+with open(logdir / 'env_params.yaml', 'w') as file:
+    yaml.dump(sim_params, file)
+
 env = CartPoleContObsEnv(x_threshold=sim_params['x_threshold'],
                          theta_threshold_deg=sim_params['theta_threshold_deg'],
-                         max_steps=sim_params['max_steps'])
+                         max_steps=sim_params['max_steps'],
+                         cart_min_initial_offset=sim_params['cart_min_offset'],
+                         cart_max_initial_offset=sim_params['cart_max_offset'],
+                         obstacle_min_w=sim_params['obstacle_min_w'],
+                         obstacle_max_w=sim_params['obstacle_max_w'],
+                         obstacle_min_h=sim_params['obstacle_min_h'],
+                         obstacle_max_h=sim_params['obstacle_max_h'],
+                         obstacle_min_dist=sim_params['obstacle_min_dist'],
+                         obstacle_max_dist=sim_params['obstacle_max_dist'])
 
 # hierarchical definition of rewards: safety, target, comfort rules
 if reward == "indicator":
