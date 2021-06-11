@@ -82,43 +82,35 @@ def make_agent(env, rl_algo, logdir):
 
 def make_reward_wrap(task, env, reward, env_params, reward_params):
     if task == "cart_pole":
+        # SAFETY: no collision
+        # rho := -1 if collision else 0
+        no_collision = lambda state: -1 * env.obstacle.intersect(state[0], state[2])
+        # TARGET: balance the pole
+        # phi := theta >= -24deg and theta <= 24deg
+        # rho := min(theta+24, 24-theta)
+        angle_range = 2 * env_params['theta_threshold_deg']  # theta in [-theta_threshold_deg, theta_threshold_deg]
+        keep_balance = lambda state: 1 / angle_range * min(state[2] + env_params['theta_deg_target_min'],
+                                                           env_params['theta_deg_target_max'] - state[2])
+        # COMFORT: reach the origin
+        # phi := x == 0 = x>=0 and x<=0
+        # rho := min(x, -x)
+        x_range = 2 * env_params['x_threshold']  # x in [-x_threshold, x_threshold]
+        reach_origin = lambda state: 1 / x_range * min(state[0], -state[0])
         if reward == "indicator":
-            # todo: additionally, add comfort requirement to constraint actuators or velocity limits
-            keep_balance = lambda state: distance_to_mid_target_range(state[2],
-                                                                      np.deg2rad(env_params['theta_deg_target_min']),
-                                                                      np.deg2rad(env_params['theta_deg_target_max']),
-                                                                      -np.deg2rad(env_params['theta_threshold_deg']),
-                                                                      +np.deg2rad(env_params['theta_threshold_deg'])
-                                                                      )
-            reach_origin = lambda state: distance_to_mid_target_range(state[0], env_params['x_target_min'],
-                                                                      env_params['x_target_max'],
-                                                                      -env_params['x_threshold'],
-                                                                      +env_params['x_threshold']
-                                                                      )
+            # define hierachy
             hierarchy = {
-                'safety': [keep_balance],
-                'target': [reach_origin],
-                'comfort': []
+                'safety': [no_collision],
+                'target': [keep_balance],
+                'comfort': [reach_origin]
             }
             env = HierarchicalRewardWrapper(env, hierarchy, clip_negative_rewards=reward_params['clip_reward'],
                                             shift_rewards=reward_params['shift_reward'])
-        elif reward=="indicator_reverse":
+        elif reward == "indicator_reverse":
             # Always indicator reward but first objective is to reach the origin, then to keep balance
-            keep_balance = lambda state: distance_to_mid_target_range(state[2],
-                                                                      np.deg2rad(env_params['theta_deg_target_min']),
-                                                                      np.deg2rad(env_params['theta_deg_target_max']),
-                                                                      -np.deg2rad(env_params['theta_threshold_deg']),
-                                                                      +np.deg2rad(env_params['theta_threshold_deg'])
-                                                                      )
-            reach_origin = lambda state: distance_to_mid_target_range(state[0], env_params['x_target_min'],
-                                                                      env_params['x_target_max'],
-                                                                      -env_params['x_threshold'],
-                                                                      +env_params['x_threshold']
-                                                                      )
             hierarchy = {
                 'safety': [reach_origin],
                 'target': [keep_balance],
-                'comfort': []
+                'comfort': [no_collision]
             }
             env = HierarchicalRewardWrapper(env, hierarchy, clip_negative_rewards=reward_params['clip_reward'],
                                             shift_rewards=reward_params['shift_reward'])
