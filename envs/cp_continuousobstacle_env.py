@@ -80,7 +80,7 @@ class CartPoleContObsEnv(gym.Env):
     def __init__(self, x_threshold=2.5, theta_threshold_deg=24, max_steps=200,
                  cart_min_initial_offset=1.2, cart_max_initial_offset=2.0,
                  obstacle_min_w=0.5, obstacle_max_w=0.5, obstacle_min_h=0.5, obstacle_max_h=0.5,
-                 obstacle_min_dist=0.1, obstacle_max_dist=0.2):
+                 obstacle_min_dist=0.1, obstacle_max_dist=0.2, terminate_on_collision=True):
         # Physical Constants
         self.gravity = 9.8
         self.masscart = 1.0
@@ -107,9 +107,10 @@ class CartPoleContObsEnv(gym.Env):
         self.obstacle_max_dist = obstacle_max_dist
 
         # Conditions for Episode Failure
-        self.theta_threshold_radians = theta_threshold_deg * math.pi / 360
+        self.theta_threshold_radians = np.deg2rad(theta_threshold_deg)
         self.x_threshold = x_threshold
-        self._max_episode_steps = max_steps
+        self.max_episode_steps = max_steps
+        self.terminate_on_collision = terminate_on_collision
         self.step_count = 0
 
         high = np.array([self.x_threshold * 2,
@@ -173,13 +174,11 @@ class CartPoleContObsEnv(gym.Env):
         self.state = (x, x_dot, theta, theta_dot, battery, obst_l, obst_r, obst_h)
 
         done = bool(
-            x < -self.x_threshold
-            or x > self.x_threshold
-            or theta < -self.theta_threshold_radians
-            or theta > self.theta_threshold_radians
-            or self.step_count > self._max_episode_steps
+            abs(x) > self.x_threshold
+            or abs(theta) > self.theta_threshold_radians
+            or self.step_count > self.max_episode_steps
             or battery <= 0
-            or self.obstacle.intersect(x, theta))
+            or (self.terminate_on_collision and self.obstacle.intersect(x, theta)))
 
         return np.array(self.state), self.reward(), done, {}
 

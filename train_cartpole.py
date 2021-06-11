@@ -14,65 +14,55 @@ import argparse as parser
 
 # define problem
 parser = parser.ArgumentParser()
-parser.add_argument("--task", type=str, required=True, choices=['cart_pole'])
 parser.add_argument("--reward", type=str, required=True, choices=['indicator'])
 parser.add_argument("--algo", type=str, required=True, choices=['ppo', 'ppo_sde'])
-parser.add_argument("--clip_reward", type=bool, default=False)
-parser.add_argument("--shift_reward", type=bool, default=False)
+parser.add_argument("--steps", type=int, default=1e6)
+parser.add_argument("-terminate_on_collision", action="store_true")
+parser.add_argument("-shift_reward", action="store_true")
+parser.add_argument("-clip_reward", action="store_true")
 args = parser.parse_args()
 
-task = args.task
+
+task = "cart_pole"
 reward = args.reward
 rl_algo = args.algo
+steps = args.steps
 clip_reward = args.clip_reward
 shift_reward = args.shift_reward
+terminate_on_collision = args.terminate_on_collision
 
 # logging
-logdir = pathlib.Path(f"logs/{task}_{reward}_clip{clip_reward}_shift{shift_reward}_{rl_algo}_{int(time.time())}")
+logdir = pathlib.Path(f"logs/{task}_{reward}_clip{clip_reward}_shift{shift_reward}_terminate{terminate_on_collision}_{int(time.time())}")
 checkpointdir = logdir / "checkpoint"
 logdir.mkdir(parents=True, exist_ok=True)
 checkpointdir.mkdir(parents=True, exist_ok=True)
 
-# define simulation parameters
-sim_params = {
-    'x_threshold': 2.5,  # episode ends when the distance from origin goes above this threshold
-    'theta_threshold_deg': 24,  # episode ends when the pole angle (w.r.t. vertical axis) goes above this threshold
-    'max_steps': 400,  # episode ends after this nr of steps
-    'cart_min_offset': 1.0,  # initial position sampled with this min distance (offset w.r.t. vertical axis)
-    'cart_max_offset': 2.0,  # initial position sampled with this max distance (offset w.r.t. vertical axis)
-    'obstacle_min_w': 0.25,  # obstacle sizes sampled within these ranges for width, height
-    'obstacle_max_w': 0.25,
-    'obstacle_min_h': 0.1,
-    'obstacle_max_h': 0.1,
-    'obstacle_min_dist': 0.1,  # obstacle initial position is within a given distance from the cart center
-    'obstacle_max_dist': 0.3,  # this distance is between the closest point of the obstacle and the cart center
-}
-with open(logdir / 'env_params.yaml', 'w') as file:
-    yaml.dump(sim_params, file)
+# store input params
+with open(logdir / f"args.yml", "w") as file:
+    yaml.dump(args, file)
 
-env = CartPoleContObsEnv(x_threshold=sim_params['x_threshold'],
-                         theta_threshold_deg=sim_params['theta_threshold_deg'],
-                         max_steps=sim_params['max_steps'],
-                         cart_min_initial_offset=sim_params['cart_min_offset'],
-                         cart_max_initial_offset=sim_params['cart_max_offset'],
-                         obstacle_min_w=sim_params['obstacle_min_w'],
-                         obstacle_max_w=sim_params['obstacle_max_w'],
-                         obstacle_min_h=sim_params['obstacle_min_h'],
-                         obstacle_max_h=sim_params['obstacle_max_h'],
-                         obstacle_min_dist=sim_params['obstacle_min_dist'],
-                         obstacle_max_dist=sim_params['obstacle_max_dist'])
+# load env params
+env_config = pathlib.Path("envs") / f"{task}.yml"
+with open(env_config, 'r') as file:
+    env_params = yaml.load(file, yaml.FullLoader)
+# eventually overwrite some default param
+env_params['terminate_on_collision'] = terminate_on_collision
+with open(logdir / f"{  task}.yml", "w") as file:
+    yaml.dump(env_params, file)
+# make env
+env = CartPoleContObsEnv(**env_params)
 
 # hierarchical definition of rewards: safety, target, comfort rules
 if reward == "indicator":
-    keep_balance = lambda state: (np.deg2rad(24) - np.abs(state[2])) / np.deg2rad(sim_params['theta_threshold_deg'])
-    # todo: limit speed or actuators
-    reach_origin = lambda state: (0.0 - np.abs(state[0])) / sim_params['x_threshold']
+    # todo: additionally, add comfort requirement to constraint actuators or velocity limits
+    keep_balance = lambda state: (np.deg2rad(env_params['theta_threshold_deg']) - np.abs(state[2])) / np.deg2rad(env_params['theta_threshold_deg'])
+    reach_origin = lambda state: (0.0 - np.abs(state[0])) / env_params['x_threshold']
     hierarchy = {
         'safety': [keep_balance],
         'target': [reach_origin],
         'comfort': []
     }
-    env = HierarchicalRewardWrapper(env, hierarchy, clip_negative_rewards=clip_reward)
+    env = HierarchicalRewardWrapper(env, hierarchy, clip_negative_rewards=clip_reward, shift_rewards=shift_reward)
 else:
     raise NotImplementedError()
 
@@ -85,7 +75,7 @@ else:
     raise NotImplementedError()
 
 # trainig
-n_steps = 10e6
+n_steps = steps
 eval_every = 5e5
 checkpoint_every = 5e5
 
