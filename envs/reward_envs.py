@@ -19,6 +19,11 @@ class HierarchicalRewardWrapper(gym.RewardWrapper):
 
     def reward(self, rew):
         state = self.state
+        return self.reward_in_state(state)
+
+    def reward_in_state(self, state):
+        if state is None:
+            raise ValueError("eval reward in not initialized env, state is None")
         # compute rewards for each hierarchy level
         safety_rewards = np.array([f(state) for f in self._hierarchy['safety']])
         target_rewards = np.array([f(state) for f in self._hierarchy['target']])

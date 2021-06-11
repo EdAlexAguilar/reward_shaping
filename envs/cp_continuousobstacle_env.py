@@ -77,7 +77,8 @@ class CartPoleContObsEnv(gym.Env):
         'video.frames_per_second': 50
     }
 
-    def __init__(self, x_threshold=2.5, theta_threshold_deg=24, max_steps=200,
+    def __init__(self, x_threshold=2.5, theta_threshold_deg=90, max_steps=200,
+                 x_target_min=0.0, x_target_max=0.0, theta_deg_target_min=-24, theta_deg_target_max=+24,
                  cart_min_initial_offset=1.2, cart_max_initial_offset=2.0,
                  obstacle_min_w=0.5, obstacle_max_w=0.5, obstacle_min_h=0.5, obstacle_max_h=0.5,
                  obstacle_min_dist=0.1, obstacle_max_dist=0.2, terminate_on_collision=True):
@@ -91,12 +92,14 @@ class CartPoleContObsEnv(gym.Env):
         self.force_mag = 30.0  # 10.0
         self.tau = 0.02  # seconds between state updates
         self.battery_consumption = 0.075
+        self.min_action = -1.0
+        self.max_action = 1.0
+
+        # Obstacle spec
         self.obstacle_min_width = obstacle_min_w
         self.obstacle_max_width = obstacle_max_w
         self.obstacle_min_height = obstacle_min_h
         self.obstacle_max_height = obstacle_max_h
-        self.min_action = -1.0
-        self.max_action = 1.0
 
         # Initial condition
         # cart_offset:=distance between the center of the cart and origin
@@ -112,6 +115,12 @@ class CartPoleContObsEnv(gym.Env):
         self.max_episode_steps = max_steps
         self.terminate_on_collision = terminate_on_collision
         self.step_count = 0
+
+        # Reward parameters
+        self.x_target_min = x_target_min
+        self.x_target_max = x_target_max
+        self.theta_deg_target_min = theta_deg_target_min
+        self.theta_deg_target_max = theta_deg_target_max
 
         high = np.array([self.x_threshold * 2,
                          np.finfo(np.float32).max,

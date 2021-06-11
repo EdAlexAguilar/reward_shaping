@@ -1,12 +1,19 @@
+# episode termination
+max_steps: 400
+terminate_on_collision: False
 x_threshold: 2.5
 theta_threshold_deg: 90
-max_steps: 400
+# reward parameters
+x_target_min: 0.0
+x_target_max: 0.0
+theta_deg_target_min: -24
+theta_deg_target_max: 24
+# initial conditions
 cart_min_initial_offset: 1.2
 cart_max_initial_offset: 2.0
-obstacle_min_w: 0.25
-obstacle_max_w: 0.25
+obstacle_min_w: 0.2
+obstacle_max_w: 0.2
 obstacle_min_h: 0.1
 obstacle_max_h: 0.1
 obstacle_min_dist: 0.1
 obstacle_max_dist: 0.3
-terminate_on_collision: False
