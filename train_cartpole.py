@@ -21,7 +21,7 @@ def main(args):
     args.task = "cart_pole"
     logdir, checkpointdir = make_log_dirs(args)
     # prepare env with custom reward
-    env, env_params = make_env(args, logdir)
+    env, env_params = make_env(args.task, args.terminate_on_collision, logdir)
     reward_params = {'clip_reward': args.clip_reward, 'shift_reward': args.shift_reward}
     env = make_reward_wrap(args.task, env, args.reward, env_params, reward_params)
     # make rl agent

@@ -1,6 +1,7 @@
 # episode termination
 max_steps: 400
 terminate_on_collision: False
+terminate_on_battery: False
 x_threshold: 2.5
 theta_threshold_deg: 90
 # reward parameters

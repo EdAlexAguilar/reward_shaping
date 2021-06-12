@@ -28,18 +28,18 @@ def make_base_env(task, env_params={}):
     return env
 
 
-def make_env(args, logdir=None):
-    env_config = pathlib.Path("envs") / f"{args.task}.yml"
+def make_env(task, terminate_on_collision, logdir=None):
+    env_config = pathlib.Path("envs") / f"{task}.yml"
     with open(env_config, 'r') as file:
         env_params = yaml.load(file, yaml.FullLoader)
     # eventually overwrite some default param
-    env_params['terminate_on_collision'] = args.terminate_on_collision
+    env_params['terminate_on_collision'] = terminate_on_collision
     # copy params in logdit (optional)
     if logdir:
-        with open(logdir / f"{args.task}.yml", "w") as file:
+        with open(logdir / f"{task}.yml", "w") as file:
             yaml.dump(env_params, file)
     # make env
-    env = make_base_env(args.task, env_params)
+    env = make_base_env(task, env_params)
     return env, env_params
 
 
@@ -88,9 +88,9 @@ def make_reward_wrap(task, env, reward, env_params, reward_params):
         # TARGET: balance the pole
         # phi := theta >= -24deg and theta <= 24deg
         # rho := min(theta+24, 24-theta)
-        angle_range = 2 * env_params['theta_threshold_deg']  # theta in [-theta_threshold_deg, theta_threshold_deg]
-        keep_balance = lambda state: 1 / angle_range * min(state[2] + env_params['theta_deg_target_min'],
-                                                           env_params['theta_deg_target_max'] - state[2])
+        angle_range = 2 * np.deg2rad(env_params['theta_threshold_deg'])  # theta in [-theta_threshold_deg, theta_threshold_deg]
+        keep_balance = lambda state: 1 / angle_range * min(state[2] - np.deg2rad(env_params['theta_deg_target_min']),
+                                                           np.deg2rad(env_params['theta_deg_target_max']) - state[2])
         # COMFORT: reach the origin
         # phi := x == 0 = x>=0 and x<=0
         # rho := min(x, -x)

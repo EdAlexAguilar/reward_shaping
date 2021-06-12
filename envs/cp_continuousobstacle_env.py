@@ -10,29 +10,46 @@ Modification of OpenAI CartPole environment
 
 import math
 import gym
+import pyglet
 from gym import spaces, logger
 from gym.utils import seeding
 import numpy as np
 
 
 class Obstacle():
-    def __init__(self, left_x, width, height):
+    def __init__(self, axle_y, polelen, left_x, left_y, width, height):
+        # cart info
+        self.axle_y = axle_y
+        self.polelen = polelen
+        # obstacle info
         self.left_x = left_x
         self.right_x = left_x + width
+        self.bottom_y = left_y
+        self.top_y = left_y + height
+        self.width = width
         self.height = height
 
-    def intersect(self, x, theta):
-        """
+    """
+    def intersect(self, x, theta, polelen):
+        
         x, theta cartpole coords
         + dist if pole is outside obstacle
         - dist if pole is inside obstacle
         # ASSUMES pole self.length = 0.5  # actually half the pole's length
-        """
+        
         if theta == 0:
             theta = 1e-5
         y_left = (1 / np.tan(theta)) * (self.left_x - x) - (1 - self.height)
         y_right = (1 / np.tan(theta)) * (self.right_x - x) - (1 - self.height)
         return np.sign(y_left * y_right) * np.min([abs(y_left), abs(y_right)]) < 0.0
+    """
+
+    def intersect(self, x, theta):
+        pole_x = x + np.sin(theta) * self.polelen
+        pole_y = self.axle_y + np.cos(theta) * self.polelen
+        intersect = self.left_x <= pole_x <= self.right_x and self.bottom_y <= pole_y <= self.top_y
+        return intersect
+
 
 
 class CartPoleContObsEnv(gym.Env):
@@ -81,12 +98,16 @@ class CartPoleContObsEnv(gym.Env):
                  x_target_min=0.0, x_target_max=0.0, theta_deg_target_min=-24, theta_deg_target_max=+24,
                  cart_min_initial_offset=1.2, cart_max_initial_offset=2.0,
                  obstacle_min_w=0.5, obstacle_max_w=0.5, obstacle_min_h=0.5, obstacle_max_h=0.5,
-                 obstacle_min_dist=0.1, obstacle_max_dist=0.2, terminate_on_collision=True):
+                 obstacle_min_dist=0.1, obstacle_max_dist=0.2,
+                 terminate_on_collision=True, terminate_on_battery=False):
         # Physical Constants
         self.gravity = 9.8
         self.masscart = 1.0
         self.masspole = 0.1
         self.total_mass = (self.masspole + self.masscart)
+        self.ground_y = 1.0
+        self.cart_width = 0.40
+        self.cart_height = 0.25
         self.length = 0.5  # actually half the pole's length
         self.polemass_length = (self.masspole * self.length)
         self.force_mag = 30.0  # 10.0
@@ -114,6 +135,7 @@ class CartPoleContObsEnv(gym.Env):
         self.x_threshold = x_threshold
         self.max_episode_steps = max_steps
         self.terminate_on_collision = terminate_on_collision
+        self.terminate_on_battery = terminate_on_battery
         self.step_count = 0
 
         # Reward parameters
@@ -186,7 +208,7 @@ class CartPoleContObsEnv(gym.Env):
             abs(x) > self.x_threshold
             or abs(theta) > self.theta_threshold_radians
             or self.step_count > self.max_episode_steps
-            or battery <= 0
+            or (self.terminate_on_battery and battery <= 0)
             or (self.terminate_on_collision and self.obstacle.intersect(x, theta)))
 
         return np.array(self.state), self.reward(), done, {}
@@ -227,7 +249,11 @@ class CartPoleContObsEnv(gym.Env):
             left_x = self.state[0] - distance_obst_center_to_cart - obstacle_width / 2.0
         else:
             left_x = self.state[0] + distance_obst_center_to_cart - obstacle_width / 2.0
-        self.obstacle = Obstacle(left_x, obstacle_width, obstacle_height)
+        axle_y = self.ground_y + self.cart_height/4.0
+        polelen = 2 * self.length
+        obstacle_y = axle_y + polelen     # this is the highest point reachable from the pole
+        obstacle_y = obstacle_y - 0.1   # we substract a small offset to make collision feasible
+        self.obstacle = Obstacle(axle_y, polelen, left_x, obstacle_y, obstacle_width, obstacle_height)
         # store obstacle position into the state
         self.state[5] = self.obstacle.left_x
         self.state[6] = self.obstacle.right_x
@@ -244,11 +270,12 @@ class CartPoleContObsEnv(gym.Env):
         world_width = self.x_threshold * 2
         scale = screen_width / world_width
 
-        carty = 100  # TOP OF CART
+        carty = self.ground_y * scale
+        polelen = (2 * self.length) * scale
         polewidth = 6.0
-        polelen = scale * (2 * self.length)
-        cartwidth = 50.0
-        cartheight = 30.0
+
+        cartwidth = self.cart_width * scale
+        cartheight = self.cart_height * scale
 
         # obstacle (unscaled) dimensions
         obstacle_width = (self.obstacle.right_x - self.obstacle.left_x)
@@ -276,9 +303,10 @@ class CartPoleContObsEnv(gym.Env):
             BG = rendering.FilledPolygon([(BG_l, BG_b), (BG_l, BG_t), (BG_r, BG_t), (BG_r, BG_b)])
             BG.set_color(*bg_color)
             self.viewer.add_geom(BG)
-            self.track = rendering.Line((0, carty), (screen_width, carty))
-            self.track.set_color(*track_color)
-            self.viewer.add_geom(self.track)
+            self.track1 = rendering.Line((0, scale*self.ground_y), (screen_width, scale*self.ground_y))
+            self.track1.set_color(*track_color)
+            self.viewer.add_geom(self.track1)
+
             for line_id, track_x in enumerate(track_x_lines):
                 if line_id % 2 == 0:
                     temp_draw = rendering.Line((screen_width / 2 + scale * track_x, carty - 20),
@@ -350,7 +378,7 @@ class CartPoleContObsEnv(gym.Env):
         # new center:   x: left_x + obstacle_width
         #               y: cart_center_y + pole_length + obstacle_height/2
         obstx = (self.state[5] + obstacle_width / 2.0) * scale + screen_width / 2.0
-        obsty = carty + polelen + (obstacle_height / 2.0 * scale)
+        obsty = (self.obstacle.bottom_y + obstacle_height / 2.0) * scale
         self.obsttrans.set_translation(obstx, obsty)
 
         return self.viewer.render(return_rgb_array=mode == 'rgb_array')
