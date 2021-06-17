@@ -1,4 +1,4 @@
-from envs import cp_continuousobstacle_env
+from envs.cart_pole import cp_continuousobstacle_env
 import ppo_mp as ppo
 import numpy as np
 import multiprocessing as mp

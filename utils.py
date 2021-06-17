@@ -4,7 +4,7 @@ import time
 import numpy as np
 import yaml
 
-from envs.cp_continuousobstacle_env import CartPoleContObsEnv
+from envs.cart_pole.cp_continuousobstacle_env import CartPoleContObsEnv
 from envs.reward_envs import HierarchicalRewardWrapper
 
 
@@ -29,7 +29,7 @@ def make_base_env(task, env_params={}):
 
 
 def make_env(task, terminate_on_collision, logdir=None):
-    env_config = pathlib.Path("envs") / f"{task}.yml"
+    env_config = pathlib.Path(f"envs/{task}") / f"{task}.yml"
     with open(env_config, 'r') as file:
         env_params = yaml.load(file, yaml.FullLoader)
     # eventually overwrite some default param

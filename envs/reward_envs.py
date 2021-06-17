@@ -36,13 +36,16 @@ class HierarchicalRewardWrapper(gym.RewardWrapper):
     def reward_in_state(self, state):
         if state is None:
             raise ValueError("eval reward in not initialized env, state is None")
-        # compute rewards for each hierarchy level
-        safety_rewards = np.array([f(state) for f in self._hierarchy['safety']])
-        target_rewards = np.array([f(state) for f in self._hierarchy['target']])
-        comfort_rewards = np.array([f(state) for f in self._hierarchy['comfort']])
+        # compute rewards for each hierarchy level: each fun returns (value, bool)
+        safety_results = np.array([f(state) for f in self._hierarchy['safety']])
+        target_results = np.array([f(state) for f in self._hierarchy['target']])
+        comfort_results = np.array([f(state) for f in self._hierarchy['comfort']])
         # compute indicators: ind_k = AND_{r in H_k} (f>=0)
-        safety_ind = all(safety_rewards >= 0.0)
-        target_ind = all(target_rewards >= 0.0)
+        safety_ind = all(safety_results[:, 1])
+        target_ind = all(target_results[:, 1])
+        safety_rewards = safety_results[:, 0]
+        target_rewards = target_results[:, 0]
+        comfort_rewards = comfort_results[:, 0]
         # (optional) clip rewards
         if self._clip_negative:
             safety_rewards = np.clip(safety_rewards, 0.0, np.Inf)

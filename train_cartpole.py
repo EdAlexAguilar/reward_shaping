@@ -1,19 +1,11 @@
-import pathlib
-import time
-
 import gym
-import yaml
-from stable_baselines3 import PPO
-import numpy as np
 
 import callbacks
-from envs.cp_continuousobstacle_env import CartPoleContObsEnv
-from envs.reward_envs import HierarchicalRewardWrapper
 from stable_baselines3.common.callbacks import CheckpointCallback
 import argparse as parser
 
 # define problem
-from utils import distance_to_mid_target_range, make_agent, make_reward_wrap, make_log_dirs, make_env
+from utils import make_agent, make_reward_wrap, make_log_dirs, make_env
 
 
 def main(args):
