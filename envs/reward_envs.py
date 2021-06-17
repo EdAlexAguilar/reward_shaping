@@ -28,6 +28,7 @@ class HierarchicalRewardWrapper(gym.RewardWrapper):
 
     def reward(self, rew):
         self._reward = self.reward_in_state(self.state)
+        self._return += self._reward
         self._env._reward = self._reward
         self._env._return = self._return
         return self._env._reward
