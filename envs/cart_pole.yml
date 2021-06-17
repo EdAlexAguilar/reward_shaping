@@ -16,5 +16,5 @@ obstacle_min_w: 0.2
 obstacle_max_w: 0.2
 obstacle_min_h: 0.1
 obstacle_max_h: 0.1
-obstacle_min_dist: 0.1
-obstacle_max_dist: 0.3
+obstacle_min_dist: 0.75
+obstacle_max_dist: 1.0

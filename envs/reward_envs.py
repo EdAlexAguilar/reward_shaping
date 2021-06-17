@@ -16,10 +16,21 @@ class HierarchicalRewardWrapper(gym.RewardWrapper):
         # bool parameters
         self._clip_negative = clip_negative_rewards  # `true` if we want to clip rewards to [0,+inf]
         self._shift_by_one = shift_rewards  # `true` if we want to shift each hierarchy by one
+        # reward for rendering
+        self._reward = 0.0
+        self._return = 0.0
+
+    def reset(self, **kwargs):
+        obs = self._env.reset(**kwargs)
+        self._reward = 0.0
+        self._return = 0.0
+        return obs
 
     def reward(self, rew):
-        state = self.state
-        return self.reward_in_state(state)
+        self._reward = self.reward_in_state(self.state)
+        self._env._reward = self._reward
+        self._env._return = self._return
+        return self._env._reward
 
     def reward_in_state(self, state):
         if state is None:

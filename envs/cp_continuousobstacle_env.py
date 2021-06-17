@@ -15,6 +15,11 @@ from gym import spaces, logger
 from gym.utils import seeding
 import numpy as np
 
+class DrawText:
+    def __init__(self, label:pyglet.text.Label):
+        self.label=label
+    def render(self):
+        self.label.draw()
 
 class Obstacle():
     def __init__(self, axle_y, polelen, left_x, left_y, width, height):
@@ -129,6 +134,7 @@ class CartPoleContObsEnv(gym.Env):
         # obst_dist:=distance between the center of the cart and closest point of the obstacle
         self.obstacle_min_dist = obstacle_min_dist
         self.obstacle_max_dist = obstacle_max_dist
+        self.obstacle = None
 
         # Conditions for Episode Failure
         self.theta_threshold_radians = np.deg2rad(theta_threshold_deg)
@@ -170,6 +176,8 @@ class CartPoleContObsEnv(gym.Env):
 
         self.observation_space = spaces.Box(low, high, dtype=np.float32)
 
+        self._reward = 0.0
+        self._return = 0.0
         self.seed()
         self.viewer = None
         self.state = None
@@ -211,7 +219,9 @@ class CartPoleContObsEnv(gym.Env):
             or (self.terminate_on_battery and battery <= 0)
             or (self.terminate_on_collision and self.obstacle.intersect(x, theta)))
 
-        return np.array(self.state), self.reward(), done, {}
+        self._reward = self.reward()
+        self._return += self._reward
+        return np.array(self.state), self._reward, done, {}
 
     def reward(self):
         """
@@ -230,6 +240,8 @@ class CartPoleContObsEnv(gym.Env):
         """
         self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(self.state_dim,))
         self.steps_beyond_done = None
+        self._reward = 0.0
+        self._return = 0.0
         # initial position (x_init) is in [-max_offset,-min_offset] U [min_offset,max_offset]
         start = self.np_random.uniform(low=self.cart_min_offset, high=self.cart_max_offset)
         if self.state[0] > 0:
@@ -361,6 +373,14 @@ class CartPoleContObsEnv(gym.Env):
             obst.add_attr(self.obsttrans)
             self.viewer.add_geom(obst)
 
+            # score
+            text = f'reward = {self._reward:.2f}, return = {self._return:.2f}'
+            self.label = pyglet.text.Label(text, font_size=20,
+                                           x=10, y=10, anchor_x='left', anchor_y='bottom',
+                                           color=(255, 255, 255, 255))
+            self.label.draw()
+            self.viewer.add_geom(DrawText(self.label))
+
         if self.state is None:
             return None
 
@@ -381,6 +401,8 @@ class CartPoleContObsEnv(gym.Env):
         obsty = (self.obstacle.bottom_y + obstacle_height / 2.0) * scale
         self.obsttrans.set_translation(obstx, obsty)
 
+
+        self.label.text = f'reward = {self._reward:.2f}, return = {self._return:.2f}'
         return self.viewer.render(return_rgb_array=mode == 'rgb_array')
 
     def close(self):
