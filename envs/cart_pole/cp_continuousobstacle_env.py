@@ -34,26 +34,14 @@ class Obstacle():
         self.width = width
         self.height = height
 
-    """
-    def intersect(self, x, theta, polelen):
-        
-        x, theta cartpole coords
-        + dist if pole is outside obstacle
-        - dist if pole is inside obstacle
-        # ASSUMES pole self.length = 0.5  # actually half the pole's length
-        
-        if theta == 0:
-            theta = 1e-5
-        y_left = (1 / np.tan(theta)) * (self.left_x - x) - (1 - self.height)
-        y_right = (1 / np.tan(theta)) * (self.right_x - x) - (1 - self.height)
-        return np.sign(y_left * y_right) * np.min([abs(y_left), abs(y_right)]) < 0.0
-    """
-
     def intersect(self, x, theta):
         pole_x = x + np.sin(theta) * self.polelen
         pole_y = self.axle_y + np.cos(theta) * self.polelen
         intersect = self.left_x <= pole_x <= self.right_x and self.bottom_y <= pole_y <= self.top_y
         return intersect
+
+    def on_left_side(self, x):
+        return x < self.left_x
 
 
 
@@ -91,7 +79,7 @@ class CartPoleContObsEnv(gym.Env):
         Cart Position is more than limit (default 2.4) (center of the cart reaches the edge of
         the display).
         Episode length is greater than (default 200) steps.
-        Cartpole Runs out of battery (battery=0)
+        Cartpole Runs state = out of battery (battery=0)
     """
 
     metadata = {
@@ -181,6 +169,7 @@ class CartPoleContObsEnv(gym.Env):
         self.seed()
         self.viewer = None
         self.state = None
+        self.initial_state = None
         self.steps_beyond_done = None
         self.state_dim = len(high)  # dimension of state-space
 
@@ -270,11 +259,21 @@ class CartPoleContObsEnv(gym.Env):
         self.state[5] = self.obstacle.left_x
         self.state[6] = self.obstacle.right_x
         self.state[7] = obstacle_height
+        # store initial state to check obstacle overcoming
+        self.initial_state = np.array(self.state)
         return np.array(self.state)
 
     def set_obstacle_width_height(self, width, height):
         self.obstacle_max_width = width
         self.obstacle_max_height = height
+
+    def overcome_obstacle(self, x):
+        """
+        Check if the current state is on the opposite side of the obstacle w.r.t. the starting position.
+        In particular, we check if the sides are different.
+        """
+        return self.obstacle.on_left_side(self.initial_state[0]) != self.obstacle.on_left_side(self.state[0])
+
 
     def render(self, mode='human', end=False):
         screen_width = 600

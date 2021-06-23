@@ -6,7 +6,7 @@ import numpy as np
 
 class HierarchicalRewardWrapper(gym.RewardWrapper):
     def __init__(self, env, hierarchy: Dict[str, List], clip_negative_rewards: bool = False,
-                 shift_rewards: bool = False):
+                 shift_rewards: bool = False, unit_scaling: bool = False):
         assert 'safety' in hierarchy
         assert 'target' in hierarchy
         assert 'comfort' in hierarchy
@@ -16,6 +16,7 @@ class HierarchicalRewardWrapper(gym.RewardWrapper):
         # bool parameters
         self._clip_negative = clip_negative_rewards  # `true` if we want to clip rewards to [0,+inf]
         self._shift_by_one = shift_rewards  # `true` if we want to shift each hierarchy by one
+        self._unit_scaling = unit_scaling  # `true` if we want to scale the final reward in [0, 1]
         # reward for rendering
         self._reward = 0.0
         self._return = 0.0
@@ -60,5 +61,8 @@ class HierarchicalRewardWrapper(gym.RewardWrapper):
         tot_target_reward = np.mean(target_rewards) if len(target_rewards) > 0 and safety_ind else 0.0
         tot_comfort_reward = np.mean(comfort_rewards) if len(comfort_rewards) > 0 and safety_ind and target_ind else 0.0
         # compute final indicator-based reward
-        final_reward = tot_safety_reward + tot_target_reward + tot_comfort_reward
+        if self._unit_scaling:
+            final_reward = 1 / 3 * tot_safety_reward + 1 / 3 * tot_target_reward + 1 / 3 * tot_comfort_reward
+        else:
+            final_reward = tot_safety_reward + tot_target_reward + tot_comfort_reward
         return final_reward

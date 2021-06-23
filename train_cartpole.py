@@ -14,7 +14,8 @@ def main(args):
     logdir, checkpointdir = make_log_dirs(args)
     # prepare env with custom reward
     env, env_params = make_env(args.task, args.terminate_on_collision, logdir)
-    reward_params = {'clip_reward': args.clip_reward, 'shift_reward': args.shift_reward}
+    reward_params = {'clip_reward': args.clip_reward, 'shift_reward': args.shift_reward,
+                     'unit_scaling': args.unit_scaling}
     env = make_reward_wrap(args.task, env, args.reward, env_params, reward_params)
     # make rl agent
     model = make_agent(env, args.algo, logdir)
@@ -51,5 +52,6 @@ if __name__ == "__main__":
     parser.add_argument("-terminate_on_collision", action="store_true")
     parser.add_argument("-shift_reward", action="store_true")
     parser.add_argument("-clip_reward", action="store_true")
+    parser.add_argument("-unit_scaling", action="store_true")
     args = parser.parse_args()
     main(args)
