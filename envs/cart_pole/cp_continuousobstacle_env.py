@@ -41,7 +41,7 @@ class Obstacle():
         return intersect
 
     def on_left_side(self, x):
-        return x < self.left_x
+        return self.right_x < x
 
 
 

@@ -104,12 +104,23 @@ def make_reward_wrap(task, env, reward, env_params, reward_params):
             env = HierarchicalRewardWrapper(env, hierarchy, clip_negative_rewards=reward_params['clip_reward'],
                                             shift_rewards=reward_params['shift_reward'],
                                             unit_scaling=reward_params['unit_scaling'])
+        elif reward == "weighted":
+            # Single level, weighted sum
+            hierarchy = {
+                'safety': [no_collision, keep_balance, overcome_obs, reach_origin],
+                'target': [],
+                'comfort': []
+            }
+            env = HierarchicalRewardWrapper(env, hierarchy, clip_negative_rewards=reward_params['clip_reward'],
+                                            shift_rewards=reward_params['shift_reward'],
+                                            unit_scaling=reward_params['unit_scaling'])
+
         elif reward == "indicator_reverse":
             # Always indicator reward but first objective is to reach the origin, then to keep balance
             hierarchy = {
                 'safety': [reach_origin],
-                'target': [keep_balance],
-                'comfort': [no_collision]
+                'target': [overcome_obs],
+                'comfort': [no_collision, keep_balance]
             }
             env = HierarchicalRewardWrapper(env, hierarchy, clip_negative_rewards=reward_params['clip_reward'],
                                             shift_rewards=reward_params['shift_reward'],

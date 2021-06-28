@@ -46,7 +46,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = parser.ArgumentParser()
-    parser.add_argument("--reward", type=str, required=True, choices=['indicator', 'indicator_reverse'])
+    parser.add_argument("--reward", type=str, required=True, choices=['indicator', 'indicator_reverse', 'weighted'])
     parser.add_argument("--algo", type=str, required=True, choices=['ppo', 'ppo_sde'])
     parser.add_argument("--steps", type=int, default=1e6)
     parser.add_argument("-terminate_on_collision", action="store_true")

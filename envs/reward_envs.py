@@ -42,11 +42,11 @@ class HierarchicalRewardWrapper(gym.RewardWrapper):
         target_results = np.array([f(state) for f in self._hierarchy['target']])
         comfort_results = np.array([f(state) for f in self._hierarchy['comfort']])
         # compute indicators: ind_k = AND_{r in H_k} (f>=0)
-        safety_ind = all(safety_results[:, 1])
-        target_ind = all(target_results[:, 1])
-        safety_rewards = safety_results[:, 0]
-        target_rewards = target_results[:, 0]
-        comfort_rewards = comfort_results[:, 0]
+        safety_ind = all(safety_results[:, 1]) if len(safety_results)>0 else False
+        target_ind = all(target_results[:, 1]) if len(target_results)>0 else False
+        safety_rewards = safety_results[:, 0] if len(safety_results)>0 else [0.0]
+        target_rewards = target_results[:, 0] if len(target_results)>0 else [0.0]
+        comfort_rewards = comfort_results[:, 0] if len(comfort_results)>0 else [0.0]
         # (optional) clip rewards
         if self._clip_negative:
             safety_rewards = np.clip(safety_rewards, 0.0, np.Inf)
