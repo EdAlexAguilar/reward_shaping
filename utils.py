@@ -4,7 +4,7 @@ import time
 import numpy as np
 import yaml
 
-from envs.cart_pole.cp_continuousobstacle_env import CartPoleContObsEnv
+
 from envs.reward_envs import HierarchicalRewardWrapper
 
 
@@ -22,7 +22,11 @@ def make_log_dirs(args):
 
 def make_base_env(task, env_params={}):
     if task == "cart_pole":
+        from envs.cart_pole.cp_continuousobstacle_env import CartPoleContObsEnv
         env = CartPoleContObsEnv(**env_params)
+    elif task == "bipedal_walker":
+        from  envs.bipedal_walker.bipedal_walker import BipedalWalker
+        env = BipedalWalker(**env_params)
     else:
         raise NotImplementedError(f"not implemented env for {task}")
     return env
@@ -30,8 +34,11 @@ def make_base_env(task, env_params={}):
 
 def make_env(task, terminate_on_collision, logdir=None):
     env_config = pathlib.Path(f"envs/{task}") / f"{task}.yml"
-    with open(env_config, 'r') as file:
-        env_params = yaml.load(file, yaml.FullLoader)
+    if env_config.exists():
+        with open(env_config, 'r') as file:
+            env_params = yaml.load(file, yaml.FullLoader)
+    else:
+        env_params = {}
     # eventually overwrite some default param
     env_params['terminate_on_collision'] = terminate_on_collision
     # copy params in logdit (optional)
