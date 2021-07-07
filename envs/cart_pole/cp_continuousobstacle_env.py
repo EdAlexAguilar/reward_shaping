@@ -184,6 +184,17 @@ class CartPoleContObsEnv(gym.Env):
         self.steps_beyond_done = None
         self.state_dim = len(high)  # dimension of state-space
 
+        # for evaluation
+        self.monitoring_variables = ['time', 'collision', 'falldown', 'outside',
+                                     'dist_target_x', 'dist_obstacle', 'dist_target_theta']
+        self.monitoring_types = ['int', 'int', 'int', 'int', 'float', 'float', 'float']
+        safety_requirements = "always((collision>=0) and (outside>=0) and not(falldown>=0))"
+        target_requirements = f"eventually(dist_target_x <= {self.x_target_tol})"
+        balancing_requirement = f"always((dist_obstacle >= 0.75) -> (dist_target_theta <= {self.theta_target_tol}))"
+        self.monitoring_spec = f"{safety_requirements} and {target_requirements} and {balancing_requirement}"
+        self.episode = {v: [] for v in self.monitoring_variables}
+        self.last_complete_episode = None
+
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
@@ -213,7 +224,7 @@ class CartPoleContObsEnv(gym.Env):
         self.last_state = self.state
         self.state = (x, x_dot, theta, theta_dot, battery, obst_l, obst_r, obst_h)
 
-        done = bool(
+        self.done = bool(
             abs(x) > self.x_threshold
             or abs(theta) > self.theta_threshold_radians
             or self.step_count > self.max_episode_steps
@@ -232,7 +243,45 @@ class CartPoleContObsEnv(gym.Env):
         self.target_tot = 0.0
         self.comfort_tot = 0.0
 
-        return np.array(self.state), self.rew, done, {}
+        self._update_episode()  # update episode for monitoring
+        return np.array(self.state), self.rew, self.done, {}
+
+    def _update_episode(self):
+        # compute monitoring variables
+        x, theta = self.state[0], self.state[2]
+        collision = -1 * self.obstacle.intersect(x, theta)
+        falldown = -1 * (abs(theta) > self.theta_threshold_radians)
+        outside = -1 * (abs(x) > self.x_threshold)
+        dist_target_x = abs(x - self.x_target)
+        dist_target_theta = abs(theta - self.theta_target)
+        dist_obstacle = abs(x - (self.obstacle.left_x + (self.obstacle.right_x - self.obstacle.left_x) / 2.0))
+        # extend episode history
+        self.episode['time'].append(self.step_count)
+        self.episode['collision'].append(collision)
+        self.episode['falldown'].append(falldown)
+        self.episode['outside'].append(outside)
+        self.episode['dist_target_x'].append(dist_target_x)
+        self.episode['dist_target_theta'].append(dist_target_theta)
+        self.episode['dist_obstacle'].append(dist_obstacle)
+        # eventually store if done
+        if self.done:
+            self.last_complete_episode = self.episode
+
+    def compute_episode_robustness(self, episode):
+        # compute robustness
+        import rtamt
+        spec = rtamt.STLSpecification()
+        for v, t in zip(self.monitoring_variables, self.monitoring_types):
+            spec.declare_var(v, f'{t}')
+        spec.spec = self.monitoring_spec
+        try:
+            spec.parse()
+        except rtamt.STLParseException as err:
+            return
+        # preprocess format, evaluate, post process
+        robustness_trace = spec.evaluate(episode)
+        return robustness_trace[0][1]
+
 
     def reward(self):
         """
@@ -252,6 +301,7 @@ class CartPoleContObsEnv(gym.Env):
         self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(self.state_dim,)).astype(np.float32)
         self.last_state = self.state
         self.steps_beyond_done = None
+        self.done = False
         # reset rewards
         self.rew = 0.0
         self.ret = 0.0
@@ -292,6 +342,8 @@ class CartPoleContObsEnv(gym.Env):
         self.state[7] = obstacle_height
         # store initial state to check obstacle overcoming
         self.initial_state = np.array(self.state)
+        # reset episode
+        self.episode = {v: [] for v in self.monitoring_variables}
         return np.array(self.state)
 
     def set_obstacle_width_height(self, width, height):
