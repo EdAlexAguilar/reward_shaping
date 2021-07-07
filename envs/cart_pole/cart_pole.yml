@@ -1,6 +1,6 @@
 # episode termination
 max_steps: 200
-terminate_on_collision: False
+terminate_on_collision: True
 terminate_on_battery: False
 x_limit: 2.5    # always x in [-x_limit,+x_limit]
 theta_limit: 90 # always theta in [-theta_limit, +theta_limit]

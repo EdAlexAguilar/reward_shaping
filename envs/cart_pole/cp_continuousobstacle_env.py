@@ -189,7 +189,7 @@ class CartPoleContObsEnv(gym.Env):
                                      'dist_target_x', 'dist_obstacle', 'dist_target_theta']
         self.monitoring_types = ['int', 'int', 'int', 'int', 'float', 'float', 'float']
         safety_requirements = "always((collision>=0) and (outside>=0) and not(falldown>=0))"
-        target_requirements = f"eventually(dist_target_x <= {self.x_target_tol})"
+        target_requirements = f"eventually(always(dist_target_x <= {self.x_target_tol}))"
         self.monitoring_spec = f"{safety_requirements} and {target_requirements}"
         self.episode = {v: [] for v in self.monitoring_variables}
         self.last_complete_episode = None
