@@ -265,7 +265,6 @@ class CartPoleContObsEnv(gym.Env):
 
         # initial position (x_init) is in [-max_offset,-min_offset] U [min_offset,max_offset]
         start = self.np_random.uniform(low=self.cart_min_offset, high=self.cart_max_offset)
-        self.state[0] = start
         if self.state[0] > 0:
            self.state[0] = start
         else:
