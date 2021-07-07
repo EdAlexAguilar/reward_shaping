@@ -10,9 +10,10 @@ from utils import make_agent, make_reward_wrap, make_log_dirs, make_env
 def main(args):
     # create log
     args.task = "cart_pole"
+    args.terminate_on_collision = True
     logdir, checkpointdir = make_log_dirs(args)
     # create environment
-    env, env_params = make_env(args.task, args.terminate_on_collision, logdir)
+    env, env_params = make_env(args.task, logdir)
     reward_params = {'clip_to_positive': args.clip_reward, 'unit_scaling': args.unit_scaling}
     env = make_reward_wrap(args.task, env, args.reward, reward_params)
     # create agent
