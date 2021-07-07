@@ -3,10 +3,6 @@ import time
 import yaml
 
 
-from envs.reward_envs import HierarchicalRewardWrapper
-from envs.cart_pole.cp_continuousobstacle_env import CartPoleContObsEnv
-
-
 def make_log_dirs(args):
     logdir_template = "logs/{}/{}_terminate{}_clip{}_unitScale{}_{}"
     logdir = pathlib.Path(logdir_template.format(args.task, args.reward, args.terminate_on_collision,
@@ -25,7 +21,7 @@ def make_base_env(task, env_params={}):
         from envs.cart_pole.cp_continuousobstacle_env import CartPoleContObsEnv
         env = CartPoleContObsEnv(**env_params)
     elif task == "bipedal_walker":
-        from  envs.bipedal_walker.bipedal_walker import BipedalWalker
+        from envs.bipedal_walker.bipedal_walker import BipedalWalker
         env = BipedalWalker(**env_params)
     else:
         raise NotImplementedError(f"not implemented env for {task}")

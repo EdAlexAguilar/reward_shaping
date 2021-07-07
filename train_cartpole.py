@@ -1,11 +1,9 @@
 import gym
-from stable_baselines3.common.vec_env import SubprocVecEnv
 
 from callbacks import RobustMonitoringCallback, VideoRecorderCallback
 from stable_baselines3.common.callbacks import CheckpointCallback, EveryNTimesteps
 import argparse as parser
 
-# define problem
 from utils import make_agent, make_reward_wrap, make_log_dirs, make_env
 
 
@@ -21,14 +19,15 @@ def main(args):
     model = make_agent(env, args.algo, logdir)
 
     # prepare for training
-    training_params = {'steps': args.steps, 'eval_every': int(args.steps/10), 'checkpoint_every': int(args.steps/10)}
+    train_params = {'steps': args.steps, 'eval_every': int(args.steps / 10), 'rob_eval_every': 1000,
+                    'checkpoint_every': int(args.steps / 10)}
     eval_env = gym.wrappers.Monitor(env, logdir / "videos")
-    video_cb = VideoRecorderCallback(eval_env, render_freq=training_params['eval_every'], n_eval_episodes=1)
-    checkpoint_callback = CheckpointCallback(save_freq=training_params['checkpoint_every'], save_path=checkpointdir,
+    video_cb = VideoRecorderCallback(eval_env, render_freq=train_params['eval_every'], n_eval_episodes=1)
+    checkpoint_callback = CheckpointCallback(save_freq=train_params['checkpoint_every'], save_path=checkpointdir,
                                              name_prefix='model')
-    monitoring_callback = EveryNTimesteps(n_steps=1000, callback=RobustMonitoringCallback())
+    monitoring_callback = EveryNTimesteps(n_steps=train_params['rob_eval_every'], callback=RobustMonitoringCallback())
     # train
-    model.learn(total_timesteps=training_params['steps'], callback=[video_cb, checkpoint_callback, monitoring_callback])
+    model.learn(total_timesteps=train_params['steps'], callback=[video_cb, checkpoint_callback, monitoring_callback])
     # evaluation
     obs = env.reset()
     env.render()
