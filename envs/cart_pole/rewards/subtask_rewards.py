@@ -25,7 +25,7 @@ class CollisionReward(TaskReward):
     def __call__(self, state):
         x, theta = state[0], state[2]
         collision = self.env.obstacle.intersect(x, theta)
-        return self.no_collision_bonus if not collision else self.no_collision_bonus
+        return self.no_collision_bonus if not collision else self.collision_penalty
 
 
 class FalldownReward(TaskReward):
