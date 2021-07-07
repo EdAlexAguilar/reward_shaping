@@ -1,11 +1,16 @@
+import logging
+import sys
 from typing import Any, Dict
 
 import gym
 import torch as th
 
-from stable_baselines3.common.callbacks import BaseCallback
+from stable_baselines3.common.callbacks import BaseCallback, EveryNTimesteps
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.logger import Video
+
+import rtamt
+import numpy as np
 
 
 class VideoRecorderCallback(BaseCallback):
@@ -51,4 +56,18 @@ class VideoRecorderCallback(BaseCallback):
                 Video(th.ByteTensor([screens]), fps=40),
                 exclude=("stdout", "log", "json", "csv"),
             )
+        return True
+
+
+class RobustMonitoringCallback(BaseCallback):
+    """
+    Custom callback for plotting robustness evaluation in tensorboard.
+    """
+    def _on_step(self) -> bool:
+        env = self.training_env.envs[0]
+        last_episode = env.last_complete_episode
+        if last_episode is None:
+            return True
+        robustness = env.compute_episode_robustness(last_episode)
+        self.logger.record("rollout/robustness", robustness)
         return True

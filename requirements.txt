@@ -7,3 +7,4 @@ stable-baselines3[extra]
 moviepy
 PyYAML
 Box2D
+git+https://github.com/nickovic/rtamt.git
