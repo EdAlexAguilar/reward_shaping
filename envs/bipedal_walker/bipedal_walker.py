@@ -447,9 +447,6 @@ class BipedalWalker(gym.Env, EzPickle):
             0] / SCALE  # moving forward is a way to receive reward (normalized to get 300 on completion)
         shaping -= 5.0 * abs(state[0])  # keep head straight, other than that and falling, any behavior is unpunished
 
-        # todo: update partial rewards
-        # safety, target, comfort, ...
-
         reward = 0
         if self.prev_shaping is not None:
             reward = shaping - self.prev_shaping
@@ -465,6 +462,17 @@ class BipedalWalker(gym.Env, EzPickle):
             done = True
         if pos[0] > (TERRAIN_LENGTH - TERRAIN_GRASS) * TERRAIN_STEP:
             done = True
+
+        # safety: always (not fall)
+        # game_over is True when the hulk has contact with the ground
+        self.safety_reward = -1 * self.game_over
+        # target: eventually (position >= target)
+        target_x = (TERRAIN_LENGTH - TERRAIN_GRASS) * TERRAIN_STEP
+        self.target_reward = pos[0] - target_x
+        # comfort: action_cost <= 0.0 (as close to zero as possible)
+        # we keep the parameters of the original reward
+        self.comfort_reward = np.sum(-0.00035 * MOTORS_TORQUE * np.clip(action, 0, 1))
+
         return np.array(state), reward, done, {}
 
     def render(self, mode='human'):
