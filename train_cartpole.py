@@ -51,8 +51,6 @@ if __name__ == "__main__":
     parser.add_argument("--reward", type=str, required=True, choices=rewards)
     parser.add_argument("--algo", type=str, required=True, choices=['ppo', 'ppo_sde', 'sac'])
     parser.add_argument("--steps", type=int, default=1e6)
-    parser.add_argument("-terminate_on_collision", action="store_true")
-    parser.add_argument("-shift_reward", action="store_true")
     parser.add_argument("-clip_reward", action="store_true")
     parser.add_argument("-unit_scaling", action="store_true")
     args = parser.parse_args()
