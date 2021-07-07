@@ -1,16 +1,10 @@
-# reward_shaping
+# Hierarchical Reward Shaping
 Reward Shaping Experiments with Temporal Logic for Hierarchical Objectives
 
-Packages Needed (I just installed the latest for most)
+To install the dependencies:
 
-python 3.8.0 (or higher)
+```pip install -r requirements.txt```
 
-gym==0.18.0
+To train on cartpole (for all the command line options, see `--help`):
 
-tensorflow==2.3.0
-
-h5py==2.10.0
-
-matplotlib==3.3.4
-
-numpy==1.19.2
+`python train_cartpole.py --reward indicator --algo sac`

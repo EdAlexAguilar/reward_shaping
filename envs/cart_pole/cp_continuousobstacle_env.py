@@ -15,11 +15,14 @@ from gym import spaces, logger
 from gym.utils import seeding
 import numpy as np
 
+
 class DrawText:
-    def __init__(self, label:pyglet.text.Label):
-        self.label=label
+    def __init__(self, label: pyglet.text.Label):
+        self.label = label
+
     def render(self):
         self.label.draw()
+
 
 class Obstacle():
     def __init__(self, axle_y, polelen, left_x, left_y, width, height):
@@ -42,7 +45,6 @@ class Obstacle():
 
     def on_left_side(self, x):
         return self.right_x < x
-
 
 
 class CartPoleContObsEnv(gym.Env):
@@ -87,12 +89,12 @@ class CartPoleContObsEnv(gym.Env):
         'video.frames_per_second': 50
     }
 
-    def __init__(self, x_threshold=2.5, theta_threshold_deg=90, max_steps=200,
-                 x_target_min=0.0, x_target_max=0.0, theta_deg_target_min=-24, theta_deg_target_max=+24,
+    def __init__(self, x_limit=2.5, theta_limit=90, max_steps=200,
+                 x_target=0.0, x_target_tol=0.0, theta_target=0.0, theta_target_tol=24.0,
                  cart_min_initial_offset=1.2, cart_max_initial_offset=2.0,
                  obstacle_min_w=0.5, obstacle_max_w=0.5, obstacle_min_h=0.5, obstacle_max_h=0.5,
                  obstacle_min_dist=0.1, obstacle_max_dist=0.2,
-                 terminate_on_collision=True, terminate_on_battery=False):
+                 terminate_on_collision=True, terminate_on_battery=False, seed=None):
         # Physical Constants
         self.gravity = 9.8
         self.masscart = 1.0
@@ -125,18 +127,18 @@ class CartPoleContObsEnv(gym.Env):
         self.obstacle = None
 
         # Conditions for Episode Failure
-        self.theta_threshold_radians = np.deg2rad(theta_threshold_deg)
-        self.x_threshold = x_threshold
+        self.theta_threshold_radians = np.deg2rad(theta_limit)
+        self.x_threshold = x_limit
         self.max_episode_steps = max_steps
         self.terminate_on_collision = terminate_on_collision
         self.terminate_on_battery = terminate_on_battery
         self.step_count = 0
 
         # Reward parameters
-        self.x_target_min = x_target_min
-        self.x_target_max = x_target_max
-        self.theta_deg_target_min = theta_deg_target_min
-        self.theta_deg_target_max = theta_deg_target_max
+        self.x_target = x_target
+        self.x_target_tol = x_target_tol
+        self.theta_target = np.deg2rad(theta_target)
+        self.theta_target_tol = np.deg2rad(theta_target_tol)
 
         high = np.array([self.x_threshold * 2,
                          np.finfo(np.float32).max,
@@ -164,10 +166,19 @@ class CartPoleContObsEnv(gym.Env):
 
         self.observation_space = spaces.Box(low, high, dtype=np.float32)
 
-        self._reward = 0.0
-        self._return = 0.0
-        self.seed()
+        self.rew = 0.0
+        self.ret = 0.0
+        self.x_target_score = 0.0
+        self.theta_target_score = 0.0
+        self.collision_score = 0.0
+        self.falldown_score = 0.0
+        self.safety_tot = 0.0
+        self.target_tot = 0.0
+        self.comfort_tot = 0.0
+
+        self.seed(seed)
         self.viewer = None
+        self.last_state = None
         self.state = None
         self.initial_state = None
         self.steps_beyond_done = None
@@ -199,6 +210,7 @@ class CartPoleContObsEnv(gym.Env):
         theta = theta + self.tau * theta_dot
         theta_dot = theta_dot + self.tau * thetaacc
 
+        self.last_state = self.state
         self.state = (x, x_dot, theta, theta_dot, battery, obst_l, obst_r, obst_h)
 
         done = bool(
@@ -208,9 +220,19 @@ class CartPoleContObsEnv(gym.Env):
             or (self.terminate_on_battery and battery <= 0)
             or (self.terminate_on_collision and self.obstacle.intersect(x, theta)))
 
-        self._reward = self.reward()
-        self._return += self._reward
-        return np.array(self.state), self._reward, done, {}
+        self.rew = self.reward()
+
+        # update scores
+        self.x_target_score = self.x_target_tol - abs(x - self.x_target)
+        self.theta_target_score = self.theta_target_tol - abs(theta - self.theta_target)
+        self.collision_score = -1.0 if self.obstacle.intersect(x, theta) else 0.0
+        self.falldown_score = -1.0 if abs(theta) > self.theta_threshold_radians else 0.0
+
+        self.safety_tot = 0.0
+        self.target_tot = 0.0
+        self.comfort_tot = 0.0
+
+        return np.array(self.state), self.rew, done, {}
 
     def reward(self):
         """
@@ -227,16 +249,27 @@ class CartPoleContObsEnv(gym.Env):
         obstacles start on same side with a distance from the cart in [min_dist,max_dist]
         state = (x, x_dot, theta, theta_dot, battery, obstacle_left_x, obstacle_right_x, obstacle_height)
         """
-        self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(self.state_dim,))
+        self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(self.state_dim,)).astype(np.float32)
+        self.last_state = self.state
         self.steps_beyond_done = None
-        self._reward = 0.0
-        self._return = 0.0
+        # reset rewards
+        self.rew = 0.0
+        self.ret = 0.0
+        self.x_target_score = 0.0
+        self.theta_target_score = 0.0
+        self.collision_score = 0.0
+        self.falldown_score = 0.0
+        self.safety_tot = 0.0
+        self.target_tot = 0.0
+        self.comfort_tot = 0.0
+
         # initial position (x_init) is in [-max_offset,-min_offset] U [min_offset,max_offset]
         start = self.np_random.uniform(low=self.cart_min_offset, high=self.cart_max_offset)
+        self.state[0] = start
         if self.state[0] > 0:
-            self.state[0] = start
+           self.state[0] = start
         else:
-            self.state[0] = -start
+           self.state[0] = -start
         # battery state
         self.state[4] = 1  # Battery Starts at 100%
         self.step_count = 0
@@ -250,10 +283,9 @@ class CartPoleContObsEnv(gym.Env):
             left_x = self.state[0] - distance_obst_center_to_cart - obstacle_width / 2.0
         else:
             left_x = self.state[0] + distance_obst_center_to_cart - obstacle_width / 2.0
-        axle_y = self.ground_y + self.cart_height/4.0
+        axle_y = self.ground_y + self.cart_height / 4.0
         polelen = 2 * self.length
-        obstacle_y = axle_y + polelen     # this is the highest point reachable from the pole
-        obstacle_y = obstacle_y - 0.1   # we substract a small offset to make collision feasible
+        obstacle_y = axle_y + obstacle_height  # this is the bottom y of the obstacle
         self.obstacle = Obstacle(axle_y, polelen, left_x, obstacle_y, obstacle_width, obstacle_height)
         # store obstacle position into the state
         self.state[5] = self.obstacle.left_x
@@ -274,7 +306,6 @@ class CartPoleContObsEnv(gym.Env):
         """
         return self.obstacle.on_left_side(self.initial_state[0]) != self.obstacle.on_left_side(self.state[0])
 
-
     def render(self, mode='human', end=False):
         screen_width = 600
         screen_height = 400
@@ -290,7 +321,6 @@ class CartPoleContObsEnv(gym.Env):
 
         # obstacle (unscaled) dimensions
         obstacle_width = (self.obstacle.right_x - self.obstacle.left_x)
-        obstacle_height = self.obstacle.height
 
         track_interval = 0.5
         track_x_lines = [track_interval * i for i in
@@ -314,7 +344,7 @@ class CartPoleContObsEnv(gym.Env):
             BG = rendering.FilledPolygon([(BG_l, BG_b), (BG_l, BG_t), (BG_r, BG_t), (BG_r, BG_b)])
             BG.set_color(*bg_color)
             self.viewer.add_geom(BG)
-            self.track1 = rendering.Line((0, scale*self.ground_y), (screen_width, scale*self.ground_y))
+            self.track1 = rendering.Line((0, scale * self.ground_y), (screen_width, scale * self.ground_y))
             self.track1.set_color(*track_color)
             self.viewer.add_geom(self.track1)
 
@@ -349,7 +379,7 @@ class CartPoleContObsEnv(gym.Env):
             self.right.set_color(*cart_color)
             self.viewer.add_geom(self.right)
             # Pole
-            l, r, t, b = -polewidth / 2, polewidth / 2, polelen - polewidth / 2, -polewidth / 2
+            l, r, t, b = -polewidth / 2, polewidth / 2, polelen, 0.0
             pole = rendering.FilledPolygon([(l, b), (l, t), (r, t), (r, b)])
             pole.set_color(*pole_color)
             self.poletrans = rendering.Transform(translation=(0, axleoffset))
@@ -365,7 +395,7 @@ class CartPoleContObsEnv(gym.Env):
             self._pole_geom = pole
             # Obstacle
             l, r = -obstacle_width * scale / 2.0, obstacle_width * scale / 2.0
-            t, b = -obstacle_height * scale / 2.0, obstacle_height * scale / 2.0
+            t, b = -0.1 * scale / 2.0, 0.1 * scale / 2.0
             obst = rendering.FilledPolygon([(l, b), (l, t), (r, t), (r, b)])
             self.obsttrans = rendering.Transform()
             obst.set_color(*obstacle_color)
@@ -373,9 +403,10 @@ class CartPoleContObsEnv(gym.Env):
             self.viewer.add_geom(obst)
 
             # score
-            text = f'reward = {self._reward:.2f}, return = {self._return:.2f}'
-            self.label = pyglet.text.Label(text, font_size=20,
-                                           x=10, y=10, anchor_x='left', anchor_y='bottom',
+            text = f'safety = {self.safety_tot:.2f}, target = {self.target_tot:.2f}, comfort: {self.comfort_tot:.2f}\n' \
+                   f'time: {self.step_count}, reward = {self.rew:.2f}, return = {self.ret:.2f}'
+            self.label = pyglet.text.Label(text, font_size=15, multiline=True, width=1000,
+                                           x=5, y=20, anchor_x='left', anchor_y='bottom',
                                            color=(255, 255, 255, 255))
             self.label.draw()
             self.viewer.add_geom(DrawText(self.label))
@@ -397,11 +428,11 @@ class CartPoleContObsEnv(gym.Env):
         # new center:   x: left_x + obstacle_width
         #               y: cart_center_y + pole_length + obstacle_height/2
         obstx = (self.state[5] + obstacle_width / 2.0) * scale + screen_width / 2.0
-        obsty = (self.obstacle.bottom_y + obstacle_height / 2.0) * scale
+        obsty = (self.obstacle.bottom_y + 0.1 / 2.0) * scale
         self.obsttrans.set_translation(obstx, obsty)
 
-
-        self.label.text = f'reward = {self._reward:.2f}, return = {self._return:.2f}'
+        self.label.text = f'safety = {self.safety_tot:.2f}, target = {self.target_tot:.2f}, comfort: {self.comfort_tot:.2f}\n' \
+                          f'time: {self.step_count}, reward = {self.rew:.2f}, return = {self.ret:.2f}'
         return self.viewer.render(return_rgb_array=mode == 'rgb_array')
 
     def close(self):
