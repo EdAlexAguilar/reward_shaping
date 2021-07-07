@@ -68,6 +68,4 @@ if __name__ == "__main__":
     parser.add_argument("--reward", choices=rewards, default="indicator")
     args = parser.parse_args()
 
-    for reward in rewards:
-        print(reward)
-        main(reward)
+    main(args.reward)
