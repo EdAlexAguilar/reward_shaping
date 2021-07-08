@@ -17,7 +17,7 @@ def main(args):
     reward_params = {'clip_to_positive': args.clip_reward, 'unit_scaling': args.unit_scaling}
     env = make_reward_wrap(args.env, env, args.reward, reward_params)
     # create agent
-    model = make_agent(env, args.algo, logdir)
+    model = make_agent(args.env, env, args.algo, logdir)
 
     # prepare for training
     train_params = {'steps': args.steps, 'eval_every': int(args.steps / 10), 'rob_eval_every': 1000,

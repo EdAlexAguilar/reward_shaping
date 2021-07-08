@@ -44,18 +44,32 @@ def make_env(env, task, logdir=None):
     return env, env_params
 
 
-def make_agent(env, rl_algo, logdir):
-    if rl_algo == "ppo":
+def make_agent(env_name, env, rl_algo, logdir=None):
+    # load model parameters
+    algo = rl_algo.split("_", 1)[0]
+    algo_config = pathlib.Path(f"envs/{env_name}/hparams") / f"{algo}.yml"
+    if algo_config.exists():
+        with open(algo_config, 'r') as file:
+            algo_params = yaml.load(file, yaml.FullLoader)
+    else:
+        algo_params = {}
+    # create model
+    if algo == "ppo":
         from stable_baselines3 import PPO
-        model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=logdir)
-    elif rl_algo == "ppo_sde":
+        model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=logdir, **algo_params)
+    elif algo == "ppo_sde":
         from stable_baselines3 import PPO
-        model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=logdir, use_sde=True)
-    elif rl_algo == "sac":
+        algo_params['use_sde'] = True
+        model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=logdir, **algo_params)
+    elif algo == "sac":
         from stable_baselines3 import SAC
-        model = SAC("MlpPolicy", env, verbose=1, tensorboard_log=logdir)
+        model = SAC("MlpPolicy", env, verbose=1, tensorboard_log=logdir, **algo_params)
     else:
         raise NotImplementedError()
+    # copy params in logdir (optional)
+    if logdir:
+        with open(logdir / f"{rl_algo}.yml", "w") as file:
+            yaml.dump(algo_params, file)
     return model
 
 
