@@ -10,12 +10,12 @@ import argparse as parser
 
 # define problem
 from envs.cart_pole.cp_continuousobstacle_env import CartPoleContObsEnv
-
+from envs.cart_pole.rewards.baselines import SparseNoFalldownReward
 
 
 def main(reward):
-    task = "cart_pole"
-    env_config = pathlib.Path(f"{task}.yml")
+    task = "random"
+    env_config = pathlib.Path(f"tasks/{task}.yml")
     with open(env_config, 'r') as file:
         env_params = yaml.load(file, yaml.FullLoader)
     env = CartPoleContObsEnv(**env_params)
@@ -34,6 +34,10 @@ def main(reward):
     elif reward == "sparse":
         from envs.cart_pole.rewards.baselines import SparseReward
         env = SparseReward(env)
+    elif reward == "sparse_nofall":
+        from envs.cart_pole.rewards.baselines import SparseReward
+        env = SparseNoFalldownReward(env)
+
 
     # evaluation
     obs = env.reset()
@@ -61,7 +65,7 @@ def main(reward):
 
 
 if __name__ == "__main__":
-    rewards = ['indicator', 'indicator_sparse', 'indicator_progress', 'weighted', 'sparse']
+    rewards = ['indicator', 'indicator_sparse', 'indicator_progress', 'weighted', 'sparse', 'sparse_nofall']
     import argparse
 
     parser = argparse.ArgumentParser()

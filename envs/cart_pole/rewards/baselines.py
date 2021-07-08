@@ -2,7 +2,7 @@ import gym
 import numpy as np
 
 from envs.cart_pole.rewards.subtask_rewards import CollisionReward, ReachTargetReward, SparseReachTargetReward, \
-    BalanceReward, NormalizedReward
+    BalanceReward, NormalizedReward, FalldownReward
 
 
 class WeightedReward(gym.RewardWrapper):
@@ -87,6 +87,45 @@ class SparseReward(gym.RewardWrapper):
 
     def reset(self):
         obs = super(SparseReward, self).reset()
+        self.rew = 0.0
+        self.ret = 0.0
+        return obs
+
+class SparseNoFalldownReward(gym.RewardWrapper):
+    """
+    reward(s,a) := penalty, if collision
+    reward(s,a) := bonus, if target is reached
+    """
+    def __init__(self, env):
+        super().__init__(env)
+        self.collision = CollisionReward(env=env, collision_penalty=-10.0, no_collision_bonus=0.0)
+        self.falldown = FalldownReward(theta_limit=env.theta_threshold_radians, falldown_penalty=-10.0)
+        self.reach_origin = SparseReachTargetReward(x_target=env.x_target, x_target_tol=env.x_target_tol,
+                                                    target_reward=5.0)
+        self.rew = 0.0
+        self.ret = 0.0
+
+    def reward(self, reward):
+        # note: the need of this overwriting fo rew/ret is purely for rendering purposes
+        # in this way, the env.render method with render the correct reward
+        self.rew = self.reward_in_state(self.state)
+        self.ret += self.rew
+        self.env.rew = self.rew
+        self.env.ret = self.ret
+        return self.rew
+
+    def reward_in_state(self, state):
+        reward_target = self.reach_origin(state)
+        reward_collision = self.collision(state)
+        reward_falldown = self.falldown(state)
+        # this is a workaround to visualize the reward while rendering
+        self.env.safety_tot = reward_collision + reward_falldown
+        self.env.target_tot = reward_target
+        self.env.comfort_tot = 0.0
+        return reward_target + reward_collision + reward_falldown
+
+    def reset(self):
+        obs = super(SparseNoFalldownReward, self).reset()
         self.rew = 0.0
         self.ret = 0.0
         return obs
