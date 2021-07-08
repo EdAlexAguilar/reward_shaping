@@ -4,8 +4,8 @@ import yaml
 
 
 def make_log_dirs(args):
-    logdir_template = "logs/{}/{}_terminate{}_clip{}_unitScale{}_{}"
-    logdir = pathlib.Path(logdir_template.format(args.task, args.reward, args.terminate_on_collision,
+    logdir_template = "logs/{}/{}_{}_terminate{}_clip{}_unitScale{}_{}"
+    logdir = pathlib.Path(logdir_template.format(args.env, args.task, args.reward, args.terminate_on_collision,
                                                  args.clip_reward, args.unit_scaling, int(time.time())))
     checkpointdir = logdir / "checkpoint"
     logdir.mkdir(parents=True, exist_ok=True)
@@ -28,21 +28,19 @@ def make_base_env(task, env_params={}):
     return env
 
 
-def make_env(task, terminate_on_collision, logdir=None):
-    env_config = pathlib.Path(f"envs/{task}") / f"{task}.yml"
+def make_env(env, task, logdir=None):
+    env_config = pathlib.Path(f"envs/{env}/tasks") / f"{task}.yml"
     if env_config.exists():
         with open(env_config, 'r') as file:
             env_params = yaml.load(file, yaml.FullLoader)
     else:
         env_params = {}
-    # eventually overwrite some default param
-    env_params['terminate_on_collision'] = terminate_on_collision
-    # copy params in logdit (optional)
+    # copy params in logdir (optional)
     if logdir:
         with open(logdir / f"{task}.yml", "w") as file:
             yaml.dump(env_params, file)
     # make env
-    env = make_base_env(task, env_params)
+    env = make_base_env(env, env_params)
     return env, env_params
 
 
@@ -61,8 +59,8 @@ def make_agent(env, rl_algo, logdir):
     return model
 
 
-def make_reward_wrap(task, env, reward, reward_params):
-    if task == "cart_pole":
+def make_reward_wrap(env_name, env, reward, reward_params):
+    if env_name == "cart_pole":
         if reward == "indicator":
             from envs.cart_pole.rewards.indicator_based import IndicatorWithContinuousTargetReward
             env = IndicatorWithContinuousTargetReward(env, **reward_params)

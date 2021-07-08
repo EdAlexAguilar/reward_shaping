@@ -18,3 +18,4 @@ obstacle_min_h: 0.99
 obstacle_max_h: 0.99
 obstacle_min_dist: 0.5
 obstacle_max_dist: 0.75
+randomize_side: False  # sample initial condition from both the sides

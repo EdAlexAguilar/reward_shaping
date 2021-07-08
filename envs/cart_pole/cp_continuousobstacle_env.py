@@ -94,7 +94,7 @@ class CartPoleContObsEnv(gym.Env):
                  cart_min_initial_offset=1.2, cart_max_initial_offset=2.0,
                  obstacle_min_w=0.5, obstacle_max_w=0.5, obstacle_min_h=0.5, obstacle_max_h=0.5,
                  obstacle_min_dist=0.1, obstacle_max_dist=0.2,
-                 terminate_on_collision=True, terminate_on_battery=False, seed=None):
+                 terminate_on_collision=True, terminate_on_battery=False, randomize_side=True, seed=None):
         # Physical Constants
         self.gravity = 9.8
         self.masscart = 1.0
@@ -132,6 +132,7 @@ class CartPoleContObsEnv(gym.Env):
         self.max_episode_steps = max_steps
         self.terminate_on_collision = terminate_on_collision
         self.terminate_on_battery = terminate_on_battery
+        self.randomize_side = randomize_side
         self.step_count = 0
 
         # Reward parameters
@@ -314,10 +315,13 @@ class CartPoleContObsEnv(gym.Env):
 
         # initial position (x_init) is in [-max_offset,-min_offset] U [min_offset,max_offset]
         start = self.np_random.uniform(low=self.cart_min_offset, high=self.cart_max_offset)
-        if self.state[0] > 0:
-           self.state[0] = start
+        if self.randomize_side:
+            if self.state[0] > 0:
+               self.state[0] = start
+            else:
+               self.state[0] = -start
         else:
-           self.state[0] = -start
+            self.state[0] = start
         # battery state
         self.state[4] = 1  # Battery Starts at 100%
         self.step_count = 0
