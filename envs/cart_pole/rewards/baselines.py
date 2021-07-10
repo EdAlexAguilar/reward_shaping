@@ -129,3 +129,36 @@ class SparseNoFalldownReward(gym.RewardWrapper):
         self.rew = 0.0
         self.ret = 0.0
         return obs
+
+class SparseSTLReward(gym.RewardWrapper):
+    """
+    reward(s,a) := rho(phi,episode), if terminal
+    reward(s,a) := 0, otherwise
+
+    note: not sure this formulation is markovian, because the reward assignment requires to observe the full episode
+    """
+    def __init__(self, env):
+        super().__init__(env)
+        self.rew = 0.0
+        self.ret = 0.0
+
+    def reward(self, reward):
+        # note: the need of this overwriting fo rew/ret is purely for rendering purposes
+        # in this way, the env.render method with render the correct reward
+        self.rew = self.reward_in_state(self.state)
+        self.ret += self.rew
+        self.env.rew = self.rew
+        self.env.ret = self.ret
+        return self.rew
+
+    def reward_in_state(self, state):
+        if self.env.done:
+            return self.env.compute_episode_robustness(self.env.last_complete_episode)
+        else:
+            return 0.0
+
+    def reset(self):
+        obs = super(SparseSTLReward, self).reset()
+        self.rew = 0.0
+        self.ret = 0.0
+        return obs

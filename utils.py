@@ -93,6 +93,9 @@ def make_reward_wrap(env_name, env, reward, reward_params):
         elif reward == "sparse_nofall":
             from envs.cart_pole.rewards.baselines import SparseNoFalldownReward
             env = SparseNoFalldownReward(env)
+        elif reward == "sparse_stl":
+            from envs.cart_pole.rewards.baselines import SparseSTLReward
+            env = SparseSTLReward(env)
     else:
         raise NotImplementedError()
     return env

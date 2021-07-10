@@ -14,7 +14,7 @@ from envs.cart_pole.rewards.baselines import SparseNoFalldownReward
 
 
 def main(reward):
-    task = "random"
+    task = "no_random"
     env_config = pathlib.Path(f"tasks/{task}.yml")
     with open(env_config, 'r') as file:
         env_params = yaml.load(file, yaml.FullLoader)
@@ -37,6 +37,9 @@ def main(reward):
     elif reward == "sparse_nofall":
         from envs.cart_pole.rewards.baselines import SparseReward
         env = SparseNoFalldownReward(env)
+    elif reward == "sparse_stl":
+        from envs.cart_pole.rewards.baselines import SparseSTLReward
+        env = SparseSTLReward(env)
 
 
     # evaluation
@@ -67,7 +70,7 @@ def main(reward):
 
 
 if __name__ == "__main__":
-    rewards = ['indicator', 'indicator_sparse', 'indicator_progress', 'weighted', 'sparse', 'sparse_nofall']
+    rewards = ['indicator', 'indicator_sparse', 'indicator_progress', 'weighted', 'sparse', 'sparse_nofall', 'sparse_stl']
     import argparse
 
     parser = argparse.ArgumentParser()

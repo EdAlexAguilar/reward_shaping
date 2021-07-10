@@ -104,6 +104,8 @@ class CartPoleContObsEnv(gym.Env):
         self.cart_width = 0.40
         self.cart_height = 0.25
         self.length = 0.5  # actually half the pole's length
+        self.pole_length = 2 * self.length
+        self.axle_y = self.ground_y + self.cart_height / 4.0
         self.polemass_length = (self.masspole * self.length)
         self.force_mag = 30.0  # 10.0
         self.tau = 0.02  # seconds between state updates
@@ -187,11 +189,23 @@ class CartPoleContObsEnv(gym.Env):
 
         # for evaluation
         self.monitoring_variables = ['time', 'collision', 'falldown', 'outside',
-                                     'dist_target_x', 'dist_obstacle', 'dist_target_theta']
-        self.monitoring_types = ['int', 'int', 'int', 'int', 'float', 'float', 'float']
-        safety_requirements = "always((collision>=0) and (outside>=0) and (falldown>=0))"
+                                     'dist_target_x', 'dist_obstacle', 'dist_target_theta',
+                                     'x', 'theta', 'pole_x', 'pole_y',
+                                     'obst_left_x', 'obst_right_x', 'obst_bottom_y', 'obst_top_y']
+        self.monitoring_types = ['int', 'int', 'int', 'int', 'float', 'float', 'float', 'float', 'float', 'float',
+                                 'float', 'float', 'float', 'float', 'float']
+        # aux specs
+        obst_intersect_polex = f"(obst_left_x < pole_x) and (pole_x < obst_right_x)"
+        obst_intersect_poley = f"(obst_bottom_y < pole_y) and (pole_y < obst_top_y)"
+        # safety specs
+        no_falldown = f"always(abs(theta) <= {self.theta_threshold_radians})"
+        no_outside = f"always(abs(x) <= {self.x_threshold})"
+        no_collision = f"always(not(({obst_intersect_polex}) and ({obst_intersect_poley})))"
+        safety_requirements = f"({no_falldown}) and ({no_outside}) and ({no_collision})"
+        # target spec
         target_requirements = f"eventually(always(dist_target_x <= {self.x_target_tol}))"
-        self.monitoring_spec = f"{safety_requirements} and {target_requirements}"
+        # all together
+        self.monitoring_spec = f"({safety_requirements}) and ({target_requirements})"
         self.episode = {v: [] for v in self.monitoring_variables}
         self.last_complete_episode = None
 
@@ -263,6 +277,14 @@ class CartPoleContObsEnv(gym.Env):
         self.episode['dist_target_x'].append(dist_target_x)
         self.episode['dist_target_theta'].append(dist_target_theta)
         self.episode['dist_obstacle'].append(dist_obstacle)
+        self.episode['x'].append(x)
+        self.episode['theta'].append(theta)
+        self.episode['pole_x'].append(x + self.pole_length * np.sin(theta))
+        self.episode['pole_y'].append(self.axle_y + self.pole_length * np.cos(theta))
+        self.episode['obst_left_x'].append(self.obstacle.left_x)
+        self.episode['obst_right_x'].append(self.obstacle.right_x)
+        self.episode['obst_bottom_y'].append(self.obstacle.bottom_y)
+        self.episode['obst_top_y'].append(self.obstacle.top_y)
         # eventually store if done
         if self.done:
             self.last_complete_episode = self.episode
@@ -281,7 +303,6 @@ class CartPoleContObsEnv(gym.Env):
         # preprocess format, evaluate, post process
         robustness_trace = spec.evaluate(episode)
         return robustness_trace[0][1]
-
 
     def reward(self):
         """
@@ -317,9 +338,9 @@ class CartPoleContObsEnv(gym.Env):
         start = self.np_random.uniform(low=self.cart_min_offset, high=self.cart_max_offset)
         if self.randomize_side:
             if self.state[0] > 0:
-               self.state[0] = start
+                self.state[0] = start
             else:
-               self.state[0] = -start
+                self.state[0] = -start
         else:
             self.state[0] = start
         # battery state
@@ -335,8 +356,8 @@ class CartPoleContObsEnv(gym.Env):
             left_x = self.state[0] - distance_obst_center_to_cart - obstacle_width / 2.0
         else:
             left_x = self.state[0] + distance_obst_center_to_cart - obstacle_width / 2.0
-        axle_y = self.ground_y + self.cart_height / 4.0
-        polelen = 2 * self.length
+        axle_y = self.axle_y
+        polelen = self.pole_length
         obstacle_y = axle_y + obstacle_height  # this is the bottom y of the obstacle
         self.obstacle = Obstacle(axle_y, polelen, left_x, obstacle_y, obstacle_width, obstacle_height)
         # store obstacle position into the state
@@ -367,7 +388,7 @@ class CartPoleContObsEnv(gym.Env):
         scale = screen_width / world_width
 
         carty = self.ground_y * scale
-        polelen = (2 * self.length) * scale
+        polelen = self.pole_length * scale
         polewidth = 6.0
 
         cartwidth = self.cart_width * scale

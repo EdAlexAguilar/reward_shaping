@@ -47,7 +47,7 @@ def main(args):
 
 
 if __name__ == "__main__":
-    rewards = ['indicator', 'indicator_sparse', 'indicator_progress', 'weighted', 'sparse', 'sparse_nofall']
+    rewards = ['indicator', 'indicator_sparse', 'indicator_progress', 'weighted', 'sparse', 'sparse_nofall', 'sparse_stl']
     tasks = ['random', 'no_random']
     parser = parser.ArgumentParser()
     parser.add_argument("--task", type=str, required=True, choices=tasks)
