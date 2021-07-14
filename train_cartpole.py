@@ -9,13 +9,15 @@ from utils import make_agent, make_reward_wrap, make_log_dirs, make_env
 
 def main(args):
     # create log
-    args.env = "cart_pole"
+    if args.task in ['balance', 'target']:
+        args.env = "cart_pole"
+    else:
+        args.env = "cart_pole_obst"
     args.terminate_on_collision = True
     logdir, checkpointdir = make_log_dirs(args)
     # create environment
     env, env_params = make_env(args.env, args.task, logdir)
-    reward_params = {'clip_to_positive': args.clip_reward, 'unit_scaling': args.unit_scaling}
-    env = make_reward_wrap(args.env, env, args.reward, reward_params)
+    env = make_reward_wrap(args.env, env, args.reward)
     # create agent
     model = make_agent(args.env, env, args.algo, logdir)
 
@@ -23,7 +25,7 @@ def main(args):
     train_params = {'steps': args.steps, 'eval_every': int(args.steps / 10), 'rob_eval_every': 1000,
                     'checkpoint_every': int(args.steps / 10)}
     eval_env = gym.wrappers.Monitor(env, logdir / "videos")
-    video_cb = VideoRecorderCallback(eval_env, render_freq=train_params['eval_every'], n_eval_episodes=1)
+    video_cb = VideoRecorderCallback(eval_env, render_freq=train_params['eval_every'], n_eval_episodes=2)
     checkpoint_callback = CheckpointCallback(save_freq=train_params['checkpoint_every'], save_path=checkpointdir,
                                              name_prefix='model')
     monitoring_callback = EveryNTimesteps(n_steps=train_params['rob_eval_every'], callback=RobustMonitoringCallback())
@@ -47,8 +49,8 @@ def main(args):
 
 
 if __name__ == "__main__":
-    rewards = ['indicator', 'indicator_sparse', 'indicator_progress', 'weighted', 'sparse', 'sparse_nofall', 'sparse_stl']
-    tasks = ['balance', 'target', 'target_with_obstacle', 'target_with_obstacle_rndh']
+    rewards = ['sparse', 'continuous', 'stl']
+    tasks = ['balance', 'target', 'fixed_height', 'random_height']
     parser = parser.ArgumentParser()
     parser.add_argument("--task", type=str, required=True, choices=tasks)
     parser.add_argument("--reward", type=str, required=True, choices=rewards)

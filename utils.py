@@ -16,15 +16,18 @@ def make_log_dirs(args):
     return logdir, checkpointdir
 
 
-def make_base_env(task, env_params={}):
-    if task == "cart_pole":
+def make_base_env(env, env_params={}):
+    if env == "cart_pole":
+        from envs.cart_pole.cp_continuous_env import CartPoleContEnv
+        env = CartPoleContEnv(**env_params)
+    elif env == "cart_pole_obst":
         from envs.cart_pole_obst.cp_continuousobstacle_env import CartPoleContObsEnv
         env = CartPoleContObsEnv(**env_params)
-    elif task == "bipedal_walker":
+    elif env == "bipedal_walker":
         from envs.bipedal_walker.bipedal_walker import BipedalWalker
         env = BipedalWalker(**env_params)
     else:
-        raise NotImplementedError(f"not implemented env for {task}")
+        raise NotImplementedError(f"not implemented env for {env}")
     return env
 
 
@@ -73,29 +76,13 @@ def make_agent(env_name, env, rl_algo, logdir=None):
     return model
 
 
-def make_reward_wrap(env_name, env, reward, reward_params):
+def make_reward_wrap(env_name, env, reward):
     if env_name == "cart_pole":
-        if reward == "indicator":
-            from envs.cart_pole_obst.rewards import IndicatorWithContinuousTargetReward
-            env = IndicatorWithContinuousTargetReward(env, **reward_params)
-        elif reward == "indicator_sparse":
-            from envs.cart_pole_obst.rewards import IndicatorWithSparseTargetReward
-            env = IndicatorWithSparseTargetReward(env, **reward_params)
-        elif reward == "indicator_progress":
-            from envs.cart_pole_obst.rewards import IndicatorWithProgressTargetReward
-            env = IndicatorWithProgressTargetReward(env, **reward_params)
-        elif reward == "weighted":
-            from envs.cart_pole_obst.rewards.baselines import WeightedReward
-            env = WeightedReward(env)
-        elif reward == "sparse":
-            from envs.cart_pole_obst.rewards.baselines import SparseReward
-            env = SparseReward(env)
-        elif reward == "sparse_nofall":
-            from envs.cart_pole_obst.rewards.baselines import SparseNoFalldownReward
-            env = SparseNoFalldownReward(env)
-        elif reward == "sparse_stl":
-            from envs.cart_pole_obst.rewards.baselines import SparseSTLReward
-            env = SparseSTLReward(env)
+        from envs.cart_pole.rewards import get_reward
+        env = get_reward(reward)(env)
+    elif env_name == "cart_pole_obst":
+        from envs.cart_pole_obst.rewards import get_reward
+        env = get_reward(reward)(env)
     else:
         raise NotImplementedError()
     return env
