@@ -31,7 +31,7 @@ def make_base_env(env, env_params={}):
     return env
 
 
-def make_env(env, task, logdir=None):
+def make_env(env, task, eval=False, logdir=None):
     env_config = pathlib.Path(f"envs/{env}/tasks") / f"{task}.yml"
     if env_config.exists():
         with open(env_config, 'r') as file:
@@ -43,6 +43,7 @@ def make_env(env, task, logdir=None):
         with open(logdir / f"{task}.yml", "w") as file:
             yaml.dump(env_params, file)
     # make env
+    env_params['eval'] = eval
     env = make_base_env(env, env_params)
     return env, env_params
 

@@ -8,3 +8,4 @@ moviepy
 PyYAML
 Box2D
 git+https://github.com/nickovic/rtamt.git
+networkx

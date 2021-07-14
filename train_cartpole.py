@@ -24,6 +24,7 @@ def main(args):
     # prepare for training
     train_params = {'steps': args.steps, 'eval_every': int(args.steps / 10), 'rob_eval_every': 1000,
                     'checkpoint_every': int(args.steps / 10)}
+    eval_env, _ = make_env(args.env, args.task, eval=True, logdir=None)
     eval_env = gym.wrappers.Monitor(env, logdir / "videos")
     video_cb = VideoRecorderCallback(eval_env, render_freq=train_params['eval_every'], n_eval_episodes=2)
     checkpoint_callback = CheckpointCallback(save_freq=train_params['checkpoint_every'], save_path=checkpointdir,
