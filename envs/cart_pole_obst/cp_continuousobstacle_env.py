@@ -89,12 +89,16 @@ class CartPoleContObsEnv(gym.Env):
         'video.frames_per_second': 50
     }
 
-    def __init__(self, x_limit=2.5, theta_limit=90, max_steps=200,
+    def __init__(self, task, x_limit=2.5, theta_limit=90, max_steps=200,
                  x_target=0.0, x_target_tol=0.0, theta_target=0.0, theta_target_tol=24.0,
                  cart_min_initial_offset=1.2, cart_max_initial_offset=2.0,
                  obstacle_min_w=0.5, obstacle_max_w=0.5, obstacle_min_h=0.5, obstacle_max_h=0.5,
                  obstacle_min_dist=0.1, obstacle_max_dist=0.2,
-                 terminate_on_collision=True, terminate_on_battery=False, randomize_side=True, seed=None):
+                 terminate_on_collision=True, terminate_on_battery=False, randomize_side=True,
+                 eval=False, seed=None):
+        self.task = task
+        self.eval = eval
+        self.n_resets = 0
         # Physical Constants
         self.gravity = 9.8
         self.masscart = 1.0
@@ -137,44 +141,15 @@ class CartPoleContObsEnv(gym.Env):
         self.randomize_side = randomize_side
         self.step_count = 0
 
-        # Reward parameters
+        # Target parameters
         self.x_target = x_target
         self.x_target_tol = x_target_tol
         self.theta_target = np.deg2rad(theta_target)
         self.theta_target_tol = np.deg2rad(theta_target_tol)
 
-        high = np.array([self.x_threshold * 2,
-                         np.finfo(np.float32).max,
-                         self.theta_threshold_radians * 2,
-                         np.finfo(np.float32).max,
-                         1,
-                         self.x_threshold * 2 - self.obstacle_max_width,
-                         self.x_threshold * 2,
-                         self.obstacle_max_height],
-                        dtype=np.float32)
-        low = np.array([-self.x_threshold * 2,
-                        -np.finfo(np.float32).max,
-                        -self.theta_threshold_radians * 2,
-                        -np.finfo(np.float32).max,
-                        0,
-                        -self.x_threshold * 2,
-                        -self.x_threshold * 2 + self.obstacle_max_width,
-                        self.obstacle_min_height],
-                       dtype=np.float32)
-
-        self.action_space = spaces.Box(
-            low=self.min_action,
-            high=self.max_action,
-            shape=(1,))
-
-        self.observation_space = spaces.Box(low, high, dtype=np.float32)
-
+        # for rendering
         self.rew = 0.0
         self.ret = 0.0
-        self.x_target_score = 0.0
-        self.theta_target_score = 0.0
-        self.collision_score = 0.0
-        self.falldown_score = 0.0
         self.safety_tot = 0.0
         self.target_tot = 0.0
         self.comfort_tot = 0.0
@@ -185,16 +160,26 @@ class CartPoleContObsEnv(gym.Env):
         self.state = None
         self.initial_state = None
         self.steps_beyond_done = None
-        self.state_dim = len(high)  # dimension of state-space
+        self.state_dim = self.observation_space.shape[0]  # dimension of state-space
 
-        # for evaluation
-        self.monitoring_variables = ['time', 'collision', 'falldown', 'outside',
-                                     'dist_target_x', 'dist_obstacle', 'dist_target_theta',
-                                     'x', 'theta', 'pole_x', 'pole_y',
-                                     'obst_left_x', 'obst_right_x', 'obst_bottom_y', 'obst_top_y']
-        self.monitoring_types = ['int', 'int', 'int', 'int', 'float', 'float', 'float', 'float', 'float', 'float',
-                                 'float', 'float', 'float', 'float', 'float']
-        # aux specs
+        # for monitoring
+        self.episode = {v: [] for v in self.monitoring_variables}
+        self.last_complete_episode = None
+
+    @property
+    def monitoring_variables(self):
+        return ['time', 'dist_target_x', 'dist_obstacle', 'dist_target_theta',
+                'x', 'theta', 'pole_x', 'pole_y', 'obst_y_from_axle',
+                'obst_left_x', 'obst_right_x', 'obst_bottom_y', 'obst_top_y']
+
+    @property
+    def monitoring_types(self):
+        return ['int', 'float', 'float', 'float', 'float', 'float', 'float',
+                'float', 'float', 'float', 'float', 'float', 'float']
+
+    @property
+    def monitoring_spec(self):
+        # aux spec
         obst_intersect_polex = f"(obst_left_x < pole_x) and (pole_x < obst_right_x)"
         obst_intersect_poley = f"(obst_bottom_y < pole_y) and (pole_y < obst_top_y)"
         # safety specs
@@ -203,15 +188,45 @@ class CartPoleContObsEnv(gym.Env):
         no_collision = f"always(not(({obst_intersect_polex}) and ({obst_intersect_poley})))"
         safety_requirements = f"({no_falldown}) and ({no_outside}) and ({no_collision})"
         # target spec
-        target_requirements = f"eventually(always(dist_target_x <= {self.x_target_tol}))"
+        target_requirement = f"eventually(always(dist_target_x <= {self.x_target_tol}))"
+        balance_requirement = f"always(dist_target_theta <= {self.theta_target_tol})"
+        # feasibility condition
+        feasible = "obst_y_from_axle >= 0.97"
         # all together
-        self.monitoring_spec = f"({safety_requirements}) and ({target_requirements})"
-        self.episode = {v: [] for v in self.monitoring_variables}
-        self.last_complete_episode = None
+        spec = f"({safety_requirements}) and " \
+               f"(({feasible}) -> ({target_requirement})) and (not({feasible}) -> {balance_requirement})"
+        return spec
+
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
+
+    @property
+    def observation_space(self):
+        low = np.array([-self.x_threshold * 2,
+                        -np.finfo(np.float32).max,
+                        -self.theta_threshold_radians * 2,
+                        -np.finfo(np.float32).max,
+                        0,
+                        -self.x_threshold * 2,
+                        -self.x_threshold * 2 + self.obstacle_max_width,
+                        self.obstacle_min_height],
+                       dtype=np.float32)
+        high = np.array([self.x_threshold * 2,
+                         np.finfo(np.float32).max,
+                         self.theta_threshold_radians * 2,
+                         np.finfo(np.float32).max,
+                         1,
+                         self.x_threshold * 2 - self.obstacle_max_width,
+                         self.x_threshold * 2,
+                         self.obstacle_max_height],
+                        dtype=np.float32)
+        return spaces.Box(low, high, dtype=np.float32)
+
+    @property
+    def action_space(self):
+        return spaces.Box(low=self.min_action, high=self.max_action, shape=(1,))
 
     def step(self, action):
         err_msg = "%r (%s) invalid" % (action, type(action))
@@ -271,9 +286,6 @@ class CartPoleContObsEnv(gym.Env):
         dist_obstacle = abs(x - (self.obstacle.left_x + (self.obstacle.right_x - self.obstacle.left_x) / 2.0))
         # extend episode history
         self.episode['time'].append(self.step_count)
-        self.episode['collision'].append(collision)
-        self.episode['falldown'].append(falldown)
-        self.episode['outside'].append(outside)
         self.episode['dist_target_x'].append(dist_target_x)
         self.episode['dist_target_theta'].append(dist_target_theta)
         self.episode['dist_obstacle'].append(dist_obstacle)
@@ -285,6 +297,7 @@ class CartPoleContObsEnv(gym.Env):
         self.episode['obst_right_x'].append(self.obstacle.right_x)
         self.episode['obst_bottom_y'].append(self.obstacle.bottom_y)
         self.episode['obst_top_y'].append(self.obstacle.top_y)
+        self.episode['obst_y_from_axle'].append(self.obstacle.bottom_y - self.axle_y)
         # eventually store if done
         if self.done:
             self.last_complete_episode = self.episode
@@ -319,6 +332,7 @@ class CartPoleContObsEnv(gym.Env):
         obstacles start on same side with a distance from the cart in [min_dist,max_dist]
         state = (x, x_dot, theta, theta_dot, battery, obstacle_left_x, obstacle_right_x, obstacle_height)
         """
+        self.n_resets += 1
         self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(self.state_dim,)).astype(np.float32)
         self.last_state = self.state
         self.steps_beyond_done = None
@@ -347,7 +361,10 @@ class CartPoleContObsEnv(gym.Env):
         self.state[4] = 1  # Battery Starts at 100%
         self.step_count = 0
         # sample obstacle parameters: height, width, initial distance from cart
-        obstacle_height = self.np_random.uniform(low=self.obstacle_min_height, high=self.obstacle_max_height)
+        if self.eval and self.task == "random_height":
+            obstacle_height = 0.75 if self.n_resets % 2 == 0 else 0.99
+        else:
+            obstacle_height = self.np_random.uniform(low=self.obstacle_min_height, high=self.obstacle_max_height)
         obstacle_width = self.np_random.uniform(low=self.obstacle_min_width, high=self.obstacle_max_width)
         # distance between cart's initial position (x_init) and the obstacle center
         distance_obst_center_to_cart = self.np_random.uniform(low=self.obstacle_min_dist + obstacle_width / 2,

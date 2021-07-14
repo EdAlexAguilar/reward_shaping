@@ -1,45 +1,32 @@
 import pathlib
 
-import gym
 import yaml
 from stable_baselines3.common.env_checker import check_env
 
-import callbacks
-from stable_baselines3.common.callbacks import CheckpointCallback
-import argparse as parser
-
 # define problem
-from envs.cart_pole.cp_continuousobstacle_env import CartPoleContObsEnv
-from envs.cart_pole.rewards.baselines import SparseNoFalldownReward
+from envs.cart_pole_obst.cp_continuousobstacle_env import CartPoleContObsEnv
+from envs.cart_pole_obst.rewards import get_reward
 
 
 def main(reward):
-    task = "no_random"
+    task = "random_height"
     env_config = pathlib.Path(f"tasks/{task}.yml")
     with open(env_config, 'r') as file:
         env_params = yaml.load(file, yaml.FullLoader)
-    env = CartPoleContObsEnv(**env_params)
+    env = CartPoleContObsEnv(**env_params, eval=True)
+    env = get_reward(reward)(env)
+    """
     if reward == "indicator":
-        from envs.cart_pole.rewards.indicator_based import IndicatorWithContinuousTargetReward
+        from envs.cart_pole_obst.rewards import IndicatorWithContinuousTargetReward
         env = IndicatorWithContinuousTargetReward(env)
     elif reward == "indicator_sparse":
-        from envs.cart_pole.rewards.indicator_based import IndicatorWithSparseTargetReward
+        from envs.cart_pole_obst.rewards import IndicatorWithSparseTargetReward
         env = IndicatorWithSparseTargetReward(env)
     elif reward == "indicator_progress":
-        from envs.cart_pole.rewards.indicator_based import IndicatorWithProgressTargetReward
+        from envs.cart_pole_obst.rewards import IndicatorWithProgressTargetReward
         env = IndicatorWithProgressTargetReward(env)
-    elif reward == "weighted":
-        from envs.cart_pole.rewards.baselines import WeightedReward
-        env = WeightedReward(env)
-    elif reward == "sparse":
-        from envs.cart_pole.rewards.baselines import SparseReward
-        env = SparseReward(env)
-    elif reward == "sparse_nofall":
-        from envs.cart_pole.rewards.baselines import SparseReward
-        env = SparseNoFalldownReward(env)
-    elif reward == "sparse_stl":
-        from envs.cart_pole.rewards.baselines import SparseSTLReward
-        env = SparseSTLReward(env)
+    """
+
 
 
     # evaluation
@@ -47,7 +34,7 @@ def main(reward):
     env.render()
     rewards = []
     tot_reward = 0.0
-    for i in range(200):
+    for i in range(10000):
         action = env.action_space.sample()
         obs, reward, done, info = env.step(action)
         tot_reward += reward
@@ -58,6 +45,7 @@ def main(reward):
             rob = env.compute_episode_robustness(env.last_complete_episode)
             print(f"reward: {tot_reward:.3f}, robustness: {rob:.3f}")
             tot_reward = 0.0
+            input()
     try:
         check_env(env)
         result = True
@@ -70,7 +58,7 @@ def main(reward):
 
 
 if __name__ == "__main__":
-    rewards = ['indicator', 'indicator_sparse', 'indicator_progress', 'weighted', 'sparse', 'sparse_nofall', 'sparse_stl']
+    rewards = ['indicator', 'indicator_sparse', 'indicator_progress', 'continuous', 'sparse', 'stl']
     import argparse
 
     parser = argparse.ArgumentParser()

@@ -1,3 +1,5 @@
+# task
+task: fixed_height
 # episode termination
 max_steps: 200
 terminate_on_collision: True
@@ -12,10 +14,10 @@ theta_target_tol: 24
 # initial conditions
 cart_min_initial_offset: 1.2
 cart_max_initial_offset: 2.0
+randomize_side: False  # sample initial condition from both the sides
 obstacle_min_w: 0.2
 obstacle_max_w: 0.2
 obstacle_min_h: 0.99
 obstacle_max_h: 0.99
 obstacle_min_dist: 0.5
 obstacle_max_dist: 0.75
-randomize_side: True  # sample initial condition from both the sides

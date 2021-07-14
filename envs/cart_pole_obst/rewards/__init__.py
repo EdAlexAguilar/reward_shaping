@@ -1,6 +1,6 @@
 import gym
 
-from envs.cart_pole.rewards.baselines import ContinuousReward, SparseReward, STLReward
+from envs.cart_pole_obst.rewards.baselines import ContinuousReward, SparseReward, STLReward
 
 _registry = {}
 
