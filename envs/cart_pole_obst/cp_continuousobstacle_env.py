@@ -93,7 +93,7 @@ class CartPoleContObsEnv(gym.Env):
                  x_target=0.0, x_target_tol=0.0, theta_target=0.0, theta_target_tol=24.0,
                  cart_min_initial_offset=1.2, cart_max_initial_offset=2.0,
                  obstacle_min_w=0.5, obstacle_max_w=0.5, obstacle_min_h=0.5, obstacle_max_h=0.5,
-                 obstacle_min_dist=0.1, obstacle_max_dist=0.2,
+                 obstacle_min_dist=0.1, obstacle_max_dist=0.2, feasible_height=0.97,
                  terminate_on_collision=True, terminate_on_battery=False, randomize_side=True,
                  eval=False, seed=None):
         self.task = task
@@ -140,6 +140,7 @@ class CartPoleContObsEnv(gym.Env):
         self.terminate_on_battery = terminate_on_battery
         self.randomize_side = randomize_side
         self.step_count = 0
+        self.feasible_height = feasible_height  # this is used to evaluate feasibility in overcoming obstacle
 
         # Target parameters
         self.x_target = x_target
@@ -154,7 +155,6 @@ class CartPoleContObsEnv(gym.Env):
         self.target_tot = 0.0
         self.comfort_tot = 0.0
 
-        self.seed(seed)
         self.viewer = None
         self.last_state = None
         self.state = None
@@ -165,6 +165,9 @@ class CartPoleContObsEnv(gym.Env):
         # for monitoring
         self.episode = {v: [] for v in self.monitoring_variables}
         self.last_complete_episode = None
+
+        self.action_space = spaces.Box(low=self.min_action, high=self.max_action, shape=(1,))
+        self.seed(seed)
 
     @property
     def monitoring_variables(self):
@@ -191,15 +194,17 @@ class CartPoleContObsEnv(gym.Env):
         target_requirement = f"eventually(always(dist_target_x <= {self.x_target_tol}))"
         balance_requirement = f"always(dist_target_theta <= {self.theta_target_tol})"
         # feasibility condition
-        feasible = "obst_y_from_axle >= 0.97"
+        feasible = f"obst_y_from_axle >= {self.feasible_height}"
         # all together
-        spec = f"({safety_requirements}) and " \
-               f"(({feasible}) -> ({target_requirement})) and (not({feasible}) -> {balance_requirement})"
+        if self.obstacle.bottom_y - self.axle_y >= self.feasible_height:
+            spec = f"({safety_requirements}) and ({target_requirement})"
+        else:
+            spec = f"({safety_requirements}) and ({balance_requirement})"
         return spec
-
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
+        self.action_space.seed(seed)
         return [seed]
 
     @property
@@ -223,10 +228,6 @@ class CartPoleContObsEnv(gym.Env):
                          self.obstacle_max_height],
                         dtype=np.float32)
         return spaces.Box(low, high, dtype=np.float32)
-
-    @property
-    def action_space(self):
-        return spaces.Box(low=self.min_action, high=self.max_action, shape=(1,))
 
     def step(self, action):
         err_msg = "%r (%s) invalid" % (action, type(action))
@@ -319,10 +320,10 @@ class CartPoleContObsEnv(gym.Env):
 
     def reward(self):
         """
-        Vanilla Reward - To be overridden
+        Vanilla Reward - Punish in early termination
         """
-        if abs(self.state[2]) < self.theta_threshold_radians:
-            return 1.0
+        if self.done and self.step_count <= self.max_episode_steps:
+            return - 1.0
         else:
             return 0.0
 

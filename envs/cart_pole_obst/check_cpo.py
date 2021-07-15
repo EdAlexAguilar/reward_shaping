@@ -6,14 +6,15 @@ from stable_baselines3.common.env_checker import check_env
 # define problem
 from envs.cart_pole_obst.cp_continuousobstacle_env import CartPoleContObsEnv
 from envs.cart_pole_obst.rewards import get_reward
+import numpy as np
 
 
 def main(reward):
-    task = "random_height"
+    task = "fixed_height"
     env_config = pathlib.Path(f"tasks/{task}.yml")
     with open(env_config, 'r') as file:
         env_params = yaml.load(file, yaml.FullLoader)
-    env = CartPoleContObsEnv(**env_params, eval=True)
+    env = CartPoleContObsEnv(**env_params, eval=True, seed=0)
     env = get_reward(reward)(env)
     """
     if reward == "indicator":
@@ -27,10 +28,9 @@ def main(reward):
         env = IndicatorWithProgressTargetReward(env)
     """
 
-
-
     # evaluation
     obs = env.reset()
+    print(obs[0])
     env.render()
     rewards = []
     tot_reward = 0.0
@@ -58,7 +58,8 @@ def main(reward):
 
 
 if __name__ == "__main__":
-    rewards = ['indicator', 'indicator_sparse', 'indicator_progress', 'continuous', 'sparse', 'stl']
+    rewards = ['indicator', 'indicator_sparse', 'indicator_progress', 'continuous', 'sparse', 'stl', 'cont_gh',
+               'cont_gh_pot']
     import argparse
 
     parser = argparse.ArgumentParser()

@@ -50,7 +50,7 @@ def main(args):
 
 
 if __name__ == "__main__":
-    rewards = ['sparse', 'continuous', 'stl']
+    rewards = ['sparse', 'continuous', 'stl', 'cont_gh', 'cont_gh_pot']
     tasks = ['balance', 'target', 'fixed_height', 'random_height']
     parser = parser.ArgumentParser()
     parser.add_argument("--task", type=str, required=True, choices=tasks)

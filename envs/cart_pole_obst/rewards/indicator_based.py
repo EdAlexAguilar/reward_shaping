@@ -1,6 +1,6 @@
 import numpy as np
 
-from envs.cart_pole_obst.rewards.hierarchical_reward import HierarchicalRewardWrapper
+from hierarchy.set_hierarchical_reward import HierarchicalRewardWrapper
 from envs.cart_pole_obst.rewards.subtask_rewards import CollisionReward, FalldownReward, OutsideReward, \
     SparseReachTargetReward, ProgressReachTargetReward
 from envs.cart_pole_obst.rewards.subtask_rewards import NormalizedReward, TaskIndicator, ReachTargetReward, BalanceReward
