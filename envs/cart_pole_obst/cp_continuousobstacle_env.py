@@ -322,8 +322,13 @@ class CartPoleContObsEnv(gym.Env):
         """
         Vanilla Reward - Punish in early termination
         """
-        if self.done and self.step_count <= self.max_episode_steps:
-            return - 1.0
+        if self.done:
+            if self.step_count <= self.max_episode_steps:
+                return - 1.0
+            elif abs(self.state[0] - self.x_target) <= self.x_target_tol:
+                return + 1.0
+            else:
+                return 0.0
         else:
             return 0.0
 

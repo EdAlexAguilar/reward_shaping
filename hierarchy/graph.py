@@ -36,10 +36,30 @@ class HierarchicalGraph(nx.DiGraph):
         self.id2lab = {n: l for n, l in enumerate(labels)}
         # topological sort
         self.top_sorting = list(nx.topological_sort(self))
+        layers = {}
+        for node in self.top_sorting:
+            preds = list(self.predecessors(node))
+            if len(preds) == 0:
+                layers[node] = 0
+            else:
+                layers[node] = max([layers[pred] for pred in preds]) + 1
+        nx.set_node_attributes(self, layers, "layer")
 
-    def render(self):
-        nx.draw(self, with_labels=True)
-        plt.show()
+    def render(self, colors=None):
+        positioning = nx.multipartite_layout(self, subset_key="layer")
+        pos_labels = {node: (pos[0], pos[1] - .1) for node, pos in positioning.items()}
+        if colors is None:
+            nx.draw(self, pos=positioning)
+        else:
+            plt.clf()
+            color_map = {color: [] for color in colors.values()}
+            for node, color in colors.items():
+                color_map[color].append(node)
+            for color, node_list in color_map.items():
+                nx.draw_networkx_nodes(self, positioning, nodelist=node_list, node_color=color)
+        nx.draw_networkx_edges(self, positioning)
+        nx.draw_networkx_labels(self, pos_labels)
+        plt.pause(0.001)
 
 def test_1():
     expected_result = False

@@ -40,18 +40,6 @@ class GraphWithContinuousScore(HierarchicalGraphRewardWrapper):
         score_functions.append(NormalizedReward(fun, min_r, max_r))
         indicators.append(TaskIndicator(fun))
 
-        # define conditional statement
-        fun = lambda _: 0.0     # this is a static condition, do not score for it (depends on the env)
-        ind_true = TaskIndicator(CheckOvercomingFeasibility(env))
-        labels.append("IF_feas")
-        score_functions.append(fun)
-        indicators.append(ind_true)
-
-        ind_false = TaskIndicator(CheckOvercomingFeasibility(env), reverse=True)
-        labels.append("IF_nfeas")
-        score_functions.append(fun)
-        indicators.append(ind_false)
-
         # define target rules
         fun = ReachTargetReward(x_target=env.x_target, x_target_tol=env.x_target_tol)
         min_r_state = np.array([env.x_threshold, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
@@ -70,11 +58,30 @@ class GraphWithContinuousScore(HierarchicalGraphRewardWrapper):
         score_functions.append(NormalizedReward(fun, min_r, max_r))
         indicators.append(TaskIndicator(fun))
 
+        # define conditional statement
+        if env.task == "fixed_height":
+            edges = [("S_coll", "T_orig"), ("S_fall", "T_orig"), ("S_exit", "T_orig"),
+                     ("T_orig", "T_bal")]
+        elif env.task == "random_height":
+            fun = lambda _: 0.0  # this is a static condition, do not score for it (depends on the env)
+            ind_true = TaskIndicator(CheckOvercomingFeasibility(env))
+            labels.append("IF_feas")
+            score_functions.append(fun)
+            indicators.append(ind_true)
+
+            ind_false = TaskIndicator(CheckOvercomingFeasibility(env), reverse=True)
+            labels.append("IF_nfeas")
+            score_functions.append(fun)
+            indicators.append(ind_false)
+
+            edges = [("S_coll", "IF_feas"), ("S_fall", "IF_feas"), ("S_exit", "IF_feas"),
+                     ("S_coll", "IF_nfeas"), ("S_fall", "IF_nfeas"), ("S_exit", "IF_nfeas"),
+                     ("IF_feas", "T_orig"),
+                     ("IF_nfeas", "T_bal")]
+        else:
+            raise NotImplemented(f"no reward for task {self.env.task}")
+
         # define graph-based hierarchy
-        edges = [("S_coll", "IF_feas"), ("S_fall", "IF_feas"), ("S_exit", "IF_feas"),
-                 ("S_coll", "IF_nfeas"), ("S_fall", "IF_nfeas"), ("S_exit", "IF_nfeas"),
-                 ("IF_feas", "T_orig"),
-                 ("IF_nfeas", "T_bal")]
         hierarchy = HierarchicalGraph(labels, score_functions, indicators, edges)
         super(GraphWithContinuousScore, self).__init__(env, hierarchy, use_potential=use_potential)
 

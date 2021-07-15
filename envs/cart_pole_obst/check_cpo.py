@@ -39,6 +39,7 @@ def main(reward):
         obs, reward, done, info = env.step(action)
         tot_reward += reward
         env.render()
+        #env.render_hierarchy()
         if done:
             rewards.append(tot_reward)
             obs = env.reset()
