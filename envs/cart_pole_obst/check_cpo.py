@@ -10,12 +10,13 @@ import numpy as np
 
 
 def main(reward):
-    task = "fixed_height"
+    task = "random_height"
     env_config = pathlib.Path(f"tasks/{task}.yml")
     with open(env_config, 'r') as file:
         env_params = yaml.load(file, yaml.FullLoader)
     env = CartPoleContObsEnv(**env_params, eval=True, seed=0)
     env = get_reward(reward)(env)
+    env.hierarchy.render()
     """
     if reward == "indicator":
         from envs.cart_pole_obst.rewards import IndicatorWithContinuousTargetReward

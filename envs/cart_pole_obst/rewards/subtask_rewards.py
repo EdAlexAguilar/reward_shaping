@@ -52,14 +52,15 @@ class ContinuousCollisionReward(TaskReward):
 
 
 class FalldownReward(TaskReward):
-    def __init__(self, theta_limit, falldown_penalty=-10):
+    def __init__(self, theta_limit, falldown_penalty=0.0, no_falldown_bonus=0.0):
         super().__init__()
         self.theta_limit = theta_limit
         self.falldown_penalty = falldown_penalty
+        self.no_falldown_bonus = no_falldown_bonus
 
     def __call__(self, state):
         theta = state[2]
-        return self.falldown_penalty * (abs(theta) > self.theta_limit)
+        return self.falldown_penalty if (abs(theta) > self.theta_limit) else self.no_falldown_bonus
 
 
 class ContinuousFalldownReward(TaskReward):
@@ -78,14 +79,15 @@ class ContinuousFalldownReward(TaskReward):
 
 
 class OutsideReward(TaskReward):
-    def __init__(self, x_limit, exit_penalty=-10):
+    def __init__(self, x_limit, exit_penalty=0.0, no_exit_bonus=0.0):
         super().__init__()
         self.x_limit = x_limit
         self.exit_penalty = exit_penalty
+        self.no_exit_bonus = no_exit_bonus
 
     def __call__(self, state):
         x = state[0]
-        return self.exit_penalty * (abs(x) > self.x_limit)
+        return self.exit_penalty if (abs(x) > self.x_limit) else self.no_exit_bonus
 
 
 class ContinuousOutsideReward(TaskReward):
@@ -175,12 +177,14 @@ class NormalizedReward(TaskReward):
 
 
 class TaskIndicator(TaskReward):
-    def __init__(self, reward_fun, reverse=False):
+    def __init__(self, reward_fun, reverse=False, include_zero=True):
         self.reward_fun = reward_fun
         self.reverse = reverse
+        self.include_zero=include_zero
 
     def __call__(self, state):
         # (default) if `reverse` is False, then indicator returns True when reward >= 0.0
         # if `reverse` is True, then indicator returns True when reward < 0.0
         reward = self.reward_fun(state)
-        return (reward >= 0.0) and not self.reverse
+        sat = reward >= 0.0 if self.include_zero else reward > 0.0
+        return sat and not self.reverse
