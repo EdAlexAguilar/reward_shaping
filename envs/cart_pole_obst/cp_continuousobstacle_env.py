@@ -367,8 +367,17 @@ class CartPoleContObsEnv(gym.Env):
         self.state[4] = 1  # Battery Starts at 100%
         self.step_count = 0
         # sample obstacle parameters: height, width, initial distance from cart
-        if self.eval and self.task == "random_height":
-            obstacle_height = 0.75 if self.n_resets % 2 == 0 else 0.99
+        if self.task == "random_height":
+            if self.eval:
+                obstacle_height = self.obstacle_min_height if self.n_resets % 2 == 0 else self.obstacle_max_height
+            else:
+                # in the training, try to keep balanced the number of envs below and above the feasible height
+                if self.n_resets % 2 == 0:
+                    obstacle_height = self.np_random.uniform(low=self.obstacle_min_height,
+                                                             high=self.feasible_height)
+                else:
+                    obstacle_height = self.np_random.uniform(low=self.feasible_height,
+                                                             high=self.obstacle_max_height)
         else:
             obstacle_height = self.np_random.uniform(low=self.obstacle_min_height, high=self.obstacle_max_height)
         obstacle_width = self.np_random.uniform(low=self.obstacle_min_width, high=self.obstacle_max_width)
