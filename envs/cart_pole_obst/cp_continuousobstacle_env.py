@@ -315,7 +315,7 @@ class CartPoleContObsEnv(gym.Env):
         if self.done:
             self.last_complete_episode = self.episode
 
-    def compute_episode_robustness(self, episode, mark_safety_break=False):
+    def compute_episode_robustness(self, episode, bool_safety_break=False):
         # compute robustness
         import rtamt
         spec = rtamt.STLSpecification()
@@ -325,7 +325,7 @@ class CartPoleContObsEnv(gym.Env):
         # the `bool_spec` consider each safety signal as a binary function: values >= 0 till valid, <<0 when violation
         # the `cont_spec` returns a continuous values which is more difficult to interpret
         cont_spec, bool_spec = self.monitoring_specs
-        if mark_safety_break:
+        if bool_safety_break:
             spec.spec = bool_spec   # mainly used for evaluation
         else:
             spec.spec = cont_spec
