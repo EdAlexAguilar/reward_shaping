@@ -187,4 +187,5 @@ class TaskIndicator(TaskReward):
         # if `reverse` is True, then indicator returns True when reward < 0.0
         reward = self.reward_fun(state)
         sat = reward >= 0.0 if self.include_zero else reward > 0.0
-        return sat and not self.reverse
+        result = sat if not self.reverse else not sat
+        return result

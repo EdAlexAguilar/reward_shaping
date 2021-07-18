@@ -53,6 +53,14 @@ class GraphWithContinuousScore(HierarchicalGraphRewardWrapper):
         min_r_state = np.array([0.0, 0.0, env.theta_threshold_radians, 0.0, 0.0, 0.0, 0.0, 0.0])
         max_r_state = np.array([0.0, 0.0, env.theta_target, 0.0, 0.0, 0.0, 0.0, 0.0])
         min_r, max_r = min(fun(-min_r_state), fun(min_r_state)), fun(max_r_state)
+        # Note: two nodes with the same rule, why?
+        # C_bal != T_bal, because one is a comfort rule when reaching the origin is feasible
+        # T_bal instead is a target requirement when the origin in not reachable.
+        # For this reason we have to use 2 distinct nodes, otherwise it will be impossible to enable any of them
+        # because H_feas and H_nfeas are never both satisfied.
+        labels.append("C_bal")
+        score_functions.append(NormalizedReward(fun, min_r, max_r))
+        indicators.append(TaskIndicator(fun))
         labels.append("T_bal")
         score_functions.append(NormalizedReward(fun, min_r, max_r))
         indicators.append(TaskIndicator(fun))
@@ -60,7 +68,7 @@ class GraphWithContinuousScore(HierarchicalGraphRewardWrapper):
         # define conditional statement
         if env.task == "fixed_height":
             edges = [("S_coll", "T_orig"), ("S_fall", "T_orig"), ("S_exit", "T_orig"),
-                     ("T_orig", "T_bal")]
+                     ("T_orig", "C_bal")]
         elif env.task == "random_height":
             fun = lambda _: 0.0  # this is a static condition, do not score for it (depends on the env)
             ind_true = TaskIndicator(CheckOvercomingFeasibility(env))
@@ -75,7 +83,7 @@ class GraphWithContinuousScore(HierarchicalGraphRewardWrapper):
 
             edges = [("S_coll", "H_feas"), ("S_fall", "H_feas"), ("S_exit", "H_feas"),
                      ("S_coll", "H_nfeas"), ("S_fall", "H_nfeas"), ("S_exit", "H_nfeas"),
-                     ("H_feas", "T_orig"), ("T_orig", "T_bal"),
+                     ("H_feas", "T_orig"), ("T_orig", "C_bal"),
                      ("H_nfeas", "T_bal")]
         else:
             raise NotImplemented(f"no reward for task {self.env.task}")
@@ -122,6 +130,10 @@ class GraphWithContinuousTargetAndDiscreteSafety(HierarchicalGraphRewardWrapper)
         min_r_state = np.array([0.0, 0.0, env.theta_threshold_radians, 0.0, 0.0, 0.0, 0.0, 0.0])
         max_r_state = np.array([0.0, 0.0, env.theta_target, 0.0, 0.0, 0.0, 0.0, 0.0])
         min_r, max_r = min(fun(-min_r_state), fun(min_r_state)), fun(max_r_state)
+        # Note: C_bal != T_bal, look at the ContReward definition for a longer explaination
+        labels.append("C_bal")
+        score_functions.append(NormalizedReward(fun, min_r, max_r))
+        indicators.append(TaskIndicator(fun))
         labels.append("T_bal")
         score_functions.append(NormalizedReward(fun, min_r, max_r))
         indicators.append(TaskIndicator(fun))
@@ -129,7 +141,7 @@ class GraphWithContinuousTargetAndDiscreteSafety(HierarchicalGraphRewardWrapper)
         # define conditional statement
         if env.task == "fixed_height":
             edges = [("S_coll", "T_orig"), ("S_fall", "T_orig"), ("S_exit", "T_orig"),
-                     ("T_orig", "T_bal")]
+                     ("T_orig", "C_bal")]
         elif env.task == "random_height":
             fun = lambda _: 0.0  # this is a static condition, do not score for it (depends on the env)
             ind_true = TaskIndicator(CheckOvercomingFeasibility(env))
@@ -144,7 +156,7 @@ class GraphWithContinuousTargetAndDiscreteSafety(HierarchicalGraphRewardWrapper)
 
             edges = [("S_coll", "H_feas"), ("S_fall", "H_feas"), ("S_exit", "H_feas"),
                      ("S_coll", "H_nfeas"), ("S_fall", "H_nfeas"), ("S_exit", "H_nfeas"),
-                     ("H_feas", "T_orig"), ("T_orig", "T_bal"),
+                     ("H_feas", "T_orig"), ("T_orig", "C_bal"),
                      ("H_nfeas", "T_bal")]
         else:
             raise NotImplemented(f"no reward for task {self.env.task}")

@@ -60,12 +60,10 @@ def main(reward):
 
 
 if __name__ == "__main__":
-    rewards = ['indicator', 'indicator_sparse', 'indicator_progress', 'continuous', 'sparse', 'stl', 'cont_gh',
-               'cont_gh_pot']
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--reward", choices=rewards, default="indicator")
+    parser.add_argument("--reward", type=str, default="sparse")
     args = parser.parse_args()
 
     main(args.reward)
