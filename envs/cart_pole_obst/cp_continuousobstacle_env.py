@@ -199,13 +199,11 @@ class CartPoleContObsEnv(gym.Env):
         safety_requirements_bool = f"({no_falldown_bool}) and ({no_outside_bool}) and ({no_collision_bool})"
         # target spec
         target_requirement = f"eventually(always(dist_target_x <= {self.x_target_tol}))"
-        balance_requirement = f"always(dist_target_theta <= {self.theta_target_tol})"
-        # feasibility condition
-        feasible = f"obst_y_from_axle >= {self.feasible_height}"
+        balance_requirement = f"eventually(always(dist_target_theta <= {self.theta_target_tol}))"
         # all together
         if self.obstacle.bottom_y - self.axle_y >= self.feasible_height:
-            spec_cont = f"({safety_requirements}) and ({target_requirement})"
-            spec_bool = f"({safety_requirements_bool}) and ({target_requirement})"
+            spec_cont = f"({safety_requirements}) and ({target_requirement}) and ({balance_requirement})"
+            spec_bool = f"({safety_requirements_bool}) and ({target_requirement}) and ({balance_requirement})"
         else:
             spec_cont = f"({safety_requirements}) and ({balance_requirement})"
             spec_bool = f"({safety_requirements_bool}) and ({balance_requirement})"
