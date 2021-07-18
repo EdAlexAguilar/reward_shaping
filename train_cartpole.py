@@ -23,10 +23,11 @@ def main(args):
 
     # prepare for training
     train_params = {'steps': args.steps, 'eval_every': int(args.steps / 10), 'rob_eval_every': 1000,
-                    'checkpoint_every': int(args.steps / 10)}
+                    'checkpoint_every': int(args.steps / 10), 'n_eval_episodes': 5}
     eval_env, _ = make_env(args.env, args.task, eval=True, logdir=None)
     eval_env = gym.wrappers.Monitor(env, logdir / "videos")
-    video_cb = VideoRecorderCallback(eval_env, render_freq=train_params['eval_every'], n_eval_episodes=2)
+    video_cb = VideoRecorderCallback(eval_env, render_freq=train_params['eval_every'],
+                                     n_eval_episodes=train_params['n_eval_episodes'])
     checkpoint_callback = CheckpointCallback(save_freq=train_params['checkpoint_every'], save_path=checkpointdir,
                                              name_prefix='model')
     monitoring_callback = EveryNTimesteps(n_steps=train_params['rob_eval_every'], callback=RobustMonitoringCallback())
@@ -50,7 +51,7 @@ def main(args):
 
 
 if __name__ == "__main__":
-    rewards = ['sparse', 'continuous', 'stl', 'cont_gh', 'cont_gh_pot', 'sdisc_gh', 'sdisc_gh_pot']
+    rewards = ['sparse', 'continuous', 'stl', 'hier_cont', 'hier_cont_pot', 'hier_disc', 'hier_disc_pot']
     tasks = ['balance', 'target', 'fixed_height', 'random_height']
     parser = parser.ArgumentParser()
     parser.add_argument("--task", type=str, required=True, choices=tasks)
