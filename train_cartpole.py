@@ -51,11 +51,10 @@ def main(args):
 
 
 if __name__ == "__main__":
-    rewards = ['sparse', 'continuous', 'stl', 'hier_cont', 'hier_cont_pot', 'hier_disc', 'hier_disc_pot']
     tasks = ['balance', 'target', 'fixed_height', 'random_height']
     parser = parser.ArgumentParser()
     parser.add_argument("--task", type=str, required=True, choices=tasks)
-    parser.add_argument("--reward", type=str, required=True, choices=rewards)
+    parser.add_argument("--reward", type=str, required=True)
     parser.add_argument("--algo", type=str, required=True, choices=['ppo', 'ppo_sde', 'sac'])
     parser.add_argument("--steps", type=int, default=1e6)
     parser.add_argument("-clip_reward", action="store_true")
