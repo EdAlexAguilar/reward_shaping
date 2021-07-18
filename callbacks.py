@@ -68,6 +68,6 @@ class RobustMonitoringCallback(BaseCallback):
         last_episode = env.last_complete_episode
         if last_episode is None:
             return True
-        robustness = env.compute_episode_robustness(last_episode)
+        robustness = env.compute_episode_robustness(last_episode, mark_safety_break=True)
         self.logger.record("rollout/robustness", robustness)
         return True

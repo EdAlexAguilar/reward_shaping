@@ -171,25 +171,32 @@ class CartPoleContObsEnv(gym.Env):
 
     @property
     def monitoring_variables(self):
-        return ['time', 'dist_target_x', 'dist_obstacle', 'dist_target_theta',
+        return ['time', 'collision', 'falldown', 'outside',
+                'dist_target_x', 'dist_obstacle', 'dist_target_theta',
                 'x', 'theta', 'pole_x', 'pole_y', 'obst_y_from_axle',
                 'obst_left_x', 'obst_right_x', 'obst_bottom_y', 'obst_top_y']
 
     @property
     def monitoring_types(self):
-        return ['int', 'float', 'float', 'float', 'float', 'float', 'float',
+        return ['int', 'int', 'int', 'int',
+                'float', 'float', 'float', 'float', 'float', 'float',
                 'float', 'float', 'float', 'float', 'float', 'float']
 
     @property
-    def monitoring_spec(self):
+    def monitoring_specs(self):
         # aux spec
         obst_intersect_polex = f"(obst_left_x < pole_x) and (pole_x < obst_right_x)"
         obst_intersect_poley = f"(obst_bottom_y < pole_y) and (pole_y < obst_top_y)"
-        # safety specs
+        # safety specs cont
         no_falldown = f"always(abs(theta) <= {self.theta_threshold_radians})"
         no_outside = f"always(abs(x) <= {self.x_threshold})"
         no_collision = f"always(not(({obst_intersect_polex}) and ({obst_intersect_poley})))"
         safety_requirements = f"({no_falldown}) and ({no_outside}) and ({no_collision})"
+        # safety specs bool
+        no_falldown_bool = f"always(falldown >= 0.0)"
+        no_outside_bool = f"always(outside >= 0)"
+        no_collision_bool = f"always(collision >= 0)"
+        safety_requirements_bool = f"({no_falldown_bool}) and ({no_outside_bool}) and ({no_collision_bool})"
         # target spec
         target_requirement = f"eventually(always(dist_target_x <= {self.x_target_tol}))"
         balance_requirement = f"always(dist_target_theta <= {self.theta_target_tol})"
@@ -197,10 +204,12 @@ class CartPoleContObsEnv(gym.Env):
         feasible = f"obst_y_from_axle >= {self.feasible_height}"
         # all together
         if self.obstacle.bottom_y - self.axle_y >= self.feasible_height:
-            spec = f"({safety_requirements}) and ({target_requirement})"
+            spec_cont = f"({safety_requirements}) and ({target_requirement})"
+            spec_bool = f"({safety_requirements_bool}) and ({target_requirement})"
         else:
-            spec = f"({safety_requirements}) and ({balance_requirement})"
-        return spec
+            spec_cont = f"({safety_requirements}) and ({balance_requirement})"
+            spec_bool = f"({safety_requirements_bool}) and ({balance_requirement})"
+        return spec_cont, spec_bool
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
@@ -279,14 +288,17 @@ class CartPoleContObsEnv(gym.Env):
     def _update_episode(self):
         # compute monitoring variables
         x, theta = self.state[0], self.state[2]
-        collision = -10 * self.obstacle.intersect(x, theta)
-        falldown = -10 * (abs(theta) > self.theta_threshold_radians)
-        outside = -10 * (abs(x) > self.x_threshold)
+        collision = -3.0 * self.obstacle.intersect(x, theta)
+        falldown = -3.0 * (abs(theta) > self.theta_threshold_radians)
+        outside = -3.0 * (abs(x) > self.x_threshold)
         dist_target_x = abs(x - self.x_target)
         dist_target_theta = abs(theta - self.theta_target)
         dist_obstacle = abs(x - (self.obstacle.left_x + (self.obstacle.right_x - self.obstacle.left_x) / 2.0))
         # extend episode history
         self.episode['time'].append(self.step_count)
+        self.episode['collision'].append(collision)
+        self.episode['falldown'].append(falldown)
+        self.episode['outside'].append(outside)
         self.episode['dist_target_x'].append(dist_target_x)
         self.episode['dist_target_theta'].append(dist_target_theta)
         self.episode['dist_obstacle'].append(dist_obstacle)
@@ -303,13 +315,20 @@ class CartPoleContObsEnv(gym.Env):
         if self.done:
             self.last_complete_episode = self.episode
 
-    def compute_episode_robustness(self, episode):
+    def compute_episode_robustness(self, episode, mark_safety_break=False):
         # compute robustness
         import rtamt
         spec = rtamt.STLSpecification()
         for v, t in zip(self.monitoring_variables, self.monitoring_types):
             spec.declare_var(v, f'{t}')
-        spec.spec = self.monitoring_spec
+        # in order to highlight the breaking of safety requirements,
+        # the `bool_spec` consider each safety signal as a binary function: values >= 0 till valid, <<0 when violation
+        # the `cont_spec` returns a continuous values which is more difficult to interpret
+        cont_spec, bool_spec = self.monitoring_specs
+        if mark_safety_break:
+            spec.spec = bool_spec   # mainly used for evaluation
+        else:
+            spec.spec = cont_spec
         try:
             spec.parse()
         except rtamt.STLParseException as err:
@@ -324,9 +343,9 @@ class CartPoleContObsEnv(gym.Env):
         """
         if self.done:
             if self.step_count <= self.max_episode_steps:
-                return - 1.0
+                return - 1.0    # early termination: either collision, outside, falldown, battery
             elif abs(self.state[0] - self.x_target) <= self.x_target_tol:
-                return + 1.0
+                return + 1.0    # successfully reach the target
             else:
                 return 0.0
         else:
@@ -371,8 +390,8 @@ class CartPoleContObsEnv(gym.Env):
             if self.eval:
                 obstacle_height = self.obstacle_min_height if self.n_resets % 2 == 0 else self.obstacle_max_height
             else:
-                # in the training, try to keep balanced the number of envs below and above the feasible height
-                if self.n_resets % 2 == 0:
+                # in the training, try to keep balanced the number of episodes with obst < or > the feasible height
+                if self.np_random.random() <= 0.50:
                     obstacle_height = self.np_random.uniform(low=self.obstacle_min_height,
                                                              high=self.feasible_height)
                 else:
