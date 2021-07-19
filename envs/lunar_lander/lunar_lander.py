@@ -27,6 +27,8 @@ Created by Oleg Klimov. Licensed on the same terms as the rest of OpenAI Gym.
 
 
 import sys, math
+from typing import Dict
+
 import numpy as np
 
 import Box2D
@@ -86,7 +88,7 @@ class LunarLander(gym.Env, EzPickle):
 
     continuous = False
 
-    def __init__(self, obstacle_coordinates=(10, 7), obstacle_size=(1, 0.5)):
+    def __init__(self, obstacle_coordinates=(10, 7), obstacle_size=(2, 0.5)):
         EzPickle.__init__(self)
         self.seed()
         self.viewer = None
@@ -361,6 +363,10 @@ class LunarLander(gym.Env, EzPickle):
             done = True
             reward = +100
         return np.array(state, dtype=np.float32), reward, done, {}
+
+    @property
+    def state(self) -> Dict:
+        return
 
     def render(self, mode='human'):
         from gym.envs.classic_control import rendering
