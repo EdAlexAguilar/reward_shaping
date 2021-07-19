@@ -286,9 +286,9 @@ class CartPoleContObsEnv(gym.Env):
     def _update_episode(self):
         # compute monitoring variables
         x, theta = self.state[0], self.state[2]
-        collision = -3.0 * self.obstacle.intersect(x, theta)
-        falldown = -3.0 * (abs(theta) > self.theta_threshold_radians)
-        outside = -3.0 * (abs(x) > self.x_threshold)
+        collision = -3.0 if self.obstacle.intersect(x, theta) else +3.0
+        falldown = -3.0 if abs(theta) > self.theta_threshold_radians else +3.0
+        outside = -3.0 if abs(x) > self.x_threshold else +3.0
         dist_target_x = abs(x - self.x_target)
         dist_target_theta = abs(theta - self.theta_target)
         dist_obstacle = abs(x - (self.obstacle.left_x + (self.obstacle.right_x - self.obstacle.left_x) / 2.0))
