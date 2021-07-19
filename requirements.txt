@@ -1,4 +1,4 @@
-gym
+gym[box2d]
 tensorflow
 h5py
 matplotlib
@@ -6,6 +6,5 @@ numpy
 stable-baselines3[extra]
 moviepy
 PyYAML
-Box2D
 git+https://github.com/nickovic/rtamt.git
 networkx
