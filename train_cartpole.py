@@ -7,7 +7,7 @@ import argparse as parser
 from utils import make_agent, make_reward_wrap, make_log_dirs, make_env
 
 
-def main(args):
+def train(args):
     # task selection
     # tasks 'balance', 'target': continuous cartpole env, with resp. goal of balancing and reach target while balancing
     # task 'fixed_height', 'random_height': continuous cartpole with obstacle placed at fixed of random height
@@ -83,4 +83,4 @@ if __name__ == "__main__":
     parser.add_argument("--steps", type=int, default=1e6)
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
-    main(args)
+    train(args)
