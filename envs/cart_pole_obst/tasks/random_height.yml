@@ -22,3 +22,4 @@ obstacle_max_h: 0.99
 obstacle_min_dist: 0.5
 obstacle_max_dist: 0.75
 feasible_height: 0.97  # this is the minimum height for which we consider the overcoming solvable
+prob_sampling_feasible: 0.5 # prob to sample obstacle with height > feasible_height

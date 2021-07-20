@@ -8,26 +8,17 @@ from envs.cart_pole_obst.cp_continuousobstacle_env import CartPoleContObsEnv
 from envs.cart_pole_obst.rewards import get_reward
 import numpy as np
 
+from hierarchy.graph_hierarchical_reward import HierarchicalGraphRewardWrapper
+from utils import make_env
+
 
 def main(reward):
+    env = "cart_pole_obst"
     task = "random_height"
-    env_config = pathlib.Path(f"tasks/{task}.yml")
-    with open(env_config, 'r') as file:
-        env_params = yaml.load(file, yaml.FullLoader)
-    env = CartPoleContObsEnv(**env_params, eval=True, seed=0)
+    env, env_params = make_env(env, task, logdir=None, seed=0, prob_sampling_feasible=.0)
     env = get_reward(reward)(env)
-    env.hierarchy.render()
-    """
-    if reward == "indicator":
-        from envs.cart_pole_obst.rewards import IndicatorWithContinuousTargetReward
-        env = IndicatorWithContinuousTargetReward(env)
-    elif reward == "indicator_sparse":
-        from envs.cart_pole_obst.rewards import IndicatorWithSparseTargetReward
-        env = IndicatorWithSparseTargetReward(env)
-    elif reward == "indicator_progress":
-        from envs.cart_pole_obst.rewards import IndicatorWithProgressTargetReward
-        env = IndicatorWithProgressTargetReward(env)
-    """
+    if isinstance(env, HierarchicalGraphRewardWrapper):
+        env.hierarchy.render()
 
     # evaluation
     obs = env.reset()
@@ -40,11 +31,10 @@ def main(reward):
         obs, reward, done, info = env.step(action)
         tot_reward += reward
         env.render()
-        #env.render_hierarchy()
         if done:
             rewards.append(tot_reward)
             obs = env.reset()
-            rob = env.compute_episode_robustness(env.last_complete_episode)
+            rob = env.compute_episode_robustness(env.last_complete_episode, env.last_cont_spec)
             print(f"reward: {tot_reward:.3f}, robustness: {rob:.3f}")
             tot_reward = 0.0
             input()
@@ -61,7 +51,6 @@ def main(reward):
 
 if __name__ == "__main__":
     import argparse
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--reward", type=str, default="sparse")
     args = parser.parse_args()

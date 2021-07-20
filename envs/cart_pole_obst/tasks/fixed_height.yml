@@ -17,8 +17,9 @@ cart_max_initial_offset: 2.0
 randomize_side: False  # sample initial condition from both the sides
 obstacle_min_w: 0.2
 obstacle_max_w: 0.2
-obstacle_min_h: 0.99
+obstacle_min_h: 0.99  # since we want to have it fixed, min==max height
 obstacle_max_h: 0.99
 obstacle_min_dist: 0.5
 obstacle_max_dist: 0.75
-feasible_height: 0.97  # this is the minimum height for which we consider the overcoming solvable
+feasible_height: 0.99  # feasible_h in [min_h, max_h]
+prob_sampling_feasible: 1.0 # not really effective in this case, but aiming to have always solvable overcoming

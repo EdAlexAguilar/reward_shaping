@@ -1,12 +1,12 @@
 import pathlib
 import time
 import yaml
-
+import os
 
 def make_log_dirs(args):
-    logdir_template = "logs/{}/{}_{}_terminate{}_clip{}_unitScale{}_{}"
+    logdir_template = "logs/{}/{}_{}_terminate{}_{}"
     logdir = pathlib.Path(logdir_template.format(args.env, args.task, args.reward, args.terminate_on_collision,
-                                                 args.clip_reward, args.unit_scaling, int(time.time())))
+                                                 int(time.time())))
     checkpointdir = logdir / "checkpoint"
     logdir.mkdir(parents=True, exist_ok=True)
     checkpointdir.mkdir(parents=True, exist_ok=True)
@@ -31,8 +31,8 @@ def make_base_env(env, env_params={}):
     return env
 
 
-def make_env(env, task, eval=False, logdir=None):
-    env_config = pathlib.Path(f"envs/{env}/tasks") / f"{task}.yml"
+def make_env(env, task, logdir=None, **kwargs):
+    env_config = pathlib.Path(f"{os.path.dirname(__file__)}/envs/{env}/tasks") / f"{task}.yml"
     if env_config.exists():
         with open(env_config, 'r') as file:
             env_params = yaml.load(file, yaml.FullLoader)
@@ -42,8 +42,10 @@ def make_env(env, task, eval=False, logdir=None):
     if logdir:
         with open(logdir / f"{task}.yml", "w") as file:
             yaml.dump(env_params, file)
+    # update params
+    for key, value in kwargs.items():
+        env_params[key] = value
     # make env
-    env_params['eval'] = eval
     env = make_base_env(env, env_params)
     return env, env_params
 

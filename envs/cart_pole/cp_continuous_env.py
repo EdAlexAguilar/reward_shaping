@@ -231,7 +231,7 @@ class CartPoleContEnv(gym.Env):
         if self.done:
             self.last_complete_episode = self.episode
 
-    def compute_episode_robustness(self, episode):
+    def compute_episode_robustness(self, episode, spec):
         # compute robustness
         import rtamt
         spec = rtamt.STLSpecification()

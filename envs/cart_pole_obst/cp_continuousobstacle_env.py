@@ -93,11 +93,10 @@ class CartPoleContObsEnv(gym.Env):
                  x_target=0.0, x_target_tol=0.0, theta_target=0.0, theta_target_tol=24.0,
                  cart_min_initial_offset=1.2, cart_max_initial_offset=2.0,
                  obstacle_min_w=0.5, obstacle_max_w=0.5, obstacle_min_h=0.5, obstacle_max_h=0.5,
-                 obstacle_min_dist=0.1, obstacle_max_dist=0.2, feasible_height=0.97,
+                 obstacle_min_dist=0.1, obstacle_max_dist=0.2, feasible_height=0.97, prob_sampling_feasible=0.5,
                  terminate_on_collision=True, terminate_on_battery=False, randomize_side=True,
-                 eval=False, seed=None):
+                 seed=None):
         self.task = task
-        self.eval = eval
         self.n_resets = 0
         # Physical Constants
         self.gravity = 9.8
@@ -141,6 +140,7 @@ class CartPoleContObsEnv(gym.Env):
         self.randomize_side = randomize_side
         self.step_count = 0
         self.feasible_height = feasible_height  # this is used to evaluate feasibility in overcoming obstacle
+        self.prob_sampling_feasible = prob_sampling_feasible  # this is used to sample obstacle height
 
         # Target parameters
         self.x_target = x_target
@@ -151,9 +151,6 @@ class CartPoleContObsEnv(gym.Env):
         # for rendering
         self.rew = 0.0
         self.ret = 0.0
-        self.safety_tot = 0.0
-        self.target_tot = 0.0
-        self.comfort_tot = 0.0
 
         self.viewer = None
         self.last_state = None
@@ -165,6 +162,8 @@ class CartPoleContObsEnv(gym.Env):
         # for monitoring
         self.episode = {v: [] for v in self.monitoring_variables}
         self.last_complete_episode = None
+        self.last_cont_spec = None  # stl-spec referring the last complete episode (continuous safety signals)
+        self.last_bool_spec = None  # as above (boolean safety signals)
 
         self.action_space = spaces.Box(low=self.min_action, high=self.max_action, shape=(1,))
         self.seed(seed)
@@ -184,10 +183,20 @@ class CartPoleContObsEnv(gym.Env):
 
     @property
     def monitoring_specs(self):
-        # aux spec
+        """
+        It returns a pair of STL specifications.
+            - The former uses continuous safety signal, proportional to the distance to the violation
+            threshold (e.g. falldown signal := dist(theta, falldown_angle)).
+            - The latter uses boolean safety signal, which have negative value when the safety spec
+            does not hold (e.g. falldown signal := +k if not falldown else -k).
+        The latter is MORE EXPRESSIVE to see when an episode breaks a safety rule. Conversely, using the continuous
+        version does not allow to clearly see when the agent learns to satisfy safety rules.
+
+        These specifications are used for evaluating the agent performance. And also used to define a STL reward.
+        """
+        # safety specs cont
         obst_intersect_polex = f"(obst_left_x < pole_x) and (pole_x < obst_right_x)"
         obst_intersect_poley = f"(obst_bottom_y < pole_y) and (pole_y < obst_top_y)"
-        # safety specs cont
         no_falldown = f"always(abs(theta) <= {self.theta_threshold_radians})"
         no_outside = f"always(abs(x) <= {self.x_threshold})"
         no_collision = f"always(not(({obst_intersect_polex}) and ({obst_intersect_poley})))"
@@ -201,7 +210,7 @@ class CartPoleContObsEnv(gym.Env):
         target_requirement = f"eventually(always(dist_target_x <= {self.x_target_tol}))"
         balance_requirement = f"eventually(always(dist_target_theta <= {self.theta_target_tol}))"
         # all together
-        if self.obstacle.bottom_y - self.axle_y >= self.feasible_height:
+        if self.is_feasible:
             spec_cont = f"({safety_requirements}) and ({target_requirement}) and ({balance_requirement})"
             spec_bool = f"({safety_requirements_bool}) and ({target_requirement}) and ({balance_requirement})"
         else:
@@ -258,7 +267,7 @@ class CartPoleContObsEnv(gym.Env):
         theta = theta + self.tau * theta_dot
         theta_dot = theta_dot + self.tau * thetaacc
 
-        self.last_state = self.state
+        self.last_state = self.state    # used for reward shaping with potential function
         self.state = (x, x_dot, theta, theta_dot, battery, obst_l, obst_r, obst_h)
 
         self.done = bool(
@@ -269,17 +278,6 @@ class CartPoleContObsEnv(gym.Env):
             or (self.terminate_on_collision and self.obstacle.intersect(x, theta)))
 
         self.rew = self.reward()
-
-        # update scores
-        self.x_target_score = self.x_target_tol - abs(x - self.x_target)
-        self.theta_target_score = self.theta_target_tol - abs(theta - self.theta_target)
-        self.collision_score = -1.0 if self.obstacle.intersect(x, theta) else 0.0
-        self.falldown_score = -1.0 if abs(theta) > self.theta_threshold_radians else 0.0
-
-        self.safety_tot = 0.0
-        self.target_tot = 0.0
-        self.comfort_tot = 0.0
-
         self._update_episode()  # update episode for monitoring
         return np.array(self.state), self.rew, self.done, {}
 
@@ -312,21 +310,17 @@ class CartPoleContObsEnv(gym.Env):
         # eventually store if done
         if self.done:
             self.last_complete_episode = self.episode
+            self.last_cont_spec = self.monitoring_specs[0]
+            self.last_bool_spec = self.monitoring_specs[1]
 
-    def compute_episode_robustness(self, episode, bool_safety_break=False):
+
+    def compute_episode_robustness(self, episode, monitoring_spec):
         # compute robustness
         import rtamt
         spec = rtamt.STLSpecification()
         for v, t in zip(self.monitoring_variables, self.monitoring_types):
             spec.declare_var(v, f'{t}')
-        # in order to highlight the breaking of safety requirements,
-        # the `bool_spec` consider each safety signal as a binary function: values >= 0 till valid, <<0 when violation
-        # the `cont_spec` returns a continuous values which is more difficult to interpret
-        cont_spec, bool_spec = self.monitoring_specs
-        if bool_safety_break:
-            spec.spec = bool_spec   # mainly used for evaluation
-        else:
-            spec.spec = cont_spec
+        spec.spec = monitoring_spec
         try:
             spec.parse()
         except rtamt.STLParseException as err:
@@ -337,13 +331,13 @@ class CartPoleContObsEnv(gym.Env):
 
     def reward(self):
         """
-        Vanilla Reward - Punish in early termination
+        Vanilla Reward - Punish in early termination, Prize for reaching the target when it is possible
         """
         if self.done:
             if self.step_count <= self.max_episode_steps:
                 return - 1.0    # early termination: either collision, outside, falldown, battery
-            elif abs(self.state[0] - self.x_target) <= self.x_target_tol:
-                return + 1.0    # successfully reach the target
+            elif self.is_feasible and abs(self.state[0] - self.x_target) <= self.x_target_tol:
+                return + 1.0    # successfully reach the target (when possible)
             else:
                 return 0.0
         else:
@@ -367,9 +361,6 @@ class CartPoleContObsEnv(gym.Env):
         self.theta_target_score = 0.0
         self.collision_score = 0.0
         self.falldown_score = 0.0
-        self.safety_tot = 0.0
-        self.target_tot = 0.0
-        self.comfort_tot = 0.0
 
         # initial position (x_init) is in [-max_offset,-min_offset] U [min_offset,max_offset]
         start = self.np_random.uniform(low=self.cart_min_offset, high=self.cart_max_offset)
@@ -384,19 +375,12 @@ class CartPoleContObsEnv(gym.Env):
         self.state[4] = 1  # Battery Starts at 100%
         self.step_count = 0
         # sample obstacle parameters: height, width, initial distance from cart
-        if self.task == "random_height":
-            if self.eval:
-                obstacle_height = self.obstacle_min_height if self.n_resets % 2 == 0 else self.obstacle_max_height
-            else:
-                # in the training, try to keep balanced the number of episodes with obst < or > the feasible height
-                if self.np_random.random() <= 0.50:
-                    obstacle_height = self.np_random.uniform(low=self.obstacle_min_height,
-                                                             high=self.feasible_height)
-                else:
-                    obstacle_height = self.np_random.uniform(low=self.feasible_height,
-                                                             high=self.obstacle_max_height)
+        if self.np_random.random() <= self.prob_sampling_feasible:
+            self.is_feasible = True
+            obstacle_height = self.np_random.uniform(low=self.feasible_height, high=self.obstacle_max_height)
         else:
-            obstacle_height = self.np_random.uniform(low=self.obstacle_min_height, high=self.obstacle_max_height)
+            self.is_feasible = False
+            obstacle_height = self.np_random.uniform(low=self.obstacle_min_height, high=self.feasible_height)
         obstacle_width = self.np_random.uniform(low=self.obstacle_min_width, high=self.obstacle_max_width)
         # distance between cart's initial position (x_init) and the obstacle center
         distance_obst_center_to_cart = self.np_random.uniform(low=self.obstacle_min_dist + obstacle_width / 2,
@@ -418,17 +402,6 @@ class CartPoleContObsEnv(gym.Env):
         # reset episode
         self.episode = {v: [] for v in self.monitoring_variables}
         return np.array(self.state)
-
-    def set_obstacle_width_height(self, width, height):
-        self.obstacle_max_width = width
-        self.obstacle_max_height = height
-
-    def overcome_obstacle(self, x):
-        """
-        Check if the current state is on the opposite side of the obstacle w.r.t. the starting position.
-        In particular, we check if the sides are different.
-        """
-        return self.obstacle.on_left_side(self.initial_state[0]) != self.obstacle.on_left_side(self.state[0])
 
     def render(self, mode='human', end=False):
         screen_width = 600
@@ -527,7 +500,7 @@ class CartPoleContObsEnv(gym.Env):
             self.viewer.add_geom(obst)
 
             # score
-            text = f'safety = {self.safety_tot:.2f}, target = {self.target_tot:.2f}, comfort: {self.comfort_tot:.2f}\n' \
+            text = f'episode: {self.n_resets}, feasible: {self.is_feasible}\n' \
                    f'time: {self.step_count}, reward = {self.rew:.2f}, return = {self.ret:.2f}'
             self.label = pyglet.text.Label(text, font_size=15, multiline=True, width=1000,
                                            x=5, y=20, anchor_x='left', anchor_y='bottom',
@@ -555,7 +528,7 @@ class CartPoleContObsEnv(gym.Env):
         obsty = (self.obstacle.bottom_y + 0.1 / 2.0) * scale
         self.obsttrans.set_translation(obstx, obsty)
 
-        self.label.text = f'safety = {self.safety_tot:.2f}, target = {self.target_tot:.2f}, comfort: {self.comfort_tot:.2f}\n' \
+        self.label.text = f'episode: {self.n_resets}, feasible: {self.is_feasible}\n' \
                           f'time: {self.step_count}, reward = {self.rew:.2f}, return = {self.ret:.2f}'
         return self.viewer.render(return_rgb_array=mode == 'rgb_array')
 
