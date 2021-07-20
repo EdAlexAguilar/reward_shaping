@@ -12,6 +12,7 @@ import math
 import gym
 import pyglet
 from gym import spaces, logger
+from gym.spaces import Box, Discrete
 from gym.utils import seeding
 import numpy as np
 
@@ -160,7 +161,6 @@ class CartPoleContObsEnv(gym.Env):
         self.state = None
         self.initial_state = None
         self.steps_beyond_done = None
-        self.state_dim = self.observation_space.shape[0]  # dimension of state-space
 
         # for monitoring
         self.episode = {v: [] for v in self.monitoring_variables}
@@ -168,6 +168,18 @@ class CartPoleContObsEnv(gym.Env):
 
         self.action_space = spaces.Box(low=self.min_action, high=self.max_action, shape=(1,))
         self.seed(seed)
+
+        self.observation_space = gym.spaces.Dict(dict(
+            x=Box(low=-self.x_threshold * 2, high=self.x_threshold * 2, shape=(1,)),
+            x_vel=Box(low=-np.finfo(np.float32).max, high=np.finfo(np.float32).max, shape=(1,)),
+            theta=Box(low=-self.theta_threshold_radians * 2, high=self.theta_threshold_radians * 2, shape=(1,)),
+            theta_vel=Box(low=-np.finfo(np.float32).max, high=np.finfo(np.float32).max, shape=(1,)),
+            battery=Box(low=0, high=1, shape=(1,)),
+            obstacle_left=Box(low=-self.x_threshold * 2, high=self.x_threshold * 2 - self.obstacle_max_width, shape=(1,)),
+            obstacle_right=Box(low=-self.x_threshold * 2 + self.obstacle_max_width, high=self.x_threshold * 2, shape=(1,)),
+            obstacle_height=Box(low=self.obstacle_min_height, high=self.obstacle_max_height, shape=(1,)),
+            collision=Discrete(2)
+        ))
 
     @property
     def monitoring_variables(self):
@@ -214,28 +226,6 @@ class CartPoleContObsEnv(gym.Env):
         self.action_space.seed(seed)
         return [seed]
 
-    @property
-    def observation_space(self):
-        low = np.array([-self.x_threshold * 2,
-                        -np.finfo(np.float32).max,
-                        -self.theta_threshold_radians * 2,
-                        -np.finfo(np.float32).max,
-                        0,
-                        -self.x_threshold * 2,
-                        -self.x_threshold * 2 + self.obstacle_max_width,
-                        self.obstacle_min_height],
-                       dtype=np.float32)
-        high = np.array([self.x_threshold * 2,
-                         np.finfo(np.float32).max,
-                         self.theta_threshold_radians * 2,
-                         np.finfo(np.float32).max,
-                         1,
-                         self.x_threshold * 2 - self.obstacle_max_width,
-                         self.x_threshold * 2,
-                         self.obstacle_max_height],
-                        dtype=np.float32)
-        return spaces.Box(low, high, dtype=np.float32)
-
     def step(self, action):
         err_msg = "%r (%s) invalid" % (action, type(action))
         assert self.action_space.contains(action), err_msg
@@ -257,6 +247,7 @@ class CartPoleContObsEnv(gym.Env):
         x_dot = x_dot + self.tau * xacc
         theta = theta + self.tau * theta_dot
         theta_dot = theta_dot + self.tau * thetaacc
+        collision = self.obstacle.intersect(x, theta)
 
         self.last_state = self.state
         self.state = (x, x_dot, theta, theta_dot, battery, obst_l, obst_r, obst_h)
@@ -266,7 +257,7 @@ class CartPoleContObsEnv(gym.Env):
             or abs(theta) > self.theta_threshold_radians
             or self.step_count > self.max_episode_steps
             or (self.terminate_on_battery and battery <= 0)
-            or (self.terminate_on_collision and self.obstacle.intersect(x, theta)))
+            or (self.terminate_on_collision and collision))
 
         self.rew = self.reward()
 
@@ -356,7 +347,7 @@ class CartPoleContObsEnv(gym.Env):
         state = (x, x_dot, theta, theta_dot, battery, obstacle_left_x, obstacle_right_x, obstacle_height)
         """
         self.n_resets += 1
-        self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(self.state_dim,)).astype(np.float32)
+        self.state = self.observation_space.sample()
         self.last_state = self.state
         self.steps_beyond_done = None
         self.done = False
