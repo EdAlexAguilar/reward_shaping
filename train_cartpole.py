@@ -40,6 +40,7 @@ def main(args):
     # callbacks
     callbacks_list = []
     for eval_env in eval_envs:
+        eval_env = make_reward_wrap(args.env, eval_env, args.reward)
         eval_env = gym.wrappers.Monitor(eval_env, logdir / "videos")
         video_cb = VideoRecorderCallback(eval_env, render_freq=train_params['eval_every'],
                                          n_eval_episodes=train_params['n_eval_episodes'])

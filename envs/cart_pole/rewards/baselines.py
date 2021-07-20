@@ -57,9 +57,9 @@ class SparseReward(gym.RewardWrapper):
 
     def reward_in_state(self, state):
         if self.env.task == "balance":
-            reward = 0.0 if abs(state[2]) <= self.env.theta_threshold_radians else -10.0
+            reward = 1.0 if abs(state[2]) <= self.env.theta_threshold_radians else 0.0
         elif self.env.task == "target":
-            reward = 0.0 if abs(state[2]) <= self.env.theta_threshold_radians else -10.0
+            reward = 1.0 if abs(state[2]) <= self.env.theta_threshold_radians else 0.0
             reward += +10 if abs(state[0] - self.env.x_target) <= self.env.x_target_tol else 0.0
         else:
             raise NotImplemented(f"no reward for task {self.env.task}")

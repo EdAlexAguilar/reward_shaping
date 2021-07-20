@@ -281,6 +281,8 @@ class CartPoleContObsEnv(gym.Env):
             or (self.terminate_on_collision and self.obstacle.intersect(x, theta)))
 
         self.rew = self.reward()
+        self.ret += self.rew
+
         self._update_episode()  # update episode for monitoring
         return np.array(self.state), self.rew, self.done, {}
 

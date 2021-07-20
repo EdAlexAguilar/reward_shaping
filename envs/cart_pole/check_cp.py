@@ -10,7 +10,7 @@ from utils import make_env
 
 def main(reward):
     env = "cart_pole"
-    task = "target"
+    task = "balance"
     env, _ = make_env(env, task, logdir=None, eval=True)
     env = get_reward(reward)(env)
     if isinstance(env, HierarchicalGraphRewardWrapper):

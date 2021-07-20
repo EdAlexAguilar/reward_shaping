@@ -211,6 +211,7 @@ class CartPoleContEnv(gym.Env):
             or (self.terminate_on_battery and battery <= 0))
 
         self.rew = self.reward()
+        self.ret += self.rew
 
         self._update_episode()  # update episode for monitoring
         return np.array(self.state), self.rew, self.done, {}
