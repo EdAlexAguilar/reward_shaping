@@ -30,7 +30,7 @@ class ContinuousReward(gym.RewardWrapper):
         obst_y = self.env.obstacle.bottom_y + (self.env.obstacle.top_y - self.env.obstacle.bottom_y) / 2.0
         dist_target = abs(state[0] - self.env.x_target)
         dist_obst = np.sqrt((obst_x - pole_x)**2 + (obst_y - pole_y)**2)
-        return - dist_target + dist_obst
+        return - 10.0 * dist_target + 2.0 * dist_obst
 
 
 class SparseReward(gym.RewardWrapper):
