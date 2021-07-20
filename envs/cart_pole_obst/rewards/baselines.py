@@ -95,7 +95,10 @@ class STLReward(gym.RewardWrapper):
 
     def reward_in_state(self, state):
         if self.env.done:
-            return self.env.compute_episode_robustness(self.env.last_complete_episode)
+            # if done, then last_complete_episode will contain the whole episode we need to compute robustness
+            # moreover, last_cont_spec will contain the stl spec of the episode according to the obstacle position
+            return self.env.compute_episode_robustness(self.env.last_complete_episode,
+                                                       self.env.last_cont_spec)
         else:
             return 0.0
 
