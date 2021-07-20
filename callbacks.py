@@ -65,7 +65,7 @@ class RobustMonitoringCallback(BaseCallback):
     """
     def _on_step(self) -> bool:
         env = self.training_env.envs[0]
-        task = env.task
+        name = env.name
         last_episode = env.last_complete_episode
         last_cont_spec = env.last_cont_spec
         last_bool_spec = env.last_bool_spec
@@ -73,6 +73,6 @@ class RobustMonitoringCallback(BaseCallback):
             return True
         robustness_cont_safety = env.compute_episode_robustness(last_episode, last_cont_spec)
         robustness_bool_safety = env.compute_episode_robustness(last_episode, last_bool_spec)
-        self.logger.record(f"rollout/{task}/robustness_cont_safety", robustness_cont_safety)
-        self.logger.record(f"rollout/{task}/robustness_bool_safety", robustness_bool_safety)
+        self.logger.record(f"rollout/{name}/robustness_cont_safety", robustness_cont_safety)
+        self.logger.record(f"rollout/{name}/robustness_bool_safety", robustness_bool_safety)
         return True

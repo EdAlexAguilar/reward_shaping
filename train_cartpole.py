@@ -15,16 +15,22 @@ def main(args):
         args.env = "cart_pole"
     else:
         args.env = "cart_pole_obst"
-
-    args.terminate_on_collision = True
     logdir, checkpointdir = make_log_dirs(args)
-    # create environments
+
+    # create training environment
     train_env, env_params = make_env(args.env, args.task, logdir)
     train_env = make_reward_wrap(args.env, train_env, args.reward)
-    eval_feas_env, _ = make_env(args.env, args.task, prob_sampling_feasible=1.0)
-    eval_nfeas_env, _ = make_env(args.env, args.task, prob_sampling_feasible=0.0)
-    eval_feas_env = gym.wrappers.Monitor(eval_feas_env, logdir / "videos")
-    eval_nfeas_env = gym.wrappers.Monitor(eval_nfeas_env, logdir / "videos")
+    # create eval environments
+    if args.task == 'random_height':
+        # if conditional environment, create 2 distinct eval envs
+        eval_feas_env, _ = make_env(args.env, args.task, eval=True, prob_sampling_feasible=1.0, name='eval_feas')
+        eval_nfeas_env, _ = make_env(args.env, args.task, eval=True, prob_sampling_feasible=0.0, name='eval_not_feas')
+        eval_envs = [eval_feas_env, eval_nfeas_env]
+    else:
+        # if normal environment without conditions, then eval env is the train env
+        eval_env, _ = make_env(args.env, args.task, logdir=None, eval=True, name='eval')
+        eval_envs = [eval_env]
+
     # create agent
     model = make_agent(args.env, train_env, args.algo, logdir)
 
@@ -32,16 +38,21 @@ def main(args):
     train_params = {'steps': args.steps, 'eval_every': int(args.steps / 10), 'rob_eval_every': 1000,
                     'checkpoint_every': int(args.steps / 10), 'n_eval_episodes': 2}
     # callbacks
-    video_feas_cb = VideoRecorderCallback(eval_feas_env, render_freq=train_params['eval_every'],
-                                          n_eval_episodes=train_params['n_eval_episodes'])
-    video_nfeas_cb = VideoRecorderCallback(eval_nfeas_env, render_freq=train_params['eval_every'],
-                                           n_eval_episodes=train_params['n_eval_episodes'])
+    callbacks_list = []
+    for eval_env in eval_envs:
+        eval_env = gym.wrappers.Monitor(eval_env, logdir / "videos")
+        video_cb = VideoRecorderCallback(eval_env, render_freq=train_params['eval_every'],
+                                         n_eval_episodes=train_params['n_eval_episodes'])
+        callbacks_list.append(video_cb)
     checkpoint_callback = CheckpointCallback(save_freq=train_params['checkpoint_every'], save_path=checkpointdir,
                                              name_prefix='model')
     monitoring_callback = EveryNTimesteps(n_steps=train_params['rob_eval_every'], callback=RobustMonitoringCallback())
+    callbacks_list.append(checkpoint_callback)
+    callbacks_list.append(monitoring_callback)
+
     # train
     model.learn(total_timesteps=train_params['steps'],
-                callback=[video_feas_cb, video_nfeas_cb, checkpoint_callback, monitoring_callback])
+                callback=callbacks_list)
     # evaluation
     for env in [eval_feas_env, eval_nfeas_env]:
         obs = env.reset()

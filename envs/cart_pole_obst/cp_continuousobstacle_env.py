@@ -89,15 +89,13 @@ class CartPoleContObsEnv(gym.Env):
         'video.frames_per_second': 50
     }
 
-    def __init__(self, task, x_limit=2.5, theta_limit=90, max_steps=200,
+    def __init__(self, task, name="", x_limit=2.5, theta_limit=90, max_steps=200,
                  x_target=0.0, x_target_tol=0.0, theta_target=0.0, theta_target_tol=24.0,
                  cart_min_initial_offset=1.2, cart_max_initial_offset=2.0,
                  obstacle_min_w=0.5, obstacle_max_w=0.5, obstacle_min_h=0.5, obstacle_max_h=0.5,
                  obstacle_min_dist=0.1, obstacle_max_dist=0.2, feasible_height=0.97, prob_sampling_feasible=0.5,
                  terminate_on_collision=True, terminate_on_battery=False, randomize_side=True,
-                 seed=None):
-        self.task = task
-        self.n_resets = 0
+                 eval=False, seed=None):
         # Physical Constants
         self.gravity = 9.8
         self.masscart = 1.0
@@ -115,6 +113,11 @@ class CartPoleContObsEnv(gym.Env):
         self.battery_consumption = 0.075
         self.min_action = -1.0
         self.max_action = 1.0
+
+        self.task = task
+        self.name = task if name == "" else name
+        self.eval_env = eval
+        self.n_resets = 0
 
         # Obstacle spec
         self.obstacle_min_width = obstacle_min_w
@@ -177,7 +180,7 @@ class CartPoleContObsEnv(gym.Env):
 
     @property
     def monitoring_types(self):
-        return ['int', 'int', 'int', 'int',
+        return ['int', 'float', 'float', 'float',
                 'float', 'float', 'float', 'float', 'float', 'float',
                 'float', 'float', 'float', 'float', 'float', 'float']
 
@@ -267,7 +270,7 @@ class CartPoleContObsEnv(gym.Env):
         theta = theta + self.tau * theta_dot
         theta_dot = theta_dot + self.tau * thetaacc
 
-        self.last_state = self.state    # used for reward shaping with potential function
+        self.last_state = self.state  # used for reward shaping with potential function
         self.state = (x, x_dot, theta, theta_dot, battery, obst_l, obst_r, obst_h)
 
         self.done = bool(
@@ -313,7 +316,6 @@ class CartPoleContObsEnv(gym.Env):
             self.last_cont_spec = self.monitoring_specs[0]
             self.last_bool_spec = self.monitoring_specs[1]
 
-
     def compute_episode_robustness(self, episode, monitoring_spec):
         # compute robustness
         import rtamt
@@ -335,9 +337,9 @@ class CartPoleContObsEnv(gym.Env):
         """
         if self.done:
             if self.step_count <= self.max_episode_steps:
-                return - 1.0    # early termination: either collision, outside, falldown, battery
+                return - 1.0  # early termination: either collision, outside, falldown, battery
             elif self.is_feasible and abs(self.state[0] - self.x_target) <= self.x_target_tol:
-                return + 1.0    # successfully reach the target (when possible)
+                return + 1.0  # successfully reach the target (when possible)
             else:
                 return 0.0
         else:

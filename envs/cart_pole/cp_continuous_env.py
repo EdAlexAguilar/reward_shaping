@@ -59,7 +59,7 @@ class CartPoleContEnv(gym.Env):
         'video.frames_per_second': 50
     }
 
-    def __init__(self, task, x_limit=2.5, theta_limit=90, max_steps=200,
+    def __init__(self, task, name="", x_limit=2.5, theta_limit=90, max_steps=200,
                  x_target=0.0, x_target_tol=0.0, theta_target=0.0, theta_target_tol=24.0,
                  cart_min_initial_offset=1.2, cart_max_initial_offset=2.0,
                  terminate_on_battery=False, randomize_side=True,
@@ -83,8 +83,9 @@ class CartPoleContEnv(gym.Env):
         self.max_action = 1.0
 
         self.task = task
+        self.name = task if name == "" else name
         self.eval_env = eval
-        self.n_reset = 0
+        self.n_resets = 0
 
         # Initial condition
         # cart_offset:=distance between the center of the cart and origin
@@ -115,13 +116,12 @@ class CartPoleContEnv(gym.Env):
         # for rendering
         self.rew = 0.0
         self.ret = 0.0
-        self.safety_tot = 0.0
-        self.target_tot = 0.0
-        self.comfort_tot = 0.0
 
         # for evaluation
         self.episode = {v: [] for v in self.monitoring_variables}
         self.last_complete_episode = None
+        self.last_cont_spec = None
+        self.last_bool_spec = None
 
     @property
     def observation_space(self):
@@ -145,30 +145,35 @@ class CartPoleContEnv(gym.Env):
 
     @property
     def monitoring_variables(self):
-        return ['time', 'dist_target_x', 'dist_target_theta', 'x', 'theta', 'pole_x', 'pole_y']
+        return ['time', 'falldown', 'outside', 'dist_target_x', 'dist_target_theta', 'x', 'theta', 'pole_x', 'pole_y']
 
     @property
     def monitoring_types(self):
-        return ['int', 'float', 'float', 'float', 'float', 'float', 'float', 'float']
+        return ['int', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float']
 
     @property
-    def monitoring_spec(self):
-        # safety specs
+    def monitoring_specs(self):
+        # safety specs (continuous signals)
         no_falldown = f"always(abs(theta) <= {self.theta_threshold_radians})"
         no_outside = f"always(abs(x) <= {self.x_threshold})"
+        safety_requirements = f"({no_falldown}) and ({no_outside})"
+        # safety specs (boolean signals)
+        no_falldown_bool = f"always(falldown>=0.0)"
+        no_outside_bool = f"always(outside>=0.0)"
+        safety_requirements_bool = f"({no_falldown_bool}) and ({no_outside_bool})"
         # target spec
         target_requirements = f"eventually(always(dist_target_x <= {self.x_target_tol}))"
         balance_requirements = f"always(dist_target_theta <= {self.theta_target_tol})"
         # all together
         if self.task == 'balance':
-            safety_requirements = f"({no_falldown}) and ({no_outside})"
-            spec = f"({safety_requirements}) and ({balance_requirements})"
+            spec_cont = f"({safety_requirements}) and ({balance_requirements})"
+            spec_bool = f"({safety_requirements_bool}) and ({balance_requirements})"
         elif self.task == 'target':
-            safety_requirements = f"({no_falldown}) and ({no_outside})"
-            spec = f"({safety_requirements}) and ({balance_requirements}) and ({target_requirements})"
+            spec_cont = f"({safety_requirements}) and ({balance_requirements}) and ({target_requirements})"
+            spec_bool = f"({safety_requirements_bool}) and ({balance_requirements}) and ({target_requirements})"
         else:
             raise NotImplemented(f'no formal spec for task {self.task}')
-        return spec
+        return spec_cont, spec_bool
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
@@ -207,20 +212,21 @@ class CartPoleContEnv(gym.Env):
 
         self.rew = self.reward()
 
-        self.safety_tot = 0.0
-        self.target_tot = 0.0
-        self.comfort_tot = 0.0
-
         self._update_episode()  # update episode for monitoring
         return np.array(self.state), self.rew, self.done, {}
 
     def _update_episode(self):
         # compute monitoring variables
         x, theta = self.state[0], self.state[2]
+        falldown = -3.0 if abs(theta) > self.theta_threshold_radians else +3.0
+        outside = -3.0 if abs(x) > self.x_threshold else +3.0
+        x, theta = self.state[0], self.state[2]
         dist_target_x = abs(x - self.x_target)
         dist_target_theta = abs(theta - self.theta_target)
         # extend episode history
         self.episode['time'].append(self.step_count)
+        self.episode['falldown'].append(falldown)
+        self.episode['outside'].append(outside)
         self.episode['dist_target_x'].append(dist_target_x)
         self.episode['dist_target_theta'].append(dist_target_theta)
         self.episode['x'].append(x)
@@ -230,14 +236,16 @@ class CartPoleContEnv(gym.Env):
         # eventually store if done
         if self.done:
             self.last_complete_episode = self.episode
+            self.last_cont_spec = self.monitoring_specs[0]
+            self.last_bool_spec = self.monitoring_specs[1]
 
-    def compute_episode_robustness(self, episode, spec):
+    def compute_episode_robustness(self, episode, monitoring_spec):
         # compute robustness
         import rtamt
         spec = rtamt.STLSpecification()
         for v, t in zip(self.monitoring_variables, self.monitoring_types):
             spec.declare_var(v, f'{t}')
-        spec.spec = self.monitoring_spec
+        spec.spec = monitoring_spec
         spec.parse()
         # preprocess format, evaluate, post process
         robustness_trace = spec.evaluate(episode)
@@ -245,10 +253,22 @@ class CartPoleContEnv(gym.Env):
 
     def reward(self):
         """
-        Vanilla Reward - To be overridden
+        Vanilla Reward according to the task
+            - balance: while balancing get bonus
+            - target: if reach the target high bonus, else encourage balancing
         """
-        if abs(self.state[2]) < self.theta_threshold_radians:
-            return 1.0
+        if self.task == 'balance':
+            if abs(self.state[2]) < self.theta_threshold_radians:
+                return 1.0
+            else:
+                return 0.0
+        elif self.task == 'target':
+            if abs(self.state[0] - self.x_target) <= self.x_target_tol:
+                return 10.0
+            elif abs(self.state[2]) < self.theta_threshold_radians:
+                return 1.0
+            else:
+                return 0.0
         else:
             return 0.0
 
@@ -256,7 +276,7 @@ class CartPoleContEnv(gym.Env):
         """
         x_init is in [-max_offset,-min_offset] U [min_offset,max_offset]
         """
-        self.n_reset += 1
+        self.n_resets += 1
         self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(self.state_dim,)).astype(np.float32)
 
         self.steps_beyond_done = None
@@ -265,13 +285,9 @@ class CartPoleContEnv(gym.Env):
         self.rew = 0.0
         self.ret = 0.0
 
-        self.safety_tot = 0.0
-        self.target_tot = 0.0
-        self.comfort_tot = 0.0
-
         if self.eval_env:
             # initial position (x_init) is fixed
-            self.state[0] = (-1) ** self.n_reset * abs(self.state[0])  # if eval, then side is alternated
+            self.state[0] = (-1) ** self.n_resets * abs(self.state[0])  # if eval, then side is alternated
             start = self.cart_min_offset + (self.cart_max_offset - self.cart_min_offset) / 2.0
         else:
             # initial position (x_init) is in [-max_offset,-min_offset] U [min_offset,max_offset]
@@ -377,7 +393,7 @@ class CartPoleContEnv(gym.Env):
             self._pole_geom = pole
 
             # score
-            text = f'safety = {self.safety_tot:.2f}, target = {self.target_tot:.2f}, comfort: {self.comfort_tot:.2f}\n' \
+            text = f'episode: {self.n_resets},\n' \
                    f'time: {self.step_count}, reward = {self.rew:.2f}, return = {self.ret:.2f}'
             self.label = pyglet.text.Label(text, font_size=15, multiline=True, width=1000,
                                            x=5, y=20, anchor_x='left', anchor_y='bottom',
@@ -398,7 +414,7 @@ class CartPoleContEnv(gym.Env):
         self.carttrans.set_translation(cartx, carty)
         self.poletrans.set_rotation(-x[2])
 
-        self.label.text = f'safety = {self.safety_tot:.2f}, target = {self.target_tot:.2f}, comfort: {self.comfort_tot:.2f}\n' \
+        self.label.text = f'episode: {self.n_resets},\n' \
                           f'time: {self.step_count}, reward = {self.rew:.2f}, return = {self.ret:.2f}'
         return self.viewer.render(return_rgb_array=mode == 'rgb_array')
 

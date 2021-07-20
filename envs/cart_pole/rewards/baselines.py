@@ -25,7 +25,8 @@ class STLReward(gym.RewardWrapper):
 
     def reward_in_state(self, state):
         if self.env.done:
-            return self.env.compute_episode_robustness(self.env.last_complete_episode)
+            return self.env.compute_episode_robustness(self.env.last_complete_episode,
+                                                       self.env.last_cont_spec)
         else:
             return 0.0
 

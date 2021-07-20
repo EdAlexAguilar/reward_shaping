@@ -4,9 +4,8 @@ import yaml
 import os
 
 def make_log_dirs(args):
-    logdir_template = "logs/{}/{}_{}_terminate{}_{}"
-    logdir = pathlib.Path(logdir_template.format(args.env, args.task, args.reward, args.terminate_on_collision,
-                                                 int(time.time())))
+    logdir_template = "logs/{}/{}_{}_{}"
+    logdir = pathlib.Path(logdir_template.format(args.env, args.task, args.reward, int(time.time())))
     checkpointdir = logdir / "checkpoint"
     logdir.mkdir(parents=True, exist_ok=True)
     checkpointdir.mkdir(parents=True, exist_ok=True)
