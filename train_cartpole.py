@@ -18,17 +18,19 @@ def main(args):
     logdir, checkpointdir = make_log_dirs(args)
 
     # create training environment
-    train_env, env_params = make_env(args.env, args.task, logdir)
+    train_env, env_params = make_env(args.env, args.task, logdir, seed=args.seed)
     train_env = make_reward_wrap(args.env, train_env, args.reward)
     # create eval environments
     if args.task == 'random_height':
         # if conditional environment, create 2 distinct eval envs
-        eval_feas_env, _ = make_env(args.env, args.task, eval=True, prob_sampling_feasible=1.0, name='eval_feas')
-        eval_nfeas_env, _ = make_env(args.env, args.task, eval=True, prob_sampling_feasible=0.0, name='eval_not_feas')
+        eval_feas_env, _ = make_env(args.env, args.task, eval=True, prob_sampling_feasible=1.0, name='eval_feas',
+                                    seed=args.seed)
+        eval_nfeas_env, _ = make_env(args.env, args.task, eval=True, prob_sampling_feasible=0.0, name='eval_not_feas',
+                                     seed=args.seed)
         eval_envs = [eval_feas_env, eval_nfeas_env]
     else:
         # if normal environment without conditions, then eval env is the train env
-        eval_env, _ = make_env(args.env, args.task, logdir=None, eval=True, name='eval')
+        eval_env, _ = make_env(args.env, args.task, logdir=None, eval=True, name='eval', seed=args.seed)
         eval_envs = [eval_env]
 
     # create agent
@@ -79,5 +81,6 @@ if __name__ == "__main__":
     parser.add_argument("--reward", type=str, required=True)
     parser.add_argument("--algo", type=str, required=True, choices=['ppo', 'ppo_sde', 'sac'])
     parser.add_argument("--steps", type=int, default=1e6)
+    parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
     main(args)
