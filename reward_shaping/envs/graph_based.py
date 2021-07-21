@@ -14,7 +14,6 @@ from reward_shaping.envs.core import RewardFunction, RewardWrapper
 class GraphBasedReward(RewardFunction):
 
     def __init__(self, reward_of_interest: str):
-        self._reward_label = reward_of_interest
         self._graph = nx.DiGraph()
 
     def add_reward(self, label: str, reward_fn: RewardFunction):
@@ -41,7 +40,14 @@ class GraphBasedReward(RewardFunction):
 
     def _evaluate_graph(self, state, action, next_state):
         self._reset_graph()
-        self._evaluate_node(node=self._reward_label, state=state, action=action, next_state=next_state)
+        top_level_nodes = [v for v in self._graph if self._graph.out_degree(v) == 0]
+        for v in top_level_nodes:
+            self._evaluate_node(node=v, state=state, action=action, next_state=next_state)
+
+    def _compute_rewards(self) -> float:
+        enabled_nodes = filter(lambda v: v['enabled'], self._graph.nodes.values())
+        rewards = sum(v['score'] for v in enabled_nodes)
+        return rewards
 
     def _reset_graph(self):
         for node in self._graph.nodes:
@@ -53,13 +59,9 @@ class GraphBasedReward(RewardFunction):
 
     def __call__(self, state, action=None, next_state=None) -> float:
         self._evaluate_graph(state=state, action=action, next_state=next_state)
-        nodes_in_hierarchy = nx.descendants(self._graph.reverse(), source=self._reward_label)
-        nodes_in_hierarchy.add(self._reward_label)
-        reward = 0
-        for v in nodes_in_hierarchy:
-            if self._graph.nodes[v]['enabled']:
-                reward += self._graph.nodes[v]['score']
+        reward = self._compute_rewards()
         return reward
+
 
 
 if __name__ == '__main__':
@@ -79,7 +81,7 @@ if __name__ == '__main__':
     graph.add_dependency(source='S_fall', target='H_nfeas')
     graph.add_dependency(source='H_feas', target='T_orig')
     graph.add_dependency(source='H_nfeas', target='T_bal')
-    graph.add_dependency(source='T_orig', target='T_bal')
+    #graph.add_dependency(source='T_orig', target='T_bal')
 
     task = "random_height"
     env_config = pathlib.Path(f"cart_pole_obst/tasks/{task}.yml")
