@@ -25,12 +25,12 @@ class GraphBasedReward(RewardFunction):
         if not nx.is_directed_acyclic_graph(self._graph):
             raise ValueError(f'Dependency {source}->{target} introduced cycle.')
 
-    def _evaluate_graph(self, node: str, state, action, next_state) -> bool:
+    def _evaluate_node(self, node: str, state, action, next_state) -> bool:
         if 'enabled' in self._graph.nodes[node]:
             return self._graph.nodes[node]['enabled']
         else:
             predecessors = self._graph.predecessors(node)
-            is_enabled = all([self._evaluate_graph(pred, state, action, next_state) for pred in predecessors])
+            is_enabled = all([self._evaluate_node(pred, state, action, next_state) for pred in predecessors])
             reward_fn = self._graph.nodes[node]['reward_fn']
             score = reward_fn(state, action, next_state)
             is_satisfied = score > 0
@@ -38,6 +38,10 @@ class GraphBasedReward(RewardFunction):
             nx.set_node_attributes(self._graph, {node: is_enabled}, 'enabled')
             nx.set_node_attributes(self._graph, {node: score}, 'score')
             return is_enabled
+
+    def _evaluate_graph(self, state, action, next_state):
+        self._reset_graph()
+        self._evaluate_node(node=self._reward_label, state=state, action=action, next_state=next_state)
 
     def _reset_graph(self):
         for node in self._graph.nodes:
@@ -48,14 +52,15 @@ class GraphBasedReward(RewardFunction):
                 attributes.pop('enabled')
 
     def __call__(self, state, action=None, next_state=None) -> float:
-        self._reset_graph()
-        is_enabled = self._evaluate_graph(node=self._reward_label, state=state, action=action, next_state=next_state)
-        if is_enabled:
-            nodes_in_hierarchy = nx.descendants(self._graph.reverse(), source=self._reward_label)
-            nodes_in_hierarchy.add(self._reward_label)
-            return sum(self._graph.nodes[v]['score'] for v in nodes_in_hierarchy)
-        else:
-            return 0
+        self._evaluate_graph(state=state, action=action, next_state=next_state)
+        nodes_in_hierarchy = nx.descendants(self._graph.reverse(), source=self._reward_label)
+        nodes_in_hierarchy.add(self._reward_label)
+        reward = 0
+        for v in nodes_in_hierarchy:
+            if self._graph.nodes[v]['enabled']:
+                reward += self._graph.nodes[v]['score']
+        return reward
+
 
 if __name__ == '__main__':
     graph = GraphBasedReward(reward_of_interest='T_bal')
