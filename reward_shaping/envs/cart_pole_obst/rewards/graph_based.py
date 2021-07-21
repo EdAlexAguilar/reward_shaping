@@ -1,8 +1,8 @@
-from envs.cart_pole_obst.rewards.subtask_rewards import ContinuousCollisionReward, TaskIndicator, \
+from reward_shaping.envs import ContinuousCollisionReward, TaskIndicator, \
     ContinuousFalldownReward, ContinuousOutsideReward, NormalizedReward, ReachTargetReward, BalanceReward, \
     CheckOvercomingFeasibility, CollisionReward, FalldownReward, OutsideReward
-from hierarchy.graph import HierarchicalGraph
-from hierarchy.graph_hierarchical_reward import HierarchicalGraphRewardWrapper
+from reward_shaping.hierarchy import HierarchicalGraph
+from reward_shaping.hierarchy import HierarchicalGraphRewardWrapper
 import numpy as np
 
 
@@ -34,12 +34,7 @@ class GraphWithContinuousScore(HierarchicalGraphRewardWrapper):
         fun = ContinuousOutsideReward(x_limit=env.x_threshold)
         min_r_state = np.array([env.x_threshold, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
         max_r_state = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-        min_r, max_r = fun(min_r_sta
-
-
-
-
-te), fun(max_r_state)
+        min_r, max_r = fun(min_r_state), fun(max_r_state)
         labels.append("S_exit")
         score_functions.append(NormalizedReward(fun, min_r, max_r))
         indicators.append(TaskIndicator(fun))

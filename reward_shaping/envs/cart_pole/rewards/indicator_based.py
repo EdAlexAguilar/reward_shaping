@@ -1,9 +1,9 @@
 import numpy as np
 
-from hierarchy.set_hierarchical_reward import HierarchicalRewardWrapper
-from envs.cart_pole_obst.rewards.subtask_rewards import CollisionReward, FalldownReward, OutsideReward, \
+from reward_shaping.hierarchy import HierarchicalRewardWrapper
+from reward_shaping.envs import CollisionReward, FalldownReward, OutsideReward, \
     SparseReachTargetReward, ProgressReachTargetReward
-from envs.cart_pole_obst.rewards.subtask_rewards import NormalizedReward, TaskIndicator, ReachTargetReward, BalanceReward
+from reward_shaping.envs import NormalizedReward, TaskIndicator, ReachTargetReward, BalanceReward
 
 
 class IndicatorWithContinuousTargetReward(HierarchicalRewardWrapper):

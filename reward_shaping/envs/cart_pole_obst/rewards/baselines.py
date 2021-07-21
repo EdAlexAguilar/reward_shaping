@@ -1,9 +1,6 @@
 import gym
 import numpy as np
 
-from envs.cart_pole_obst.rewards.subtask_rewards import CollisionReward, ReachTargetReward, SparseReachTargetReward, \
-    BalanceReward, NormalizedReward, FalldownReward
-
 
 class ContinuousReward(gym.RewardWrapper):
     """

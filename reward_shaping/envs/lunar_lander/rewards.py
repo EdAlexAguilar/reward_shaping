@@ -1,6 +1,6 @@
 from typing import Dict, Tuple
 
-from envs.core import RewardFunction
+from reward_shaping.envs import RewardFunction
 
 
 class MinimizeDistanceToLandingArea(RewardFunction):

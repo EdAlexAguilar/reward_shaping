@@ -4,9 +4,8 @@ import yaml
 from stable_baselines3.common.env_checker import check_env
 
 # define problem
-from envs.cart_pole.cp_continuous_env import CartPoleContEnv
-from envs.cart_pole.rewards import get_reward
-from envs.cart_pole_obst.rewards.baselines import SparseNoFalldownReward
+from reward_shaping.envs.cart_pole.cp_continuous_env import CartPoleContEnv
+from reward_shaping.envs.cart_pole.rewards import get_reward
 
 
 def main(reward):

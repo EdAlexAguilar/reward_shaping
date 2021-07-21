@@ -1,4 +1,4 @@
-from envs.cart_pole_obst import cp_continuousobstacle_env
+from reward_shaping.envs.cart_pole_obst import cp_continuousobstacle_env
 import ppo_mp as ppo
 import numpy as np
 import multiprocessing as mp

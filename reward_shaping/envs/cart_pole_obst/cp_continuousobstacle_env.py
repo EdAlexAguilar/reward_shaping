@@ -230,7 +230,11 @@ class CartPoleContObsEnv(gym.Env):
         err_msg = "%r (%s) invalid" % (action, type(action))
         assert self.action_space.contains(action), err_msg
         self.step_count += 1
-        x, x_dot, theta, theta_dot, battery, obst_l, obst_r, obst_h = self.state
+        x, x_dot, theta, theta_dot, battery, obst_l, obst_r, obst_h = tuple([
+            self.state[k]
+            for k
+            in 'x,x_vel,theta,theta_vel,battery,obstacle_left,obstacle_right,obstacle_height'.split(',')
+        ])
 
         force = float(action * self.force_mag)
         battery -= float(abs(action) * self.battery_consumption)
@@ -250,7 +254,7 @@ class CartPoleContObsEnv(gym.Env):
         collision = self.obstacle.intersect(x, theta)
 
         self.last_state = self.state
-        self.state = (x, x_dot, theta, theta_dot, battery, obst_l, obst_r, obst_h)
+        #self.state = (x, x_dot, theta, theta_dot, battery, obst_l, obst_r, obst_h)
 
         self.done = bool(
             abs(x) > self.x_threshold
@@ -272,11 +276,23 @@ class CartPoleContObsEnv(gym.Env):
         self.comfort_tot = 0.0
 
         self._update_episode()  # update episode for monitoring
-        return np.array(self.state), self.rew, self.done, {}
+        state = dict(
+            x=x,
+            x_vel=x_dot,
+            theta=theta,
+            theta_vel=theta_dot,
+            battery=battery,
+            obstacle_left=obst_l,
+            obstacle_right=obst_r,
+            obstacle_height=obst_h,
+            collision=collision
+        )
+        self.state = state
+        return state, self.rew, self.done, {}
 
     def _update_episode(self):
         # compute monitoring variables
-        x, theta = self.state[0], self.state[2]
+        x, theta = self.state['x'], self.state['theta']
         collision = -3.0 if self.obstacle.intersect(x, theta) else +3.0
         falldown = -3.0 if abs(theta) > self.theta_threshold_radians else +3.0
         outside = -3.0 if abs(x) > self.x_threshold else +3.0
@@ -333,7 +349,7 @@ class CartPoleContObsEnv(gym.Env):
         if self.done:
             if self.step_count <= self.max_episode_steps:
                 return - 1.0    # early termination: either collision, outside, falldown, battery
-            elif abs(self.state[0] - self.x_target) <= self.x_target_tol:
+            elif abs(self.state['x'] - self.x_target) <= self.x_target_tol:
                 return + 1.0    # successfully reach the target
             else:
                 return 0.0
@@ -365,14 +381,14 @@ class CartPoleContObsEnv(gym.Env):
         # initial position (x_init) is in [-max_offset,-min_offset] U [min_offset,max_offset]
         start = self.np_random.uniform(low=self.cart_min_offset, high=self.cart_max_offset)
         if self.randomize_side:
-            if self.state[0] > 0:
-                self.state[0] = start
+            if self.state['x'] > 0:
+                self.state['x'] = start
             else:
-                self.state[0] = -start
+                self.state['x'] = -start
         else:
-            self.state[0] = start
+            self.state['x'] = start
         # battery state
-        self.state[4] = 1  # Battery Starts at 100%
+        self.state['battery'] = 1  # Battery Starts at 100%
         self.step_count = 0
         # sample obstacle parameters: height, width, initial distance from cart
         if self.task == "random_height":
@@ -392,23 +408,36 @@ class CartPoleContObsEnv(gym.Env):
         # distance between cart's initial position (x_init) and the obstacle center
         distance_obst_center_to_cart = self.np_random.uniform(low=self.obstacle_min_dist + obstacle_width / 2,
                                                               high=self.obstacle_max_dist + obstacle_width / 2)
-        if self.state[0] > 0:
-            left_x = self.state[0] - distance_obst_center_to_cart - obstacle_width / 2.0
+        if self.state['x'] > 0:
+            left_x = self.state['x'] - distance_obst_center_to_cart - obstacle_width / 2.0
         else:
-            left_x = self.state[0] + distance_obst_center_to_cart - obstacle_width / 2.0
+            left_x = self.state['x'] + distance_obst_center_to_cart - obstacle_width / 2.0
         axle_y = self.axle_y
         polelen = self.pole_length
         obstacle_y = axle_y + obstacle_height  # this is the bottom y of the obstacle
         self.obstacle = Obstacle(axle_y, polelen, left_x, obstacle_y, obstacle_width, obstacle_height)
         # store obstacle position into the state
-        self.state[5] = self.obstacle.left_x
-        self.state[6] = self.obstacle.right_x
-        self.state[7] = obstacle_height
+        self.state['obstacle_left'] = self.obstacle.left_x
+        self.state['obstacle_right'] = self.obstacle.right_x
+        self.state['obstacle_height'] = obstacle_height
         # store initial state to check obstacle overcoming
-        self.initial_state = np.array(self.state)
+        self.initial_state = self.state
         # reset episode
         self.episode = {v: [] for v in self.monitoring_variables}
-        return np.array(self.state)
+
+        state = dict(
+            x=self.state['x'],
+            x_vel=self.state['x_vel'],
+            theta=0,
+            theta_vel=0,
+            battery=1,
+            obstacle_left=self.obstacle.left_x,
+            obstacle_right=self.obstacle.right_x,
+            obstacle_height=obstacle_height,
+            collision=0
+        )
+        self.state = state
+        return state
 
     def set_obstacle_width_height(self, width, height):
         self.obstacle_max_width = width
@@ -419,7 +448,7 @@ class CartPoleContObsEnv(gym.Env):
         Check if the current state is on the opposite side of the obstacle w.r.t. the starting position.
         In particular, we check if the sides are different.
         """
-        return self.obstacle.on_left_side(self.initial_state[0]) != self.obstacle.on_left_side(self.state[0])
+        return self.obstacle.on_left_side(self.initial_state['x']) != self.obstacle.on_left_side(self.state['x'])
 
     def render(self, mode='human', end=False):
         screen_width = 600
@@ -534,15 +563,15 @@ class CartPoleContObsEnv(gym.Env):
         l, r, t, b = -polewidth / 2, polewidth / 2, polelen - polewidth / 2, -polewidth / 2
         pole.v = [(l, b), (l, t), (r, t), (r, b)]
 
-        x = self.state
-        cartx = x[0] * scale + screen_width / 2.0  # MIDDLE OF CART
+
+        cartx = self.state['x'] * scale + screen_width / 2.0  # MIDDLE OF CART
         self.carttrans.set_translation(cartx, carty)
-        self.poletrans.set_rotation(-x[2])
+        self.poletrans.set_rotation(-self.state['x'])
 
         # note: translate obstacle center
         # new center:   x: left_x + obstacle_width
         #               y: cart_center_y + pole_length + obstacle_height/2
-        obstx = (self.state[5] + obstacle_width / 2.0) * scale + screen_width / 2.0
+        obstx = (self.state['obstacle_left'] + obstacle_width / 2.0) * scale + screen_width / 2.0
         obsty = (self.obstacle.bottom_y + 0.1 / 2.0) * scale
         self.obsttrans.set_translation(obstx, obsty)
 

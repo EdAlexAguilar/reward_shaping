@@ -1,10 +1,7 @@
-import time
-import numpy as np
 import gym
 
 from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import CheckpointCallback
-from argparse import Namespace
 import callbacks
 from utils import make_log_dirs, make_env
 

@@ -3,7 +3,7 @@ from typing import Tuple
 
 import numpy as np
 
-from envs.core import RewardFunction
+from reward_shaping.envs.core import RewardFunction
 
 
 class CollisionReward(RewardFunction):

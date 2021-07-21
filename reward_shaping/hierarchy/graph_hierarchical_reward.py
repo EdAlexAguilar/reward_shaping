@@ -1,10 +1,8 @@
-from typing import Dict, List, Tuple
-
 import numpy as np
 import gym
 
-from envs.cart_pole.cp_continuous_env import CartPoleContEnv
-from hierarchy.graph import HierarchicalGraph
+from reward_shaping.envs.cart_pole.cp_continuous_env import CartPoleContEnv
+from reward_shaping.hierarchy import HierarchicalGraph
 
 C = {0: {0: 'grey',     # not sat and not enabled
          1: 'red'},     # not sat and enabled (ie, parents sat, node unsat)

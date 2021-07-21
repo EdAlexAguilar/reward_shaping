@@ -4,9 +4,8 @@ import yaml
 from stable_baselines3.common.env_checker import check_env
 
 # define problem
-from envs.cart_pole_obst.cp_continuousobstacle_env import CartPoleContObsEnv
-from envs.cart_pole_obst.rewards import get_reward
-import numpy as np
+from reward_shaping.envs.cart_pole_obst.cp_continuousobstacle_env import CartPoleContObsEnv
+from reward_shaping.envs import get_reward
 
 
 def main(reward):

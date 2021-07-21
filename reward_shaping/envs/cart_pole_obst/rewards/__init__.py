@@ -1,7 +1,7 @@
 import gym
 
-from envs.cart_pole_obst.rewards.baselines import ContinuousReward, SparseReward, STLReward
-from envs.cart_pole_obst.rewards.graph_based import GraphWithContinuousScore, PotentialGraphWithContinuousScore, \
+from reward_shaping.envs import ContinuousReward, SparseReward, STLReward
+from reward_shaping.envs import GraphWithContinuousScore, PotentialGraphWithContinuousScore, \
     GraphWithContinuousTargetAndDiscreteSafety, PotentialGraphWithContinuousTargetAndDiscreteSafety
 
 _registry = {}
