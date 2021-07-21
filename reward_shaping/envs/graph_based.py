@@ -14,17 +14,19 @@ from reward_shaping.envs.core import RewardFunction, RewardWrapper
 
 class GraphBasedReward(RewardFunction):
 
-    def __init__(self, nodes: Dict[str, RewardFunction] = None, topology: Dict[str, List[str]] = None):
+    def __init__(self):
         self._graph = nx.DiGraph()
-        if topology and not nodes:
-            raise ValueError('If a topology is provided, nodes must also be provided.')
-        if nodes:
-            for node, reward_fn in nodes.items():
-                self.add_reward(node, reward_fn)
+
+    @staticmethod
+    def from_collections(nodes: Dict[str, RewardFunction], topology: Dict[str, List[str]] = None):
+        graph = GraphBasedReward()
+        for node, reward_fn in nodes.items():
+            graph.add_reward(node, reward_fn)
         if topology:
-            self._graph.add_edges_from(topology)
-            if not nx.is_directed_acyclic_graph(self._graph):
-                raise ValueError('Graph is not a DAG.')
+            for source, targets in topology.items():
+                for target in targets:
+                    graph.add_dependency(source, target)
+        return graph
 
     def add_reward(self, label: str, reward_fn: RewardFunction):
         self._graph.add_node(label, reward_fn=reward_fn)
@@ -99,7 +101,7 @@ if __name__ == '__main__':
         'T_orig': ['T_bal'],
     }
 
-    graph_reward = GraphBasedReward(nodes=rewards, topology=topology)
+    graph_reward = GraphBasedReward.from_collections(nodes=rewards, topology=topology)
     env = make_env()
     env = RewardWrapper(env, reward_fn=graph_reward)
     env.reset()
