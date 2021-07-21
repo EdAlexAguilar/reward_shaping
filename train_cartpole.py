@@ -57,7 +57,7 @@ def train(args):
     model.learn(total_timesteps=train_params['steps'],
                 callback=callbacks_list)
     # evaluation
-    for env in [eval_feas_env, eval_nfeas_env]:
+    for env in eval_envs:
         obs = env.reset()
         env.render()
         rewards = []
