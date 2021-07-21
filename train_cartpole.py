@@ -1,9 +1,11 @@
 import gym
+from gym.wrappers import Monitor
 
 from callbacks import RobustMonitoringCallback, VideoRecorderCallback
-from stable_baselines3.common.callbacks import CheckpointCallback, EveryNTimesteps
+from stable_baselines3.common.callbacks import CheckpointCallback, EveryNTimesteps, EvalCallback
 import argparse as parser
 
+from hierarchy.graph_hierarchical_reward import HierarchicalGraphRewardWrapper
 from utils import make_agent, make_reward_wrap, make_log_dirs, make_env
 
 
@@ -20,38 +22,43 @@ def train(args):
     # create training environment
     train_env, env_params = make_env(args.env, args.task, logdir, seed=args.seed)
     train_env = make_reward_wrap(args.env, train_env, args.reward)
+    if isinstance(train_env, HierarchicalGraphRewardWrapper):
+        import matplotlib.pyplot as plt
+        train_env.hierarchy.render()
+        plt.savefig("hierarchy.pdf")
+
     # create eval environments
     if args.task == 'random_height':
         # if conditional environment, create 2 distinct eval envs
-        eval_feas_env, _ = make_env(args.env, args.task, eval=True, prob_sampling_feasible=1.0, name='eval_feas',
-                                    seed=args.seed)
-        eval_nfeas_env, _ = make_env(args.env, args.task, eval=True, prob_sampling_feasible=0.0, name='eval_not_feas',
-                                     seed=args.seed)
-        eval_envs = [eval_feas_env, eval_nfeas_env]
+        eval_env, _ = make_env(args.env, args.task, eval=True, prob_sampling_feasible=0.5, seed=args.seed)
+        eval_envs = [eval_env]
     else:
         # if normal environment without conditions, then eval env is the train env
-        eval_env, _ = make_env(args.env, args.task, logdir=None, eval=True, name='eval', seed=args.seed)
+        eval_env, _ = make_env(args.env, args.task, logdir=None, eval=True, seed=args.seed)
         eval_envs = [eval_env]
 
     # create agent
     model = make_agent(args.env, train_env, args.algo, logdir)
 
     # prepare for training
-    train_params = {'steps': args.steps, 'eval_every': int(args.steps / 10), 'rob_eval_every': 1000,
-                    'checkpoint_every': int(args.steps / 10), 'n_eval_episodes': 2}
+    train_params = {'steps': args.steps, 'video_every': int(args.steps / 10), 'n_recorded_episodes': 5,
+                    'eval_every': min(10000, int(args.steps / 10)), 'n_eval_episodes': 5,
+                    'checkpoint_every': int(args.steps / 10)}
     # callbacks
     callbacks_list = []
     for eval_env in eval_envs:
-        eval_env = make_reward_wrap(args.env, eval_env, args.reward)
-        eval_env = gym.wrappers.Monitor(eval_env, logdir / "videos")
-        video_cb = VideoRecorderCallback(eval_env, render_freq=train_params['eval_every'],
-                                         n_eval_episodes=train_params['n_eval_episodes'])
+        video_env = Monitor(make_reward_wrap(args.env, eval_env, args.reward), logdir / "videos")
+        video_cb = VideoRecorderCallback(video_env, render_freq=train_params['video_every'],
+                                         n_eval_episodes=train_params['n_recorded_episodes'])
         callbacks_list.append(video_cb)
+        stl_env = make_reward_wrap(args.env, eval_env, 'bool_stl')
+        eval_cb = EvalCallback(stl_env, eval_freq=train_params['eval_every'],
+                               n_eval_episodes=train_params['n_eval_episodes'],
+                               deterministic=True, render=False)
+        callbacks_list.append(eval_cb)
     checkpoint_callback = CheckpointCallback(save_freq=train_params['checkpoint_every'], save_path=checkpointdir,
                                              name_prefix='model')
-    monitoring_callback = EveryNTimesteps(n_steps=train_params['rob_eval_every'], callback=RobustMonitoringCallback())
     callbacks_list.append(checkpoint_callback)
-    callbacks_list.append(monitoring_callback)
 
     # train
     model.learn(total_timesteps=train_params['steps'],

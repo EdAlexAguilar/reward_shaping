@@ -1,5 +1,6 @@
 import pathlib
 
+import matplotlib.pyplot as plt
 import yaml
 from stable_baselines3.common.env_checker import check_env
 
@@ -14,8 +15,8 @@ from utils import make_env
 
 def main(reward):
     env = "cart_pole_obst"
-    task = "random_height"
-    env, env_params = make_env(env, task, logdir=None, seed=0, prob_sampling_feasible=.0)
+    task = "fixed_height"
+    env, env_params = make_env(env, task, logdir=None, seed=0, prob_sampling_feasible=1.0)
     env = get_reward(reward)(env)
     if isinstance(env, HierarchicalGraphRewardWrapper):
         env.hierarchy.render()

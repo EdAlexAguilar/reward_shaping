@@ -59,7 +59,7 @@ class CartPoleContEnv(gym.Env):
         'video.frames_per_second': 50
     }
 
-    def __init__(self, task, name="", x_limit=2.5, theta_limit=90, max_steps=200,
+    def __init__(self, task, x_limit=2.5, theta_limit=90, max_steps=200,
                  x_target=0.0, x_target_tol=0.0, theta_target=0.0, theta_target_tol=24.0,
                  cart_min_initial_offset=1.2, cart_max_initial_offset=2.0,
                  terminate_on_battery=False, randomize_side=True,
@@ -83,7 +83,6 @@ class CartPoleContEnv(gym.Env):
         self.max_action = 1.0
 
         self.task = task
-        self.name = task if name == "" else name
         self.eval_env = eval
         self.n_resets = 0
 

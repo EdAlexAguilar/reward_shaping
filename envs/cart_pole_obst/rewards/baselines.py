@@ -107,3 +107,38 @@ class STLReward(gym.RewardWrapper):
         self.rew = 0.0
         self.ret = 0.0
         return obs
+
+
+class BoolSTLReward(gym.RewardWrapper):
+    """
+    as stl reward but safety properties are evaluated as boolean signal
+    """
+
+    def __init__(self, env):
+        super().__init__(env)
+        self.rew = 0.0
+        self.ret = 0.0
+
+    def reward(self, reward):
+        # note: the need of this overwriting fo rew/ret is purely for rendering purposes
+        # in this way, the env.render method with render the correct reward
+        self.rew = self.reward_in_state(self.state)
+        self.ret += self.rew
+        self.env.rew = self.rew
+        self.env.ret = self.ret
+        return self.rew
+
+    def reward_in_state(self, state):
+        if self.env.done:
+            # if done, then last_complete_episode will contain the whole episode we need to compute robustness
+            # moreover, last_cont_spec will contain the stl spec of the episode according to the obstacle position
+            return self.env.compute_episode_robustness(self.env.last_complete_episode,
+                                                       self.env.last_bool_spec)
+        else:
+            return 0.0
+
+    def reset(self):
+        obs = super(BoolSTLReward, self).reset()
+        self.rew = 0.0
+        self.ret = 0.0
+        return obs

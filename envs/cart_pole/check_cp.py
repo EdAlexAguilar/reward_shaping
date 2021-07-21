@@ -10,7 +10,7 @@ from utils import make_env
 
 def main(reward):
     env = "cart_pole"
-    task = "balance"
+    task = "target"
     env, _ = make_env(env, task, logdir=None, eval=True)
     env = get_reward(reward)(env)
     if isinstance(env, HierarchicalGraphRewardWrapper):
@@ -32,7 +32,7 @@ def main(reward):
             rob = env.compute_episode_robustness(env.last_complete_episode, env.last_bool_spec)
             print(f"reward: {tot_reward:.3f}, robustness: {rob:.3f}")
             tot_reward = 0.0
-            input()
+        input()
     try:
         check_env(env)
         result = True
