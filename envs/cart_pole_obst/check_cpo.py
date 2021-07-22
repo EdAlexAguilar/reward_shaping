@@ -35,7 +35,7 @@ def main(reward):
         if done:
             rewards.append(tot_reward)
             obs = env.reset()
-            rob = env.compute_episode_robustness(env.last_complete_episode, env.last_cont_spec)
+            rob = env.compute_episode_robustness(env.last_complete_episode, env.last_eval_spec)
             print(f"reward: {tot_reward:.3f}, robustness: {rob:.3f}")
             tot_reward = 0.0
             input()

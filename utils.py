@@ -25,6 +25,9 @@ def make_base_env(env, env_params={}):
     elif env == "bipedal_walker":
         from envs.bipedal_walker.bipedal_walker import BipedalWalker
         env = BipedalWalker(**env_params)
+    elif env == "highway":
+        from envs.highway.highway_env import CustomHighwayEnv
+        env = CustomHighwayEnv(**env_params)
     else:
         raise NotImplementedError(f"not implemented env for {env}")
     return env
@@ -69,6 +72,9 @@ def make_agent(env_name, env, rl_algo, logdir=None):
     elif algo == "sac":
         from stable_baselines3 import SAC
         model = SAC("MlpPolicy", env, verbose=1, tensorboard_log=logdir, **algo_params)
+    elif algo == "dqn":
+        from stable_baselines3 import DQN
+        model = DQN("MlpPolicy", env, verbose=1, tensorboard_log=logdir, **algo_params)
     else:
         raise NotImplementedError()
     # copy params in logdir (optional)
@@ -85,6 +91,9 @@ def make_reward_wrap(env_name, env, reward):
     elif env_name == "cart_pole_obst":
         from envs.cart_pole_obst.rewards import get_reward
         env = get_reward(reward)(env)
+    elif env_name == "highway":
+        # todo: define rewards
+        pass
     else:
-        raise NotImplementedError()
+        raise NotImplementedError(f'{reward} not implemented for {env_name}')
     return env
