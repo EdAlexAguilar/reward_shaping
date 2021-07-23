@@ -88,8 +88,6 @@ def make_env():
 
 if __name__ == '__main__':
 
-    make_indicator = lambda fn, thresh: RewardThresholdIndicator(reward_fn=fn, threshold=thresh)
-
     rewards = {
         'S_coll': RewardThresholdIndicator(reward_fns.CollisionReward(no_collision_bonus=10), threshold=0),
         'S_fall': RewardThresholdIndicator(reward_fns.ContinuousFalldownReward(theta_limit=5), threshold=0),
