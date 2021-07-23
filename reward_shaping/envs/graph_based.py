@@ -1,5 +1,6 @@
 import pathlib
-from typing import Dict, List
+from abc import ABC, abstractmethod
+from typing import Dict, List, Tuple
 
 import numpy as np
 import yaml
@@ -10,6 +11,7 @@ from reward_shaping.envs.cart_pole_obst import reward_fns
 import networkx as nx
 
 from reward_shaping.envs.core import RewardFunction, RewardWrapper
+from reward_shaping.envs.satisfaction_functions import IndicatorRewardFunction, RewardThresholdIndicator
 
 
 class GraphBasedReward(RewardFunction):
@@ -18,17 +20,17 @@ class GraphBasedReward(RewardFunction):
         self._graph = nx.DiGraph()
 
     @staticmethod
-    def from_collections(nodes: Dict[str, RewardFunction], topology: Dict[str, List[str]] = None):
+    def from_collections(nodes: Dict[str, IndicatorRewardFunction], topology: Dict[str, List[str]] = None):
         graph = GraphBasedReward()
         for node, reward_fn in nodes.items():
-            graph.add_reward(node, reward_fn)
+            graph.add_node(node, reward_fn)
         if topology:
             for source, targets in topology.items():
                 for target in targets:
                     graph.add_dependency(source, target)
         return graph
 
-    def add_reward(self, label: str, reward_fn: RewardFunction):
+    def add_node(self, label: str, reward_fn: IndicatorRewardFunction):
         self._graph.add_node(label, reward_fn=reward_fn)
 
     def add_dependency(self, source: str, target: str):
@@ -42,9 +44,9 @@ class GraphBasedReward(RewardFunction):
         else:
             predecessors = self._graph.predecessors(node)
             is_enabled = all([self._evaluate_node(pred, state, action, next_state) for pred in predecessors])
-            reward_fn = self._graph.nodes[node]['reward_fn']
+            reward_fn: IndicatorRewardFunction = self._graph.nodes[node]['reward_fn']
             score = reward_fn(state, action, next_state)
-            is_satisfied = score > 0
+            is_satisfied = reward_fn.is_satisfied(state, action, next_state)
             is_enabled = is_enabled and is_satisfied
             nx.set_node_attributes(self._graph, {node: is_enabled}, 'enabled')
             nx.set_node_attributes(self._graph, {node: score}, 'score')
@@ -85,13 +87,16 @@ def make_env():
     return env
 
 if __name__ == '__main__':
+
+    make_indicator = lambda fn, thresh: RewardThresholdIndicator(reward_fn=fn, threshold=thresh)
+
     rewards = {
-        'S_coll': reward_fns.CollisionReward(no_collision_bonus=10),
-        'S_fall': reward_fns.ContinuousFalldownReward(theta_limit=5),
-        'H_nfeas': reward_fns.Indicator(reward_fns.CheckOvercomingFeasibility(obstacle_y=1, axle_y=1, feasible_height=5), negate=True),
-        'H_feas': reward_fns.Indicator(reward_fns.CheckOvercomingFeasibility(obstacle_y=1, axle_y=1, feasible_height=5)),
-        'T_orig': reward_fns.ReachTargetReward(x_target=0, x_target_tol=2),
-        'T_bal': reward_fns.BalanceReward(theta_target=0, theta_target_tol=0.1)
+        'S_coll': RewardThresholdIndicator(reward_fns.CollisionReward(no_collision_bonus=10), threshold=0),
+        'S_fall': RewardThresholdIndicator(reward_fns.ContinuousFalldownReward(theta_limit=5), threshold=0),
+        'H_nfeas':RewardThresholdIndicator(reward_fns.CheckOvercomingFeasibility(obstacle_y=1, axle_y=1, feasible_height=5), threshold=0, comparator=lambda a, b: a <= b),
+        'H_feas': RewardThresholdIndicator(reward_fns.CheckOvercomingFeasibility(obstacle_y=1, axle_y=1, feasible_height=5), threshold=0),
+        'T_orig': RewardThresholdIndicator(reward_fns.ReachTargetReward(x_target=0, x_target_tol=2), threshold=0),
+        'T_bal': RewardThresholdIndicator(reward_fns.BalanceReward(theta_target=0, theta_target_tol=0.1), threshold=0)
     }
     topology = {
         'S_coll': ['H_feas', 'H_nfeas'],
