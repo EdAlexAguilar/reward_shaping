@@ -1,5 +1,6 @@
 gym[box2d]
 tensorflow
+pyglet
 h5py
 matplotlib
 numpy
@@ -8,3 +9,4 @@ moviepy
 PyYAML
 git+https://github.com/nickovic/rtamt.git
 networkx
+highway-env

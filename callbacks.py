@@ -12,6 +12,8 @@ from stable_baselines3.common.logger import Video
 import rtamt
 import numpy as np
 
+from envs.monitorable_env import MonitorableEnv
+
 
 class VideoRecorderCallback(BaseCallback):
     def __init__(self, eval_env: gym.Env, render_freq: int, n_eval_episodes: int = 1, deterministic: bool = True):
@@ -111,13 +113,12 @@ class RobustMonitoringCallback(BaseCallback):
     """
     def _on_step(self) -> bool:
         env = self.training_env.envs[0]
+        assert isinstance(env, MonitorableEnv)
         last_episode = env.last_complete_episode
-        last_cont_spec = env.last_cont_spec
-        last_bool_spec = env.last_bool_spec
         if last_episode is None:
             return True
-        robustness_cont_safety = env.compute_episode_robustness(last_episode, last_cont_spec)
-        robustness_bool_safety = env.compute_episode_robustness(last_episode, last_bool_spec)
-        self.logger.record(f"rollout/robustness_cont_safety", robustness_cont_safety)
-        self.logger.record(f"rollout/robustness_bool_safety", robustness_bool_safety)
+        train_robustness = env.compute_episode_robustness(last_episode, env.last_train_spec)
+        eval_robustness = env.compute_episode_robustness(last_episode, env.last_eval_spec)
+        self.logger.record(f"rollout/train_robustness", train_robustness)
+        self.logger.record(f"rollout/eval_robustness", eval_robustness)
         return True
