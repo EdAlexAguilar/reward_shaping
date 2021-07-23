@@ -25,7 +25,7 @@ def train(args):
     if isinstance(train_env, HierarchicalGraphRewardWrapper):
         import matplotlib.pyplot as plt
         train_env.hierarchy.render()
-        plt.savefig("hierarchy.pdf")
+        plt.savefig(f"{logdir}/hierarchy.pdf")
 
     # create eval environments
     if args.task == 'random_height':
