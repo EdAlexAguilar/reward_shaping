@@ -80,7 +80,7 @@ class GraphWithContinuousScoreBinaryIndicator(HierarchicalGraphRewardWrapper):
 
         # define graph-based hierarchy
         hierarchy = HierarchicalGraph(labels, score_functions, indicators, edges)
-        super(GraphWithContinuousScore, self).__init__(env, hierarchy, use_potential=use_potential)
+        super(GraphWithContinuousScoreBinaryIndicator, self).__init__(env, hierarchy, use_potential=use_potential)
 
 
 class GraphWithContinuousScoreContinuousIndicator(HierarchicalGraphRewardWrapper):
@@ -153,7 +153,7 @@ class GraphWithContinuousScoreContinuousIndicator(HierarchicalGraphRewardWrapper
 
         # define graph-based hierarchy
         hierarchy = HierarchicalGraph(labels, score_functions, indicators, edges)
-        super(GraphWithContinuousScore, self).__init__(env, hierarchy, use_potential=use_potential)
+        super(GraphWithContinuousScoreContinuousIndicator, self).__init__(env, hierarchy, use_potential=use_potential)
 
 
 class GraphWithContinuousTargetAndDiscreteSafety(HierarchicalGraphRewardWrapper):
@@ -378,7 +378,7 @@ class GraphWithTwoTargets(HierarchicalGraphRewardWrapper):
         super(GraphWithTwoTargets, self).__init__(env, hierarchy, use_potential=use_potential)
 
 
-class PotentialGraphWithContinuousScore(GraphWithContinuousScore):
+class PotentialGraphWithContinuousScore(GraphWithContinuousScoreBinaryIndicator):
     def __init__(self, env):
         super(PotentialGraphWithContinuousScore, self).__init__(env, use_potential=True)
 
