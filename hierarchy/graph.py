@@ -7,6 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
+
 class HierarchicalGraph(nx.DiGraph):
     """
         It is a DAG where each node has associated:
@@ -17,7 +18,7 @@ class HierarchicalGraph(nx.DiGraph):
     """
 
     def __init__(self, labels: List[str], score_functions: List[Callable[..., float]],
-                 val_functions: List[Callable[..., bool]], edge_list: List[Tuple[str, str]]):
+                 val_functions: List[Callable[..., float]], edge_list: List[Tuple[str, str]]):
         super(HierarchicalGraph, self).__init__()
         assert len(set(labels)) == len(labels), \
             f"labels must be unique identifiers, {labels}"
@@ -36,6 +37,12 @@ class HierarchicalGraph(nx.DiGraph):
         self.id2lab = {n: l for n, l in enumerate(labels)}
         # topological sort
         self.top_sorting = list(nx.topological_sort(self))
+        self.ancestors = {label: set() for label in labels}
+        for node in self.top_sorting:
+            for pred in self.predecessors(node):
+                self.ancestors[node].update(self.ancestors[pred])
+                self.ancestors[node].add(pred)
+        # layer for visualization layout
         layers = {}
         for node in self.top_sorting:
             preds = list(self.predecessors(node))
@@ -61,78 +68,8 @@ class HierarchicalGraph(nx.DiGraph):
         nx.draw_networkx_labels(self, pos_labels)
         plt.pause(0.001)
 
-def test_1():
-    expected_result = False
-    try:
-        labels = ["a", "b", "c", "a"]
-        f = lambda x: 0
-        v = lambda x: False
-        scores = [f] * len(labels)
-        values = [v] * len(labels)
-        edges = []
-        g = HierarchicalGraph(labels, scores, values, edges)
-        result = True
-    except Exception as e:
-        print(e)
-        result = False
-    return result == expected_result
-
-
-def test_2():
-    expected_result = False
-    try:
-        labels = ["a", "b", "c"]
-        f = lambda x: 0
-        v = lambda x: True
-        scores = [f] * len(labels)
-        values = [v] * len(labels)
-        edges = [("a", "b"), ("a", "d")]
-        g = HierarchicalGraph(labels, scores, values, edges)
-        result = True
-    except Exception as e:
-        print(e)
-        result = False
-    return result == expected_result
-
-
-def test_3():
-    expected_result = True
-    try:
-        labels = ["S1", "S2", "S3", "T1", "C1"]
-        f = lambda x: 0
-        v = lambda x: True
-        scores = [f] * len(labels)
-        values = [v] * len(labels)
-        edges = [("S1", "T1"), ("S2", "T1"), ("S3", "T1"), ("T1", "C1")]
-        g = HierarchicalGraph(labels, scores, values, edges)
-        g.render()
-        result = True
-    except Exception as e:
-        print(e)
-        result = False
-    return result == expected_result
-
-
-def test_4():
-    expected_result = True
-    try:
-        labels = ["S1", "S2", "S3", "T1", "C1"]
-        f = lambda x: 0
-        v = lambda x: True
-        scores = [f] * len(labels)
-        values = [v] * len(labels)
-        edges = [("S1", "T1"), ("S2", "T1"), ("S3", "T1"), ("T1", "C1")]
-        g = HierarchicalGraph(labels, scores, values, edges)
-        print("Topological Sorting: ", g.top_sorting)
-        result = True
-    except Exception as e:
-        print(e)
-        result = False
-    return result == expected_result
-
-
-if __name__ == "__main__":
-    tests = [test_1, test_2, test_3, test_4]
-    for i, test in enumerate(tests):
-        result = test()
-        print(f"Test {i}: {result}\n")
+if __name__=="__main__":
+    from hierarchy.test_graph import TestHierarchicalGraph
+    test = TestHierarchicalGraph()
+    test.test_topological_sorting()
+    pass
