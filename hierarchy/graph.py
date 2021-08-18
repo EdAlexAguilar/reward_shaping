@@ -17,8 +17,8 @@ class HierarchicalGraph(nx.DiGraph):
         A node is enabled iff FORALL parents p . p.v(state) == True.
     """
 
-    def __init__(self, labels: List[str], score_functions: List[Callable[..., float]],
-                 val_functions: List[Callable[..., float]], edge_list: List[Tuple[str, str]]):
+    def __init__(self, labels: List[str], robustness_functions: List[Callable[..., float]],
+                 satisfaction_functions: List[Callable[..., float]], edge_list: List[Tuple[str, str]]):
         super(HierarchicalGraph, self).__init__()
         assert len(set(labels)) == len(labels), \
             f"labels must be unique identifiers, {labels}"
@@ -26,8 +26,8 @@ class HierarchicalGraph(nx.DiGraph):
             f"edge list must only use existing labels, {edge_list}"
         # define nodes
         self.labels = np.array(labels)
-        self.score = score_functions
-        self.valuation = val_functions
+        self.robustness_functions = robustness_functions
+        self.satisfaction_functions = satisfaction_functions
         self.add_nodes_from(self.labels)
         # define edges
         self.add_edges_from(edge_list)

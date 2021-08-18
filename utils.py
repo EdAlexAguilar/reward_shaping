@@ -39,7 +39,7 @@ def make_env(env, task, logdir=None, **kwargs):
         with open(env_config, 'r') as file:
             env_params = yaml.load(file, yaml.FullLoader)
     else:
-        env_params = {}
+        env_params = {'task': task}
     # copy params in logdir (optional)
     if logdir:
         with open(logdir / f"{task}.yml", "w") as file:

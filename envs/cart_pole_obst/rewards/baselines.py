@@ -98,7 +98,7 @@ class STLReward(gym.RewardWrapper):
             # if done, then last_complete_episode will contain the whole episode we need to compute robustness
             # moreover, last_cont_spec will contain the stl spec of the episode according to the obstacle position
             return self.env.compute_episode_robustness(self.env.last_complete_episode,
-                                                       self.env.last_cont_spec)
+                                                       self.env.last_train_spec)
         else:
             return 0.0
 
@@ -133,7 +133,7 @@ class BoolSTLReward(gym.RewardWrapper):
             # if done, then last_complete_episode will contain the whole episode we need to compute robustness
             # moreover, last_cont_spec will contain the stl spec of the episode according to the obstacle position
             return self.env.compute_episode_robustness(self.env.last_complete_episode,
-                                                       self.env.last_bool_spec)
+                                                       self.env.last_eval_spec)
         else:
             return 0.0
 

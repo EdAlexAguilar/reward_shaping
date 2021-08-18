@@ -5,6 +5,7 @@ import gym
 
 from envs.cart_pole.cp_continuous_env import CartPoleContEnv
 from hierarchy.graph import HierarchicalGraph
+from utils import make_env
 
 C = {0: {0: 'grey',     # not sat and not enabled
          1: 'red'},     # not sat and enabled (ie, parents sat, node unsat)
@@ -30,7 +31,6 @@ class HierarchicalGraphRewardWrapper(gym.RewardWrapper):
         self.last_state = None
         self.last_scores = None
         self.last_sat = None
-        self.last_enables = None
 
     def reset(self, **kwargs):
         state = self.env.reset(**kwargs)
@@ -39,7 +39,6 @@ class HierarchicalGraphRewardWrapper(gym.RewardWrapper):
         self.ret = 0.0        
         self.last_scores = None
         self.last_sat = None
-        self.last_enables = None
         return state
 
     def reward(self, rew):
@@ -61,46 +60,48 @@ class HierarchicalGraphRewardWrapper(gym.RewardWrapper):
         """
         if state is None:
             raise ValueError("eval reward in not initialized env, state is None")
-        scores = np.zeros(len(self.hierarchy.labels))   # all zeros
-        enable = np.ones(len(self.hierarchy.labels)).astype(bool)  # all true
-        sat = np.zeros(len(self.hierarchy.labels)).astype(bool)  # all false
+        rob_scores = np.zeros(len(self.hierarchy.labels))   # robustness degree
+        sat_scores = np.zeros(len(self.hierarchy.labels))  # satisfaction score
+        scores = np.zeros(len(self.hierarchy.labels))  # final score for each node
         for node_label in self.hierarchy.top_sorting:
             node_id = self.hierarchy.lab2id[node_label]
-            scores[node_id] = self.hierarchy.score[node_id](state)
-            assert scores[node_id] >= 0.0 and scores[node_id] <= 1.0
-            node_val = self.hierarchy.valuation[node_id](state)
-            sat[node_id] = node_val
-            neighbours_ids = [self.hierarchy.lab2id[neigh] for neigh in self.hierarchy.neighbors(node_label)]
-            for neigh_id in neighbours_ids:
-                enable[neigh_id] = enable[neigh_id] and node_val
+            rob_scores[node_id] = self.hierarchy.robustness_functions[node_id](state)
+            # note: eventually convert boolean indicator into float
+            sat_scores[node_id] = float(self.hierarchy.satisfaction_functions[node_id](state))
+            assert rob_scores[node_id] >= 0.0 and rob_scores[node_id] <= 1.0
+            assert sat_scores[node_id] >= 0.0 and sat_scores[node_id] <= 1.0
+            scores[node_id] = np.prod([sat_scores[self.hierarchy.lab2id[anc]] for anc in self.hierarchy.ancestors[node_label]]) * rob_scores[node_id]
         if update_last:
-            # this is needed by using potential function, because we call twise (state and last_state)
-            self.last_scores = scores
-            self.last_sat = sat
-            self.last_enables = enable
-        final_reward = np.sum(scores * enable)        
+            # this is needed by using potential function, because we call twice (state and last_state)
+            self.last_rob = rob_scores
+            self.last_sat = sat_scores
+            self.last_score = scores
+        final_reward = np.sum(scores)
         return final_reward
 
     def render_hierarchy(self, mode='human', **kwargs):
         # work in progress
+        # todo
+        """
         if self.eval and self.last_enables is not None:
             colors = [C[int(sat)][int(enable)] for sat, enable in zip(self.last_sat, self.last_enables)]
             colors = {self.hierarchy.id2lab[i]: c for i, c in enumerate(colors)}
             self.hierarchy.render(colors)
+        """
         # super(HierarchicalGraphRewardWrapper, self).render(mode, **kwargs)
         
 
-def prova():
+def my_test_1():
     expected_result = True
     try:
         labels = ["S1", "S2", "S3", "T1", "C1"]
         f = lambda x: 1.0
-        v = lambda x: False
+        v = lambda x: np.random.random()
         scores = [f] * len(labels)
         values = [v] * len(labels)
         edges = [("S1", "T1"), ("S2", "T1"), ("S3", "T1"), ("T1", "C1")]
         g = HierarchicalGraph(labels, scores, values, edges)
-        env = CartPoleContEnv(task='balance')
+        env, env_params = make_env(env='cart_pole_obst', task='fixed_height', logdir=None, seed=0)
         env = HierarchicalGraphRewardWrapper(env, g)
         # evaluation
         obs = env.reset()
@@ -115,7 +116,7 @@ def prova():
             if done:
                 rewards.append(tot_reward)
                 obs = env.reset()
-                rob = env.compute_episode_robustness(env.last_complete_episode)
+                rob = env.compute_episode_robustness(env.last_complete_episode, env.last_eval_spec)
                 print(f"reward: {tot_reward:.3f}, robustness: {rob:.3f}")
                 tot_reward = 0.0
             input()
@@ -126,4 +127,4 @@ def prova():
     return result == expected_result
 
 if __name__=="__main__":
-    print(prova())
+    print(my_test_1())
