@@ -24,10 +24,6 @@ register_reward('bool_stl', reward=BoolSTLReward)
 # Graph-based (gb) formulations
 register_reward('gb_cr_bi', reward=GraphWithContinuousScoreBinaryIndicator)
 register_reward('gb_cr_ci', reward=GraphWithContinuousScoreContinuousIndicator)
-# Potential Graph-based (pgb) formulations
-#register_reward('pgb_cr_bi', reward=PotentialReward(GraphWithContinuousScoreBinaryIndicator))
-#register_reward('pgb_cr_ci', reward=PotentialReward(GraphWithContinuousScoreContinuousIndicator))
-
 
 """
 register_reward('hier_cont', reward=GraphWithContinuousScore)

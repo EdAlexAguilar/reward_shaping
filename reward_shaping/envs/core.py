@@ -71,11 +71,11 @@ class STLRewardConfig(ABC):
         pass
 
 
-class STLRewardWrapper(RewardWrapper):
+class STLRewardWrapper(gym.Wrapper):
     """ This is an 'episodic' wrapper which evaluate a spec in the terminal states."""
 
     def __init__(self, env: gym.Env, stl_conf: STLRewardConfig):
-        super(STLRewardWrapper, self).__init__(env, reward_fn=None)
+        super(STLRewardWrapper, self).__init__(env)
         self._episode = {var: [] for var in stl_conf.monitoring_variables}
         self._stl_conf = stl_conf
         self._reward = 0.0
