@@ -4,7 +4,6 @@ from unittest import TestCase
 from gym.wrappers import FlattenObservation
 
 from reward_shaping.envs.graph_based import GraphRewardWrapper
-from reward_shaping.training.train_cartpole import train
 from reward_shaping.training.utils import make_env, make_reward_wrap, make_agent
 
 

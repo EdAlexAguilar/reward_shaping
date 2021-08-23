@@ -8,6 +8,7 @@ import argparse as parser
 from reward_shaping.envs.graph_based import GraphRewardWrapper
 from utils import make_agent, make_reward_wrap, make_log_dirs, make_env
 
+
 def rollout(env, model, steps=500):
     obs = env.reset()
     env.render()
@@ -24,6 +25,7 @@ def rollout(env, model, steps=500):
             tot_reward = 0.0
     return rewards
 
+
 def prepare_callbacks(env, env_name, env_params, logdir, checkpointdir, train_params):
     video_env = Monitor(env, logdir / "videos")
     video_cb = VideoRecorderCallback(video_env, render_freq=train_params['video_every'],
@@ -35,6 +37,7 @@ def prepare_callbacks(env, env_name, env_params, logdir, checkpointdir, train_pa
     checkpoint_cb = CheckpointCallback(save_freq=train_params['checkpoint_every'], save_path=checkpointdir,
                                        name_prefix='model')
     return [video_cb, eval_cb, checkpoint_cb]
+
 
 def train(args):
     # task selection
@@ -51,10 +54,6 @@ def train(args):
     train_env, env_params = make_env(args.env, args.task, logdir, seed=args.seed)
     train_env = make_reward_wrap(args.env, train_env, env_params, args.reward)
     train_env = FlattenObservation(train_env)
-    if isinstance(train_env, GraphRewardWrapper):
-        import matplotlib.pyplot as plt
-        train_env.hierasparserchy.render()
-        plt.savefig(f"{logdir}/hierarchy.pdf")
 
     # create eval environments
     if args.task == 'random_height':
@@ -81,7 +80,8 @@ def train(args):
     # evaluation
     steps = 500
     rewards = rollout(eval_env, model, steps=steps)
-    print(f"\n\n[Final Eval] Result: steps: {steps}, episodes: {len(rewards)}, mean reward: {sum(rewards)/len(rewards)}")
+    print(
+        f"\n\n[Final Eval] Result: steps: {steps}, episodes: {len(rewards)}, mean reward: {sum(rewards) / len(rewards)}")
     # close envs
     train_env.close()
     eval_env.close()
