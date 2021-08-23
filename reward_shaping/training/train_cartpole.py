@@ -42,6 +42,7 @@ def train(args):
     # task 'fixed_height', 'random_height': continuous cartpole with obstacle placed at fixed of random height
     if args.task in ['balance', 'target']:
         args.env = "cart_pole"
+        raise DeprecationWarning("simple cartpole still need to be merged with the last changes ")
     else:
         args.env = "cart_pole_obst"
     logdir, checkpointdir = make_log_dirs(args)
