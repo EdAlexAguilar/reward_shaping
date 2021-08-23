@@ -8,6 +8,7 @@ from utils import make_log_dirs, make_env
 
 def main(args):
     args.task = "bipedal_walker"
+    args.env = "bipedal_walker"
     logdir, checkpointdir = make_log_dirs(args)
     env, env_params = make_env(args.task, args.terminate_on_collision, logdir)
 
@@ -42,7 +43,8 @@ if __name__ == "__main__":
     parser.add_argument("--reward", type=str, default="default",
                         choices=['indicator', 'indicator_reverse', 'weighted', 'default'])
     parser.add_argument("--algo", type=str, required=True, choices=['ppo'])
-    parser.add_argument("--steps", type=int, default=2e6)
+    parser.add_argument("--steps", type=int, default=4e6)
+    parser.add_argument("--seed", type=int, default=122333)
     parser.add_argument("-terminate_on_collision", action="store_true")
     parser.add_argument("-shift_reward", action="store_true")
     parser.add_argument("-clip_reward", action="store_true")
