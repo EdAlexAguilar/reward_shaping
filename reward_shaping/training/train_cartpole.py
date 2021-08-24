@@ -50,7 +50,7 @@ def train(args):
 
     # create training environment
     train_env, env_params = make_env(args.env, args.task, logdir, seed=args.seed)
-    train_env = make_reward_wrap(args.env, train_env, env_params, args.reward)
+    train_env = make_reward_wrap(args.env, train_env, env_params, args.reward, logdir=logdir)
     train_env = FlattenObservation(train_env)
 
     # create eval environments
