@@ -1,11 +1,9 @@
-import gym
 from gym.wrappers import Monitor, FlattenObservation
 
 from callbacks import VideoRecorderCallback
-from stable_baselines3.common.callbacks import CheckpointCallback, EveryNTimesteps, EvalCallback
+from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback
 import argparse as parser
 
-from reward_shaping.envs.graph_based import GraphRewardWrapper
 from utils import make_agent, make_reward_wrap, make_log_dirs, make_env
 
 

@@ -1,7 +1,8 @@
 from unittest import TestCase
 
-from reward_shaping.core.wrappers import RewardWrapper, GraphRewardWrapper
-from reward_shaping.envs.graph_based import GraphBasedReward
+from reward_shaping.core.configs import BuildGraphReward
+from reward_shaping.core.wrappers import RewardWrapper
+from reward_shaping.core.graph_based import GraphBasedReward
 from reward_shaping.training.utils import make_env
 
 
@@ -119,6 +120,7 @@ class TestGraphBasedRewards(TestCase):
         from reward_shaping.envs.cart_pole_obst.rewards.graph_based import GraphWithContinuousScoreBinaryIndicator
         env, env_params = make_env('cart_pole_obst', 'fixed_height')
         graph_conf = GraphWithContinuousScoreBinaryIndicator(env_params)
-        env = GraphRewardWrapper(env, graph_config=graph_conf)
+        reward_fn = BuildGraphReward.from_conf(graph_config=graph_conf)
+        env = RewardWrapper(env, reward_fn=reward_fn)
         for _ in range(5):
             self._rollout(env, render=True)

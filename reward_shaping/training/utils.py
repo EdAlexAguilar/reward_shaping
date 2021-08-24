@@ -1,7 +1,11 @@
 import pathlib
 import time
+
+import matplotlib.pyplot as plt
 import yaml
 import os
+
+from reward_shaping.core.wrappers import RewardWrapper
 
 
 def make_log_dirs(args):
@@ -85,23 +89,29 @@ def make_agent(env_name, env, rl_algo, logdir=None):
     return model
 
 
-def make_reward_wrap(env_name, env, env_params, reward, use_potential=False):
+def make_reward_wrap(env_name, env, env_params, reward, use_potential=False, logdir=None):
     if env_name == "cart_pole":
         #env = get_reward(reward)()
         raise DeprecationWarning("this env is not updated")
     elif env_name == "cart_pole_obst":
         from reward_shaping.envs.cart_pole_obst import get_reward
-        reward_fn = get_reward(reward)(env_params=env_params)
+        reward_conf = get_reward(reward)(env_params=env_params)
     else:
         raise NotImplementedError(f'{reward} not implemented for {env_name}')
 
     if 'stl' in reward:
         from reward_shaping.core.wrappers import STLRewardWrapper
-        env = STLRewardWrapper(env, stl_conf=reward_fn)
+        env = STLRewardWrapper(env, stl_conf=reward_conf)
     elif 'gb' in reward:
-        from reward_shaping.core.wrappers import GraphRewardWrapper
-        env = GraphRewardWrapper(env, graph_config=reward_fn)
+        from reward_shaping.core.configs import BuildGraphReward
+        reward_fn = BuildGraphReward.from_conf(graph_config=reward_conf)
+        env = RewardWrapper(env, reward_fn=reward_fn)
+        reward_fn.render()
+        if logdir is not None:
+            plt.savefig(logdir / "graph_reward.pdf")
+        else:
+            plt.show()
     else:
-        from reward_shaping.core.wrappers import RewardWrapper
+        reward_fn = reward_conf
         env = RewardWrapper(env, reward_fn=reward_fn)
     return env

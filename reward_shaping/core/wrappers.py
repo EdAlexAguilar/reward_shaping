@@ -2,9 +2,8 @@ from typing import Any
 
 import gym
 
-from reward_shaping.core.configs import STLRewardConfig, GraphRewardConfig
+from reward_shaping.core.configs import STLRewardConfig
 from reward_shaping.core.reward import RewardFunction
-from reward_shaping.envs.graph_based import GraphBasedReward
 
 
 class RewardWrapper(gym.Wrapper):
@@ -83,11 +82,3 @@ class STLRewardWrapper(gym.Wrapper):
                                                     info={'reward': self._reward, 'return': self._return})
 
 
-class GraphRewardWrapper(RewardWrapper):
-
-    def __init__(self, env: gym.Env, graph_config: GraphRewardConfig):
-        self._reward_fn = GraphBasedReward.from_collections(nodes=graph_config.nodes, topology=graph_config.topology)
-        super().__init__(env, reward_fn=self._reward_fn)
-
-    def render_graph(self):
-        self._reward_fn.render()
