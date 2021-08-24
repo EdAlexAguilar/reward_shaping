@@ -1,0 +1,4 @@
+task: "forward"
+angle_hull_limit: 0.7853981633974483 #pi/4
+speed_y_limit: 0.5  # domain in [0,1], 0.5 choosen arbitrarly
+angle_vel_limit: .25

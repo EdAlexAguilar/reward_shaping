@@ -1,6 +1,7 @@
 from typing import List, Dict, Any
 import numpy as np
-from reward_shaping.envs.core import STLRewardConfig
+
+from reward_shaping.core.configs import STLRewardConfig
 
 
 class STLReward(STLRewardConfig):

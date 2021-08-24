@@ -30,9 +30,6 @@ def make_base_env(env, env_params={}):
     elif env == "bipedal_walker":
         from reward_shaping.envs import BipedalWalker
         env = BipedalWalker(**env_params)
-    elif env == "highway":
-        from reward_shaping.envs import CustomHighwayEnv
-        env = CustomHighwayEnv(**env_params)
     else:
         raise NotImplementedError(f"not implemented env for {env}")
     return env
@@ -95,6 +92,9 @@ def make_reward_wrap(env_name, env, env_params, reward, use_potential=False, log
         raise DeprecationWarning("this env is not updated")
     elif env_name == "cart_pole_obst":
         from reward_shaping.envs.cart_pole_obst import get_reward
+        reward_conf = get_reward(reward)(env_params=env_params)
+    elif env_name == "bipedal_walker":
+        from reward_shaping.envs.bipedal_walker import get_reward
         reward_conf = get_reward(reward)(env_params=env_params)
     else:
         raise NotImplementedError(f'{reward} not implemented for {env_name}')

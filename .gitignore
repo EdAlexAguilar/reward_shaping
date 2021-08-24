@@ -146,3 +146,4 @@ cartpole_models/
 # Others
 .*
 logs/*
+/run_experiment.sh

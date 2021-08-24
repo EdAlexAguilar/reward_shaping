@@ -36,6 +36,7 @@ from gym.utils import colorize, seeding, EzPickle
 # To solve hardcore version you need 300 points in 2000 time steps.
 #
 # Created by Oleg Klimov. Licensed on the same terms as the rest of OpenAI Gym.
+from reward_shaping.training.utils import make_env, make_reward_wrap
 
 FPS = 50
 SCALE = 30.0  # affects how fast-paced the game is, forces should be adjusted as well
@@ -113,9 +114,10 @@ class BipedalWalker(gym.Env, EzPickle):
 
     hardcore = False
 
-    def __init__(self, **kwargs):
+    def __init__(self, task="forward", angle_hull_limit=np.pi/4,
+                 speed_y_limit=1.0, angle_vel_limit=.25, seed=0):
         EzPickle.__init__(self)
-        self.seed()
+        self.seed(seed=seed)
         self.viewer = None
 
         self.world = Box2D.b2World()
@@ -140,17 +142,24 @@ class BipedalWalker(gym.Env, EzPickle):
             categoryBits=0x0001,
         )
 
-        self.reset()
-
         high = np.array([np.inf] * 24)
         self.action_space = spaces.Box(np.array([-1, -1, -1, -1]), np.array([1, 1, 1, 1]), dtype=np.float32)
         self.observation_space = spaces.Box(-high, high, dtype=np.float32)
+
+        # env params
+        self.task = task
+        self.angle_hull_limit = angle_hull_limit
+        self.speed_y_limit = speed_y_limit
+        self.angle_vel_limit = angle_vel_limit
 
         # reward metrics
         self.default_reward = 0.0
         self.fall_reward = 0.0
         self.target_reward = 0.0
         self.action_reward = 0.0
+
+        self.reset()
+
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
@@ -436,7 +445,7 @@ class BipedalWalker(gym.Env, EzPickle):
             self.joints[2].speed / SPEED_HIP,
             self.joints[3].angle + 1.0,
             self.joints[3].speed / SPEED_KNEE,
-            1.0 if self.legs[3].ground_contact else 0.0
+            1.0 if self.legs[3].ground_contact else 0.0,
         ]
         state += [l.fraction for l in self.lidar]
         assert len(state) == 24
@@ -473,9 +482,14 @@ class BipedalWalker(gym.Env, EzPickle):
         # we keep the parameters of the original reward
         self.comfort_reward = np.sum(-0.00035 * MOTORS_TORQUE * np.clip(action, 0, 1))
 
-        return np.array(state), reward, done, {}
+        # define additional info for reward shaping
+        info = {"collision": self.game_over,
+                "angle_hull_limit": self.angle_hull_limit,
+                "speed_y_limit": self.speed_y_limit,
+                "angle_vel_limit": self.angle_vel_limit}
+        return np.array(state), reward, done, info
 
-    def render(self, mode='human'):
+    def render(self, mode='human', **kwargs):
         from gym.envs.classic_control import rendering
         if self.viewer is None:
             self.viewer = rendering.Viewer(VIEWPORT_W, VIEWPORT_H)
