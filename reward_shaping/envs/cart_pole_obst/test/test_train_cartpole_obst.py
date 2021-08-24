@@ -3,7 +3,7 @@ from unittest import TestCase
 
 from gym.wrappers import FlattenObservation
 
-from reward_shaping.envs.graph_based import GraphRewardWrapper
+from reward_shaping.core.wrappers import GraphRewardWrapper
 from reward_shaping.training.utils import make_env, make_reward_wrap, make_agent
 
 
@@ -17,11 +17,11 @@ class TestTrainingLoop(TestCase):
         # create training environment
         train_env, env_params = make_env(args.env, args.task, logdir=None, seed=args.seed)
         train_env = make_reward_wrap(args.env, train_env, env_params, args.reward)
-        train_env = FlattenObservation(train_env)
         if isinstance(train_env, GraphRewardWrapper):
             import matplotlib.pyplot as plt
-            train_env.hierasparserchy.render()
+            train_env.render_graph()
             plt.show()
+        train_env = FlattenObservation(train_env)
 
         # create agent
         model = make_agent(args.env, train_env, args.algo, logdir=None)

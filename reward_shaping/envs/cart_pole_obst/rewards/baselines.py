@@ -1,9 +1,6 @@
-from typing import List
-
-import gym
 import numpy as np
 
-from reward_shaping.envs.core import RewardFunction
+from reward_shaping.core.reward import RewardFunction
 
 
 class ContinuousReward(RewardFunction):

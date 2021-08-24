@@ -4,10 +4,6 @@ import yaml
 import os
 
 
-from reward_shaping.envs.core import RewardWrapper, STLRewardWrapper
-from reward_shaping.envs.graph_based import GraphRewardWrapper
-
-
 def make_log_dirs(args):
     logdir_template = "logs/{}/{}_{}_Seed{}_{}"
     logdir = pathlib.Path(logdir_template.format(args.env, args.task, args.reward, args.seed, int(time.time())))
@@ -91,7 +87,6 @@ def make_agent(env_name, env, rl_algo, logdir=None):
 
 def make_reward_wrap(env_name, env, env_params, reward, use_potential=False):
     if env_name == "cart_pole":
-        from reward_shaping.envs.cart_pole import get_reward
         #env = get_reward(reward)()
         raise DeprecationWarning("this env is not updated")
     elif env_name == "cart_pole_obst":
@@ -101,9 +96,12 @@ def make_reward_wrap(env_name, env, env_params, reward, use_potential=False):
         raise NotImplementedError(f'{reward} not implemented for {env_name}')
 
     if 'stl' in reward:
+        from reward_shaping.core.wrappers import STLRewardWrapper
         env = STLRewardWrapper(env, stl_conf=reward_fn)
     elif 'gb' in reward:
+        from reward_shaping.core.wrappers import GraphRewardWrapper
         env = GraphRewardWrapper(env, graph_config=reward_fn)
     else:
+        from reward_shaping.core.wrappers import RewardWrapper
         env = RewardWrapper(env, reward_fn=reward_fn)
     return env

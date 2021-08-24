@@ -4,7 +4,6 @@ from gym.wrappers import FlattenObservation
 from stable_baselines3.common.env_checker import check_env
 
 from reward_shaping.training.utils import make_env, make_reward_wrap
-from reward_shaping.training.wrappers import FlattenFloatObservation
 
 
 class TestCartPoleObstacle(TestCase):
@@ -12,7 +11,7 @@ class TestCartPoleObstacle(TestCase):
     def _generic_test(self, task, reward_name):
         env_name = "cart_pole_obst"
         env, env_params = make_env(env_name, task, logdir=None, seed=0, prob_sampling_feasible=1.0)
-        env = make_reward_wrap(env_name, env, reward_name)
+        env = make_reward_wrap(env_name, env, env_params, reward_name)
         env = FlattenObservation(env)
         # check
         check_env(env)

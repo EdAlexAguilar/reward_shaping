@@ -8,8 +8,7 @@ import yaml
 
 import networkx as nx
 
-from reward_shaping.envs.cart_pole_obst.rewards.graph_based import GraphRewardConfig
-from reward_shaping.envs.core import RewardFunction, RewardWrapper
+from reward_shaping.core.reward import RewardFunction
 
 
 class GraphBasedReward(RewardFunction):
@@ -93,7 +92,6 @@ class GraphBasedReward(RewardFunction):
         nx.draw(self._graph, pos=positioning)
         nx.draw_networkx_edges(self._graph, positioning)
         nx.draw_networkx_labels(self._graph, pos_labels)
-        plt.show()
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
         self._evaluate_graph(state=state, action=action, next_state=next_state, info=info)
@@ -101,8 +99,3 @@ class GraphBasedReward(RewardFunction):
         return reward
 
 
-class GraphRewardWrapper(RewardWrapper):
-
-    def __init__(self, env: gym.Env, graph_config: GraphRewardConfig):
-        reward_fn = GraphBasedReward.from_collections(nodes=graph_config.nodes, topology=graph_config.topology)
-        super().__init__(env, reward_fn=reward_fn)

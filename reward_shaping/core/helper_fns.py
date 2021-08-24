@@ -1,6 +1,6 @@
 import numpy as np
 
-from reward_shaping.envs.core import RewardFunction
+from reward_shaping.core.reward import RewardFunction
 
 
 class NormalizedReward(RewardFunction):

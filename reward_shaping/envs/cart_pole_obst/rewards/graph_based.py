@@ -1,24 +1,7 @@
-from abc import ABC, abstractmethod
-
 import reward_shaping.envs.cart_pole_obst.rewards.subtask_rewards as fns
-from reward_shaping.envs.helper_fns import ThresholdIndicator, NormalizedReward
+from reward_shaping.core.configs import GraphRewardConfig
+from reward_shaping.core.helper_fns import ThresholdIndicator, NormalizedReward
 import numpy as np
-
-
-class GraphRewardConfig(ABC):
-
-    def __init__(self, **kwargs):
-        pass
-
-    @property
-    @abstractmethod
-    def nodes(self):
-        pass
-
-    @property
-    @abstractmethod
-    def topology(self):
-        pass
 
 
 class GraphWithContinuousScoreBinaryIndicator(GraphRewardConfig):
@@ -26,10 +9,6 @@ class GraphWithContinuousScoreBinaryIndicator(GraphRewardConfig):
     rew(R) = Sum_{r in R} (Product_{r' in R st. r' <= r} sigma(r')) * rho(r)
     with sigma returns binary value {0,1}
     """
-
-    def __init__(self, env_params):
-        self._env_params = env_params
-        self._task = env_params['task']
 
     @property
     def nodes(self):
@@ -80,7 +59,7 @@ class GraphWithContinuousScoreBinaryIndicator(GraphRewardConfig):
         balance_ind_fn = ThresholdIndicator(fun)
         nodes["T_bal"] = (balance_reward_fn, balance_ind_fn)
 
-        if self._task == "random_height":
+        if self._env_params['task'] == "random_height":
             # for random env, additional comfort node
             nodes["C_bal"] = (balance_reward_fn, balance_ind_fn)
             # conditional nodes (ie, to check env conditions)
@@ -93,14 +72,14 @@ class GraphWithContinuousScoreBinaryIndicator(GraphRewardConfig):
 
     @property
     def topology(self):
-        if self._task == "fixed_height":
+        if self._env_params['task'] == "fixed_height":
             topology = {
                 'S_coll': ['T_origin'],
                 'S_fall': ['T_origin'],
                 'S_exit': ['T_origin'],
                 'T_origin': ['T_bal'],
             }
-        elif self._task == "random_height":
+        elif self._env_params['task'] == "random_height":
             topology = {
                 'S_coll': ['H_feas', 'H_nfeas'],
                 'S_fall': ['H_feas', 'H_nfeas'],
@@ -110,7 +89,7 @@ class GraphWithContinuousScoreBinaryIndicator(GraphRewardConfig):
                 'T_origin': ['C_bal'],
             }
         else:
-            raise NotImplemented(f"no reward-topology for task {self._task}")
+            raise NotImplemented(f"no reward-topology for task {self._env_params['task']}")
         return topology
 
 
@@ -118,10 +97,6 @@ class GraphWithContinuousScoreContinuousIndicator(GraphRewardConfig):
     """
         rew(R) = Sum_{r in R} (Product_{r' in R st. r' <= r} rho(r')) * rho(r)
     """
-
-    def __init__(self, env_params):
-        self._env_params = env_params
-        self._task = env_params['task']
 
     @property
     def nodes(self):
@@ -172,7 +147,7 @@ class GraphWithContinuousScoreContinuousIndicator(GraphRewardConfig):
         balance_ind_fn = ThresholdIndicator(fun)
         nodes["T_bal"] = (balance_reward_fn, balance_reward_fn)
 
-        if self._task == "random_height":
+        if self._env_params['task'] == "random_height":
             # for random env, additional comfort node
             nodes["C_bal"] = (balance_reward_fn, balance_reward_fn)
             # conditional nodes (ie, to check env conditions)
@@ -185,14 +160,14 @@ class GraphWithContinuousScoreContinuousIndicator(GraphRewardConfig):
 
     @property
     def topology(self):
-        if self._task == "fixed_height":
+        if self._env_params['task'] == "fixed_height":
             topology = {
                 'S_coll': ['T_origin'],
                 'S_fall': ['T_origin'],
                 'S_exit': ['T_origin'],
                 'T_origin': ['T_bal'],
             }
-        elif self._task == "random_height":
+        elif self._env_params['task'] == "random_height":
             topology = {
                 'S_coll': ['H_feas', 'H_nfeas'],
                 'S_fall': ['H_feas', 'H_nfeas'],
@@ -202,5 +177,5 @@ class GraphWithContinuousScoreContinuousIndicator(GraphRewardConfig):
                 'T_origin': ['C_bal'],
             }
         else:
-            raise NotImplemented(f"no reward-topology for task {self._task}")
+            raise NotImplemented(f"no reward-topology for task {self._env_params['task']}")
         return topology
