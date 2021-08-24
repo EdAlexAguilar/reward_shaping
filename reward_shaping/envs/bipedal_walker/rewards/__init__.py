@@ -4,7 +4,11 @@ _registry = {}
 
 
 def get_reward(name: str):
-    return _registry[name]
+    try:
+        reward = _registry[name]
+    except KeyError:
+        raise KeyError(f"the reward {name} is not registered")
+    return reward
 
 
 def register_reward(name: str, reward):

@@ -5,26 +5,50 @@ import matplotlib.pyplot as plt
 import yaml
 import os
 
+from gym.wrappers import FlattenObservation
+
 from reward_shaping.core.wrappers import RewardWrapper
 
 
-def make_log_dirs(args):
-    logdir_template = "logs/{}/{}_{}_Seed{}_{}"
-    logdir = pathlib.Path(logdir_template.format(args.env, args.task, args.reward, args.seed, int(time.time())))
-    checkpointdir = logdir / "checkpoint"
-    logdir.mkdir(parents=True, exist_ok=True)
-    checkpointdir.mkdir(parents=True, exist_ok=True)
-    # store input params
-    with open(logdir / f"args.yml", "w") as file:
-        yaml.dump(args, file)
-    return logdir, checkpointdir
+def make_env(env_name, task, reward, eval=False, logdir=None, seed=0):
+    # make base env
+    extra_params = load_eval_params(env_name, task) if eval else {}
+    extra_params['seed'] = seed
+    env_params = load_env_params(env_name, task, **extra_params)
+    # copy params in logdir (optional)
+    if logdir:
+        with open(logdir / f"{task}.yml", "w") as file:
+            yaml.dump(env_params, file)
+    env = make_base_env(env_name, env_params)
+    # set reward
+    env = make_reward_wrap(env_name, env, env_params, reward)
+    env = FlattenObservation(env)
+    return env, env_params
+
+
+def load_env_params(env, task, **kwargs):
+    try:
+        config = pathlib.Path(f"{os.path.dirname(__file__)}/../envs/{env}/tasks") / f"{task}.yml"
+        with open(config, 'r') as file:
+            params = yaml.load(file, yaml.FullLoader)
+    except FileNotFoundError as error:
+        params = {'task': task}
+    # update params
+    for key, value in kwargs.items():
+        params[key] = value
+    return params
+
+
+def load_eval_params(env, task):
+    if env == "cart_pole_obst" and task == "random_height":
+        params = {"eval": True, "prob_sampling_feasible": 0.5}
+    else:
+        params = {"eval": True}
+    return params
 
 
 def make_base_env(env, env_params={}):
-    if env == "cart_pole":
-        from reward_shaping.envs import CartPoleContEnv
-        env = CartPoleContEnv(**env_params)
-    elif env == "cart_pole_obst":
+    if env == "cart_pole_obst":
         from reward_shaping.envs import CartPoleContObsEnv
         env = CartPoleContObsEnv(**env_params)
     elif env == "bipedal_walker":
@@ -33,25 +57,6 @@ def make_base_env(env, env_params={}):
     else:
         raise NotImplementedError(f"not implemented env for {env}")
     return env
-
-
-def make_env(env, task, logdir=None, **kwargs):
-    env_config = pathlib.Path(f"{os.path.dirname(__file__)}/../envs/{env}/tasks") / f"{task}.yml"
-    if env_config.exists():
-        with open(env_config, 'r') as file:
-            env_params = yaml.load(file, yaml.FullLoader)
-    else:
-        env_params = {'task': task}
-    # copy params in logdir (optional)
-    if logdir:
-        with open(logdir / f"{task}.yml", "w") as file:
-            yaml.dump(env_params, file)
-    # update params
-    for key, value in kwargs.items():
-        env_params[key] = value
-    # make env
-    env = make_base_env(env, env_params)
-    return env, env_params
 
 
 def make_agent(env_name, env, rl_algo, logdir=None):
@@ -67,16 +72,9 @@ def make_agent(env_name, env, rl_algo, logdir=None):
     if algo == "ppo":
         from stable_baselines3 import PPO
         model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=logdir, **algo_params)
-    elif algo == "ppo_sde":
-        from stable_baselines3 import PPO
-        algo_params['use_sde'] = True
-        model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=logdir, **algo_params)
     elif algo == "sac":
         from stable_baselines3 import SAC
         model = SAC("MlpPolicy", env, verbose=1, tensorboard_log=logdir, **algo_params)
-    elif algo == "dqn":
-        from stable_baselines3 import DQN
-        model = DQN("MlpPolicy", env, verbose=1, tensorboard_log=logdir, **algo_params)
     else:
         raise NotImplementedError()
     # copy params in logdir (optional)
@@ -88,7 +86,7 @@ def make_agent(env_name, env, rl_algo, logdir=None):
 
 def make_reward_wrap(env_name, env, env_params, reward, use_potential=False, logdir=None):
     if env_name == "cart_pole":
-        #env = get_reward(reward)()
+        # env = get_reward(reward)()
         raise DeprecationWarning("this env is not updated")
     elif env_name == "cart_pole_obst":
         from reward_shaping.envs.cart_pole_obst import get_reward

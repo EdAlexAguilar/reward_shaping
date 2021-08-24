@@ -115,7 +115,7 @@ class BipedalWalker(gym.Env, EzPickle):
     hardcore = False
 
     def __init__(self, task="forward", angle_hull_limit=np.pi/4,
-                 speed_y_limit=1.0, angle_vel_limit=.25, seed=0):
+                 speed_y_limit=1.0, angle_vel_limit=.25, eval=False, seed=0):
         EzPickle.__init__(self)
         self.seed(seed=seed)
         self.viewer = None
@@ -148,6 +148,7 @@ class BipedalWalker(gym.Env, EzPickle):
 
         # env params
         self.task = task
+        self.eval = eval    # this can be eventually used to make eval deterministic (ie, test specific starting conds)
         self.angle_hull_limit = angle_hull_limit
         self.speed_y_limit = speed_y_limit
         self.angle_vel_limit = angle_vel_limit
