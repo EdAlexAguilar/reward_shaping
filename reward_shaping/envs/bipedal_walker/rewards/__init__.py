@@ -1,4 +1,5 @@
 from reward_shaping.envs.bipedal_walker.rewards.graph_based import GraphWithContinuousScoreBinaryIndicator
+from reward_shaping.envs.bipedal_walker.rewards.stl_based import STLReward, BoolSTLReward
 
 _registry = {}
 
@@ -20,3 +21,5 @@ def register_reward(name: str, reward):
 # todo
 # Graph-based
 register_reward('gb_cr_bi', reward=GraphWithContinuousScoreBinaryIndicator)
+register_reward('stl', reward=STLReward)
+register_reward('bool_stl', reward=BoolSTLReward)

@@ -26,10 +26,10 @@ class BinaryFalldownReward(RewardFunction):
 class SpeedTargetReward(RewardFunction):
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
         """
-        always(v_x >= 0)
+        always(v_x >= speed_x_target)
         state[2] = 0.3 * vel.x * (VIEWPORT_W / SCALE) / FPS,  # Normalized to get -1..1 range
         """
-        return state[2]
+        return state[2] - info['speed_x_target']
 
 
 class ContinuousHullAngleReward(RewardFunction):

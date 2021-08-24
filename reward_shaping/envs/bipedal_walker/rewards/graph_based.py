@@ -36,15 +36,20 @@ class GraphWithContinuousScoreBinaryIndicator(GraphRewardConfig):
         # prepare env info
         info = {'angle_hull_limit': self._env_params['angle_hull_limit'],
                 'speed_y_limit': self._env_params['speed_y_limit'],
-                'angle_vel_limit': self._env_params['angle_vel_limit']}
+                'angle_vel_limit': self._env_params['angle_vel_limit'],
+                'speed_x_target': self._env_params['speed_x_target']}
 
         # safety rules
         fun = fns.BinaryFalldownReward()
         nodes["S_fall"] = (fun, ThresholdIndicator(fun, include_zero=False))
 
         # define target rule
-        fun = fns.SpeedTargetReward()       # this is already normalized in +-1
-        nodes["T_move"] = (NormalizedReward(fun, 0, +1), ThresholdIndicator(fun, threshold=0.1))
+        fun = fns.SpeedTargetReward()       # this is already normalized in +-1   (unless target is nonzero)
+        min_r_state = [0]*2 + [info['speed_x_target']] + [0]*21
+        max_r_state = [0]*2 + [1] + [0]*21
+        min_r, max_r = fun(min_r_state, info=info), fun(max_r_state, info=info)
+        nodes["T_move"] = (NormalizedReward(fun, min_r, max_r), ThresholdIndicator(fun))
+        # nodes["T_move"] = (NormalizedReward(fun, 0, +1), ThresholdIndicator(fun, threshold=info['speed_x_limit']))
 
         # define comfort rules
         # note: for comfort rules, the indicators does not necessarly reflect the satisfaction

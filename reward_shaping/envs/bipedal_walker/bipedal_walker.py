@@ -115,7 +115,8 @@ class BipedalWalker(gym.Env, EzPickle):
     hardcore = False
 
     def __init__(self, task="forward", angle_hull_limit=np.pi/4,
-                 speed_y_limit=1.0, angle_vel_limit=.25, eval=False, seed=0):
+                 speed_y_limit=1.0, angle_vel_limit=.25, speed_x_target=0.0,
+                 eval=False, seed=0):
         EzPickle.__init__(self)
         self.seed(seed=seed)
         self.viewer = None
@@ -152,6 +153,8 @@ class BipedalWalker(gym.Env, EzPickle):
         self.angle_hull_limit = angle_hull_limit
         self.speed_y_limit = speed_y_limit
         self.angle_vel_limit = angle_vel_limit
+        self.speed_x_target= speed_x_target
+        self.step_count = 0
 
         # reward metrics
         self.default_reward = 0.0
@@ -315,6 +318,7 @@ class BipedalWalker(gym.Env, EzPickle):
         self.prev_shaping = None
         self.scroll = 0.0
         self.lidar_render = 0
+        self.step_count = 0
 
         W = VIEWPORT_W / SCALE
         H = VIEWPORT_H / SCALE
@@ -419,6 +423,7 @@ class BipedalWalker(gym.Env, EzPickle):
             self.joints[3].maxMotorTorque = float(MOTORS_TORQUE * np.clip(np.abs(action[3]), 0, 1))
 
         self.world.Step(1.0 / FPS, 6 * 30, 2 * 30)
+        self.step_count += 1
 
         pos = self.hull.position
         vel = self.hull.linearVelocity
@@ -484,10 +489,12 @@ class BipedalWalker(gym.Env, EzPickle):
         self.comfort_reward = np.sum(-0.00035 * MOTORS_TORQUE * np.clip(action, 0, 1))
 
         # define additional info for reward shaping
-        info = {"collision": self.game_over,
+        info = {"time": self.step_count,
+                "collision": self.game_over,
                 "angle_hull_limit": self.angle_hull_limit,
                 "speed_y_limit": self.speed_y_limit,
-                "angle_vel_limit": self.angle_vel_limit}
+                "angle_vel_limit": self.angle_vel_limit,
+                "speed_x_target": self.speed_x_target}
         return np.array(state), reward, done, info
 
     def render(self, mode='human', **kwargs):
