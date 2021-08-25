@@ -10,9 +10,7 @@ class TestCartPoleObstacle(TestCase):
 
     def _generic_test(self, task, reward_name):
         env_name = "cart_pole_obst"
-        env, env_params = make_env(env_name, task, logdir=None, seed=0, prob_sampling_feasible=1.0)
-        env = make_reward_wrap(env_name, env, env_params, reward_name)
-        env = FlattenObservation(env)
+        env, env_params = make_env(env_name, task, reward_name, eval=True, logdir=None, seed=0)
         # check
         check_env(env)
         # evaluation

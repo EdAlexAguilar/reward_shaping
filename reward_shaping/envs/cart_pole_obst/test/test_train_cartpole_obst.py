@@ -15,9 +15,7 @@ class TestTrainingLoop(TestCase):
             args.env = "cart_pole_obst"
 
         # create training environment
-        train_env, env_params = make_env(args.env, args.task, logdir=None, seed=args.seed)
-        train_env = make_reward_wrap(args.env, train_env, env_params, args.reward)
-        train_env = FlattenObservation(train_env)
+        train_env, env_params = make_env(args.env, args.task, args.reward, seed=args.seed)
 
         # create agent
         model = make_agent(args.env, train_env, args.algo, logdir=None)

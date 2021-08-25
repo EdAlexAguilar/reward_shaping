@@ -3,7 +3,7 @@ from unittest import TestCase
 from reward_shaping.core.configs import BuildGraphReward
 from reward_shaping.core.wrappers import RewardWrapper
 from reward_shaping.core.graph_based import GraphBasedReward
-from reward_shaping.training.utils import make_env
+from reward_shaping.training.utils import make_base_env, load_env_params
 
 
 class TestGraphBasedRewards(TestCase):
@@ -37,7 +37,8 @@ class TestGraphBasedRewards(TestCase):
             'T_orig': ['T_bal'],
         }
         graph_reward = GraphBasedReward.from_collections(nodes=reward_fns, topology=topology)
-        env, _ = make_env('cart_pole_obst', 'fixed_height')
+        env_params = load_env_params('cart_pole_obst', 'fixed_height')
+        env = make_base_env('cart_pole_obst', env_params)
         env = RewardWrapper(env, reward_fn=graph_reward)
         for _ in range(5):
             self._rollout(env, const_rew=1.0 * len(reward_fns), render=True)
@@ -63,7 +64,8 @@ class TestGraphBasedRewards(TestCase):
             'T_orig': ['C_bal'],
         }
         graph_reward = GraphBasedReward.from_collections(nodes=reward_fns, topology=topology)
-        env, _ = make_env('cart_pole_obst', 'fixed_height')
+        env_params = load_env_params('cart_pole_obst', 'fixed_height')
+        env = make_base_env('cart_pole_obst', env_params)
         env = RewardWrapper(env, reward_fn=graph_reward)
         for _ in range(5):
             self._rollout(env, const_rew=4.0, render=True)
@@ -88,7 +90,8 @@ class TestGraphBasedRewards(TestCase):
             'T_orig': ['T_bal'],
         }
         graph_reward = GraphBasedReward.from_collections(nodes=reward_fns, topology=topology)
-        env, _ = make_env('cart_pole_obst', 'fixed_height')
+        env_params = load_env_params('cart_pole_obst', 'fixed_height')
+        env = make_base_env('cart_pole_obst', env_params)
         env = RewardWrapper(env, reward_fn=graph_reward)
         for _ in range(5):
             self._rollout(env, const_rew=2.0, render=True)
@@ -118,7 +121,8 @@ class TestGraphBasedRewards(TestCase):
 
     def test_gb_continuous_score_binary_indicator(self):
         from reward_shaping.envs.cart_pole_obst.rewards.graph_based import GraphWithContinuousScoreBinaryIndicator
-        env, env_params = make_env('cart_pole_obst', 'fixed_height')
+        env_params = load_env_params('cart_pole_obst', 'fixed_height')
+        env = make_base_env('cart_pole_obst', env_params)
         graph_conf = GraphWithContinuousScoreBinaryIndicator(env_params)
         reward_fn = BuildGraphReward.from_conf(graph_config=graph_conf)
         env = RewardWrapper(env, reward_fn=reward_fn)
