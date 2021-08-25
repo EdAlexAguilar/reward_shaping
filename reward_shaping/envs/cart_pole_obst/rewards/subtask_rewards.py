@@ -11,8 +11,8 @@ class CollisionReward(RewardFunction):
         self.no_collision_bonus = no_collision_bonus
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        assert 'collision' in state
-        collision = state['collision'] == 1
+        assert 'collision' in next_state
+        collision = next_state['collision'] == 1
         return self.no_collision_bonus if not collision else self.collision_penalty
 
 
@@ -30,29 +30,28 @@ class ContinuousCollisionReward(RewardFunction):
     """
 
     def __call__(self, state, action, next_state, info):
-        assert 'x' in state and 'theta' in state
+        assert 'x' in next_state and 'theta' in next_state
         assert 'axle_y' in info and 'pole_length' in info
-        assert 'obstacle_left' in state and 'obstacle_right' in state
-        assert 'obstacle_bottom' in state and 'obstacle_top' in state
-        x, theta = state['x'], state['theta']
+        assert 'obstacle_left' in next_state and 'obstacle_right' in next_state
+        assert 'obstacle_bottom' in next_state and 'obstacle_top' in next_state
+        x, theta = next_state['x'], next_state['theta']
         pole_x = x + np.sin(theta) * info['pole_length']
         pole_y = info['axle_y'] + np.cos(theta) * info['pole_length']
-        rho = max(-(pole_x - state['obstacle_left']), -(state['obstacle_right'] - pole_x),
-                  -(pole_y - state['obstacle_bottom']), -(state['obstacle_top'] - pole_y))
+        rho = max(-(pole_x - next_state['obstacle_left']), -(next_state['obstacle_right'] - pole_x),
+                  -(pole_y - next_state['obstacle_bottom']), -(next_state['obstacle_top'] - pole_y))
         return rho
 
 
 class FalldownReward(RewardFunction):
-    def __init__(self, theta_limit, falldown_penalty=0.0, no_falldown_bonus=0.0):
+    def __init__(self, falldown_penalty=0.0, no_falldown_bonus=0.0):
         super().__init__()
-        self.theta_limit = theta_limit
         self.falldown_penalty = falldown_penalty
         self.no_falldown_bonus = no_falldown_bonus
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        assert 'theta' in state
-        theta = state['theta']
-        return self.falldown_penalty if (abs(theta) > self.theta_limit) else self.no_falldown_bonus
+        assert 'theta' in next_state
+        theta = next_state['theta']
+        return self.falldown_penalty if (abs(theta) > info['theta_limit']) else self.no_falldown_bonus
 
 
 class ContinuousFalldownReward(RewardFunction):
@@ -60,9 +59,10 @@ class ContinuousFalldownReward(RewardFunction):
     psi := abs(theta) <= theta_limit
     rho := theta_limit - abs(theta)
     """
+
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        assert 'theta' in state and 'theta_limit' in info
-        theta = state['theta']
+        assert 'theta' in next_state and 'theta_limit' in info
+        theta = next_state['theta']
         return info['theta_limit'] - abs(theta)
 
 
@@ -73,8 +73,8 @@ class OutsideReward(RewardFunction):
         self.no_exit_bonus = no_exit_bonus
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        assert 'x' in state and 'x_limit' in info
-        x = state['x']
+        assert 'x' in next_state and 'x_limit' in info
+        x = next_state['x']
         return self.exit_penalty if (abs(x) > info['x_limit']) else self.no_exit_bonus
 
 
@@ -91,24 +91,24 @@ class ContinuousOutsideReward(RewardFunction):
 
 class ReachTargetReward(RewardFunction):
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        assert 'x' in state and 'x_target' in info and 'x_target_tol' in info
-        x = state['x']
+        assert 'x' in next_state and 'x_target' in info and 'x_target_tol' in info
+        x = next_state['x']
         return info['x_target_tol'] - abs(x - info['x_target'])
 
 
 class ProgressToTargetReward(RewardFunction):
     def __init__(self, progress_coeff=1.0):
-        self._progress_coeff=progress_coeff
+        self._progress_coeff = progress_coeff
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        assert 'x' in state and 'x_target' in info and 'x_target_tol' in info
+        assert 'x' in next_state and 'x_target' in info and 'x_target_tol' in info
         if next_state is not None:
-            closeness = 1 - (abs(state['x'] - info['x_target']) / abs(info['x_limit'] - info['x_target']))
-            next_closeness = 1 - (abs(next_state['x'] - info['x_target']) / abs(info['x_limit'] - info['x_target']))
-            return self._progress_coeff * (next_closeness - closeness)
+            prev_closeness = 1 - (abs(state['x'] - info['x_target']) / abs(info['x_limit'] - info['x_target']))
+            closeness = 1 - (abs(next_state['x'] - info['x_target']) / abs(info['x_limit'] - info['x_target']))
+            return self._progress_coeff * (closeness - prev_closeness)
         else:
-            return info['x_target_tol'] - abs(state['x'] - info['x_target'])
-
+            # it should never happen but for robustness
+            return 0.0
 
 
 class SparseReachTargetReward(RewardFunction):
@@ -116,31 +116,17 @@ class SparseReachTargetReward(RewardFunction):
         self.target_reward = target_reward
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        assert 'x' in state and 'x_target' in info and 'x_target_tol' in info
-        x = state['x']
+        assert 'x' in next_state and 'x_target' in info and 'x_target_tol' in info
+        x = next_state['x']
         rho = info['x_target_tol'] - abs(x - info['x_target'])
         return self.target_reward if rho >= 0.0 else 0.0
-
-
-class ProgressReachTargetReward(RewardFunction):
-    def __init__(self, progress_coeff=1.0):
-        self.progress_coeff = progress_coeff
-
-    def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        assert 'x' in state and 'x' in next_state
-        assert 'x_target' in info and 'x_target_tol' in info
-        x = state['x']
-        next_x = next_state['x']
-        distance = info['x_target_tol'] - abs(x - info['x_target'])
-        next_distance = info['x_target_tol'] - abs(next_x - info['x_target'])
-        return self.progress_coeff * (distance - next_distance)
 
 
 class BalanceReward(RewardFunction):
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        assert 'theta' in state
-        theta = state['theta']
+        assert 'theta' in next_state
+        theta = next_state['theta']
         return info['theta_target_tol'] - abs(theta - info['theta_target'])
 
 

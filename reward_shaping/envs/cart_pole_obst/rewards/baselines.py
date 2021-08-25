@@ -15,13 +15,13 @@ class ContinuousReward(RewardFunction):
         x, theta = next_state['x'], next_state['theta']
         obst_left, obst_right = next_state['obstacle_left'], next_state['obstacle_right']
         obst_bottom, obst_top = next_state['obstacle_bottom'], next_state['obstacle_top']
-        dist_target = abs(x - info['x_target'])
+        dist_target = abs(x - info['x_target']) / abs(info['x_limit'] - info['x_target'])
         pole_x, pole_y = x + info['pole_length'] * np.sin(theta), \
                          info['axle_y'] + info['pole_length'] * np.cos(theta)
         obst_x, obst_y = obst_left + (obst_right - obst_left) / 2.0, \
                          obst_bottom + (obst_top - obst_bottom) / 2.0
-        dist_obst = np.sqrt((obst_x - pole_x) ** 2 + (obst_y - pole_y) ** 2)
-        return - dist_target + dist_obst
+        dist_obst = 1/10 * np.sqrt((obst_x - pole_x) ** 2 + (obst_y - pole_y) ** 2)
+        return 5.0 * (1 - dist_target) - (1 - dist_obst)
 
 
 class SparseReward(RewardFunction):

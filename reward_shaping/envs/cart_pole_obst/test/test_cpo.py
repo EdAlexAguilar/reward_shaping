@@ -58,4 +58,9 @@ class TestCartPoleObstacle(TestCase):
         reward = "gb_pcr_bi"
         self._generic_test(task, reward)
 
+    def test_gb_boolsafety(self):
+        task = "fixed_height"
+        reward = "gb_bcr_bi"
+        self._generic_test(task, reward)
+
 
