@@ -11,7 +11,7 @@ from .utils import make_env, make_agent
 
 
 def make_log_dirs(args):
-    logdir_template = "../logs/{}/{}_{}_Seed{}_{}"
+    logdir_template = "logs/{}/{}_{}_Seed{}_{}"
     logdir = pathlib.Path(logdir_template.format(args.env, args.task, args.reward, args.seed, int(time.time())))
     checkpointdir = logdir / "checkpoint"
     logdir.mkdir(parents=True, exist_ok=True)
