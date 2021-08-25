@@ -96,6 +96,21 @@ class ReachTargetReward(RewardFunction):
         return info['x_target_tol'] - abs(x - info['x_target'])
 
 
+class ProgressToTargetReward(RewardFunction):
+    def __init__(self, progress_coeff=1.0):
+        self._progress_coeff=progress_coeff
+
+    def __call__(self, state, action=None, next_state=None, info=None) -> float:
+        assert 'x' in state and 'x_target' in info and 'x_target_tol' in info
+        if next_state is not None:
+            closeness = 1 - (abs(state['x'] - info['x_target']) / abs(info['x_limit'] - info['x_target']))
+            next_closeness = 1 - (abs(next_state['x'] - info['x_target']) / abs(info['x_limit'] - info['x_target']))
+            return self._progress_coeff * (next_closeness - closeness)
+        else:
+            return info['x_target_tol'] - abs(state['x'] - info['x_target'])
+
+
+
 class SparseReachTargetReward(RewardFunction):
     def __init__(self, target_reward=5.0):
         self.target_reward = target_reward

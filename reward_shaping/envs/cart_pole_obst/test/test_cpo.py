@@ -22,6 +22,7 @@ class TestCartPoleObstacle(TestCase):
         while not done:
             action = env.action_space.sample()
             obs, reward, done, info = env.step(action)
+            print(reward)
             tot_reward += reward
             env.render()
         print(f"[{reward_name}] tot reward: {tot_reward:.3f}")
@@ -51,5 +52,10 @@ class TestCartPoleObstacle(TestCase):
         task = "fixed_height"
         reward = "gb_cr_bi"
         self._generic_test(task, reward, potential=True)
+
+    def test_gb_progress(self):
+        task = "fixed_height"
+        reward = "gb_pcr_bi"
+        self._generic_test(task, reward)
 
 

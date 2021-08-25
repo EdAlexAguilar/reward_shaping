@@ -2,7 +2,7 @@ import gym
 
 from reward_shaping.envs.cart_pole_obst.rewards.baselines import SparseReward, ContinuousReward
 from reward_shaping.envs.cart_pole_obst.rewards.graph_based import GraphWithContinuousScoreBinaryIndicator, \
-    GraphWithContinuousScoreContinuousIndicator
+    GraphWithContinuousScoreContinuousIndicator, GraphWithProgressScoreBinaryIndicator
 from reward_shaping.envs.cart_pole_obst.rewards.stl_based import STLReward, BoolSTLReward
 
 _registry = {}
@@ -24,6 +24,8 @@ register_reward('bool_stl', reward=BoolSTLReward)
 # Graph-based (gb) formulations
 register_reward('gb_cr_bi', reward=GraphWithContinuousScoreBinaryIndicator)
 register_reward('gb_cr_ci', reward=GraphWithContinuousScoreContinuousIndicator)
+# Progress
+register_reward('gb_pcr_bi', reward=GraphWithProgressScoreBinaryIndicator)
 
 """
 register_reward('hier_cont', reward=GraphWithContinuousScore)

@@ -49,3 +49,6 @@ class TestTrainingLoop(TestCase):
 
     def test_train_gbased_continuous_ind(self):
         self._test_fast_train('fixed_height', 'gb_cr_ci')
+
+    def test_train_gbased_progress(self):
+        self._test_fast_train('fixed_height', 'gb_pcr_bi')
