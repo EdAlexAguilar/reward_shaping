@@ -1,10 +1,10 @@
 import argparse as parser
 
-from train import train
+from reward_shaping.training.train import train
 
 
 def main(args):
-    env_name = "cart_pole_obst"
+    env_name = "bipedal_walker"
     train_params = {'steps': args.steps,
                     'video_every': int(args.steps / 10),
                     'n_recorded_episodes': 5,
@@ -15,7 +15,7 @@ def main(args):
 
 
 if __name__ == "__main__":
-    tasks = ['balance', 'target', 'fixed_height', 'random_height']
+    tasks = ['forward']
     parser = parser.ArgumentParser()
     parser.add_argument("--task", type=str, required=True, choices=tasks)
     parser.add_argument("--reward", type=str, required=True)
