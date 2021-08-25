@@ -1,6 +1,6 @@
 import argparse as parser
 
-from reward_shaping.training.train import train
+from train import train
 
 
 def main(args):

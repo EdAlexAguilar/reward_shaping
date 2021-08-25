@@ -6,8 +6,8 @@ import yaml
 from gym.wrappers import Monitor
 from stable_baselines3.common.callbacks import EvalCallback, CheckpointCallback
 
-from reward_shaping.training.callbacks import VideoRecorderCallback
-from reward_shaping.training.utils import make_env, make_agent
+from callbacks import VideoRecorderCallback
+from utils import make_env, make_agent
 
 
 def make_log_dirs(args):
