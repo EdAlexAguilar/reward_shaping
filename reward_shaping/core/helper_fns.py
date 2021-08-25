@@ -41,6 +41,10 @@ class PotentialReward(RewardFunction):
         self._potential_coeff = potential_coeff
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
+        # assume: the reward fn depends only on the current state
         reward = self._reward_fn(state=state, info=info)
-        next_reward = self._reward_fn(state=next_state, info=info)
+        if next_state is not None:
+            next_reward = self._reward_fn(state=next_state, info=info)
+        else:
+            next_reward = reward    # force 0 reward on terminal states
         return self._potential_coeff * (next_reward - reward)
