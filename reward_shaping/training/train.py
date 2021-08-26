@@ -11,7 +11,7 @@ from .utils import make_env, make_agent
 
 
 def make_log_dirs(args):
-    if args.expdir is None:
+    if args.expdir is not None:
         basedir = f"logs/{args.env}/{args.expdir}"
     else:
         basedir = f"logs/{args.env}"
