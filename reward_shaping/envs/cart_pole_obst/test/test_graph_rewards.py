@@ -11,11 +11,15 @@ class TestGraphBasedRewards(TestCase):
     def _rollout(self, env, const_rew=None, render=False):
         env.reset()
         done = False
+        ret = 0.0
         while not done:
             obs, reward, done, info = env.step(env.action_space.sample())
+            ret += reward
             if render:
                 env.render()
+            #print(reward)
             self.assertTrue(reward == const_rew or const_rew is None)
+        print(ret)
 
     def test_always_ones(self):
         """ each node returns reward=1.0 and sat=1.0
@@ -124,6 +128,26 @@ class TestGraphBasedRewards(TestCase):
         env_params = load_env_params('cart_pole_obst', 'fixed_height')
         env = make_base_env('cart_pole_obst', env_params)
         graph_conf = GraphWithContinuousScoreBinaryIndicator(env_params)
+        reward_fn = BuildGraphReward.from_conf(graph_config=graph_conf)
+        env = RewardWrapper(env, reward_fn=reward_fn)
+        for _ in range(5):
+            self._rollout(env, render=True)
+
+    def test_gb_binary_safeties(self):
+        from reward_shaping.envs.cart_pole_obst.rewards.graph_based import GraphWithBinarySafetyScoreBinaryIndicator
+        env_params = load_env_params('cart_pole_obst', 'fixed_height')
+        env = make_base_env('cart_pole_obst', env_params)
+        graph_conf = GraphWithBinarySafetyScoreBinaryIndicator(env_params)
+        reward_fn = BuildGraphReward.from_conf(graph_config=graph_conf)
+        env = RewardWrapper(env, reward_fn=reward_fn)
+        for _ in range(5):
+            self._rollout(env, render=True)
+
+    def test_gb_single_safety_node(self):
+        from reward_shaping.envs.cart_pole_obst.rewards.graph_based import GraphWithSingleConjunctiveSafetyNode
+        env_params = load_env_params('cart_pole_obst', 'fixed_height')
+        env = make_base_env('cart_pole_obst', env_params)
+        graph_conf = GraphWithSingleConjunctiveSafetyNode(env_params)
         reward_fn = BuildGraphReward.from_conf(graph_config=graph_conf)
         env = RewardWrapper(env, reward_fn=reward_fn)
         for _ in range(5):

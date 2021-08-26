@@ -233,14 +233,16 @@ class CartPoleContObsEnv(gym.Env):
             or (self.terminate_on_battery and battery <= 0)
             or (self.terminate_on_collision and collision))
 
+        reward = self.reward()
         info = {'time': self.step_count,
                 'x_limit': self.x_threshold, 'theta_limit': self.theta_threshold_radians,
                 'x_target': self.x_target, 'x_target_tol': self.x_target_tol,
                 'theta_target': self.theta_target, 'theta_target_tol': self.theta_target_tol,
                 'pole_length': self.pole_length, 'axle_y': self.axle_y,
                 'is_feasible': self.is_feasible, 'feasible_height': self.feasible_height,
-                'collision': collision, 'outside': outside, 'falldown': falldown}
-        return state, self.reward(), self.done, info
+                'collision': collision, 'outside': outside, 'falldown': falldown,
+                'default_reward': reward}
+        return state, reward, self.done, info
 
     def reward(self):
         """

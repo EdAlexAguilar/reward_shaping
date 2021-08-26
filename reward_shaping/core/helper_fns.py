@@ -1,6 +1,18 @@
+from typing import List
+
 import numpy as np
 
 from reward_shaping.core.reward import RewardFunction
+
+
+class DefaultReward(RewardFunction):
+    """
+    this is a dummy reward for using the default reward of an environment,
+    it assumes the default reward computed by the original implementation is passed in the info
+    """
+    def __call__(self, state, action=None, next_state=None, info=None) -> float:
+        assert 'default_reward' in info
+        return info['default_reward']
 
 
 class NormalizedReward(RewardFunction):
@@ -35,6 +47,35 @@ class ThresholdIndicator(RewardFunction):
         return result
 
 
+class MinAggregatorReward(RewardFunction):
+    """
+    given a list `fns` of individual score functions, it returns:
+        - score=min{scores}
+    """
+
+    def __init__(self, fns: List[RewardFunction]):
+        self._fns = fns
+
+    def __call__(self, state, action=None, next_state=None, info=None) -> float:
+        score = np.min([fn(state, action, next_state, info) for fn in self._fns])
+        return score
+
+
+class ProdAggregatorReward(RewardFunction):
+    """
+    given a list `fns` of individual score functions, it returns:
+        - score=prod{scores}
+    note: this is thought for binary indicator functions, in fact the product evaluates the AND of all indicators
+    """
+
+    def __init__(self, fns: List[RewardFunction]):
+        self._fns = fns
+
+    def __call__(self, state, action=None, next_state=None, info=None) -> float:
+        score = np.prod([fn(state, action, next_state, info) for fn in self._fns])
+        return score
+
+
 class PotentialReward(RewardFunction):
     def __init__(self, reward_fn, potential_coeff=1.0):
         self._reward_fn = reward_fn
@@ -45,5 +86,5 @@ class PotentialReward(RewardFunction):
         # reward = self._reward_fn(state=state, info=info)
         # next_reward = self._reward_fn(state=next_state, info=info)
         # not working
-        #return self._potential_coeff * (next_reward - reward)
+        # return self._potential_coeff * (next_reward - reward)
         return -1.0

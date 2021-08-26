@@ -1,4 +1,3 @@
-from abc import ABC, abstractmethod
 import numpy as np
 
 from reward_shaping.core.reward import RewardFunction

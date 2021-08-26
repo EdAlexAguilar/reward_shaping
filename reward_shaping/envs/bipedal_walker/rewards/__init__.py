@@ -1,3 +1,4 @@
+from reward_shaping.core.helper_fns import DefaultReward
 from reward_shaping.envs.bipedal_walker.rewards.graph_based import GraphWithContinuousScoreBinaryIndicator
 from reward_shaping.envs.bipedal_walker.rewards.stl_based import STLReward, BoolSTLReward
 
@@ -18,7 +19,7 @@ def register_reward(name: str, reward):
 
 
 # Baselines
-# todo
+register_reward('default', reward=DefaultReward)
 # Graph-based
 register_reward('gb_cr_bi', reward=GraphWithContinuousScoreBinaryIndicator)
 register_reward('stl', reward=STLReward)

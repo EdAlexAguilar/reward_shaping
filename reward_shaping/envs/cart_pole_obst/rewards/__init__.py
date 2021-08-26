@@ -1,9 +1,10 @@
 import gym
 
+from reward_shaping.core.helper_fns import DefaultReward
 from reward_shaping.envs.cart_pole_obst.rewards.baselines import SparseReward, ContinuousReward
 from reward_shaping.envs.cart_pole_obst.rewards.graph_based import GraphWithContinuousScoreBinaryIndicator, \
     GraphWithContinuousScoreContinuousIndicator, GraphWithProgressScoreBinaryIndicator, \
-    GraphWithBinarySafetyScoreBinaryIndicator
+    GraphWithBinarySafetyScoreBinaryIndicator, GraphWithSingleConjunctiveSafetyNode
 from reward_shaping.envs.cart_pole_obst.rewards.stl_based import STLReward, BoolSTLReward
 
 _registry = {}
@@ -18,6 +19,7 @@ def register_reward(name: str, reward):
         _registry[name] = reward
 
 # Baselines
+register_reward('default', reward=DefaultReward)
 register_reward('sparse', reward=SparseReward)
 register_reward('continuous', reward=ContinuousReward)
 register_reward('stl', reward=STLReward)
@@ -28,6 +30,7 @@ register_reward('gb_cr_ci', reward=GraphWithContinuousScoreContinuousIndicator)
 # Progress
 register_reward('gb_pcr_bi', reward=GraphWithProgressScoreBinaryIndicator)
 register_reward('gb_bcr_bi', reward=GraphWithBinarySafetyScoreBinaryIndicator)
+register_reward('gb_cr_bi_s1', reward=GraphWithSingleConjunctiveSafetyNode)
 
 """
 register_reward('hier_cont', reward=GraphWithContinuousScore)

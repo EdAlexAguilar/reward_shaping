@@ -494,7 +494,8 @@ class BipedalWalker(gym.Env, EzPickle):
                 "angle_hull_limit": self.angle_hull_limit,
                 "speed_y_limit": self.speed_y_limit,
                 "angle_vel_limit": self.angle_vel_limit,
-                "speed_x_target": self.speed_x_target}
+                "speed_x_target": self.speed_x_target,
+                "default_reward": reward}
         return np.array(state), reward, done, info
 
     def render(self, mode='human', **kwargs):
