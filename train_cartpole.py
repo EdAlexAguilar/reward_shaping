@@ -11,7 +11,7 @@ def main(args):
                     'eval_every': min(10000, int(args.steps / 10)),
                     'n_eval_episodes': 5,
                     'checkpoint_every': int(args.steps / 10)}
-    train(env_name, args.task, args.reward, train_params, seed=args.seed)
+    train(env_name, args.task, args.reward, train_params, seed=args.seed, expdir=args.expdir)
 
 
 if __name__ == "__main__":
@@ -21,5 +21,6 @@ if __name__ == "__main__":
     parser.add_argument("--reward", type=str, required=True)
     parser.add_argument("--steps", type=int, default=1e6)
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--expdir", type=str, default=None, help="name of intermediate dir to group experiments")
     args = parser.parse_args()
     main(args)
