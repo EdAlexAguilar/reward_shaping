@@ -1,5 +1,5 @@
 from unittest import TestCase
-from reward_shaping.envs.cart_pole_obst.test.test import generic_env_test
+from reward_shaping.envs.cart_pole_obst.test.test import generic_env_test, generic_training
 
 env_name = "bipedal_walker"
 
@@ -31,3 +31,16 @@ class TestBipedalWalker(TestCase):
         self.assertTrue(result)
 
 
+class TestTrainingLoop(TestCase):
+
+    def test_train_default(self):
+        generic_training(env_name, 'forward', 'default')
+
+    def test_train_stl(self):
+        generic_training(env_name, 'forward', 'stl')
+
+    def test_train_bool_stl(self):
+        generic_training(env_name, 'forward', 'bool_stl')
+
+    def test_train_gbased_binary_ind(self):
+        generic_training(env_name, 'forward', 'gb_cr_bi')
