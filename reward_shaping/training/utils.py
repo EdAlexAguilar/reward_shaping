@@ -109,11 +109,9 @@ def make_reward_wrap(env_name, env, env_params, reward, use_potential=False, log
         if 'gb' in reward:
             from reward_shaping.core.configs import BuildGraphReward
             reward_fn = BuildGraphReward.from_conf(graph_config=reward_conf)
-            reward_fn.render()
             if logdir is not None:
+                reward_fn.render()
                 plt.savefig(logdir / "graph_reward.pdf")
-            else:
-                plt.show()
         else:
             reward_fn = reward_conf
         if use_potential:

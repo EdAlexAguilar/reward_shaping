@@ -56,3 +56,9 @@ class TestCartPoleObstacle(TestCase):
         reward = "gb_bcr_bi"
         result = generic_env_test(env_name, task, reward)
         self.assertTrue(result)
+
+    def test_weighted_reward(self):
+        task = "fixed_height"
+        reward = "weighted"
+        result = generic_env_test(env_name, task, reward)
+        self.assertTrue(result)
