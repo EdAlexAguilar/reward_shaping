@@ -1,7 +1,7 @@
 import warnings
 from unittest import TestCase
 
-from reward_shaping.envs.cart_pole_obst.test.test import generic_env_test
+from reward_shaping.test.test import generic_env_test
 
 env_name = "cart_pole_obst"
 
