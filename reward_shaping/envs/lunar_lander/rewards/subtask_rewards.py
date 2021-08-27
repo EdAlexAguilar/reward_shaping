@@ -43,7 +43,7 @@ class MinimizeXVelocity(RewardFunction):
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
         x, x_dot = state[0], state[2]
         delta = 1/info['FPS']
-        return x + delta*x_dot
+        return np.sign(x)*(x + delta*x_dot)
 
 class MinimizeCraftAngle(RewardFunction):
     """
@@ -65,7 +65,7 @@ class MinimizeFuelConsumption(RewardFunction):
 
 class MinimizeAngleVelocity(RewardFunction):
     """
-     # Comfort 3: Small Angle Velocity
+     # Comfort : Small Angle Velocity
         angular_velocity = f"always(abs(theta_dot) <= theta_dot_limit)"
     """
     def __call__(self, state, action=None, next_state=None, info=None) -> float:

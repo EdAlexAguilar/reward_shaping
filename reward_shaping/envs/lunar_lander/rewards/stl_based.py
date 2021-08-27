@@ -11,7 +11,7 @@ class STLReward(STLRewardConfig):
         no_y_crash = f"always((y+delta*y_dot)>= 0)"
         # Safety 2 : Theta angle should be bounded
         spacecraft_angle = f"always(abs(theta) < theta_limit)"
-        fuel_usage = f"always(fuel >= 0)"
+        fuel_usage = f"always(fuel > 0)"
         safety_requirement = f"(({no_y_crash}) and ({spacecraft_angle}) and ({fuel_usage}))"
 
         # Target : reach origin
@@ -19,7 +19,7 @@ class STLReward(STLRewardConfig):
 
         # Comfort 1: Small Horizontal Speed (same as for no_y_crash)
         horizontal_speed = f"always(sign_x*(x+delta*x_dot)>= 0)"
-        # Comfort 3: Small Angle Velocity
+        # Comfort 2: Small Angle Velocity
         angular_velocity = f"always(abs(theta_dot) <= theta_dot_limit)"
         # Comfort Requirements
         comfort_requirement = f"({horizontal_speed} and {angular_velocity})"
@@ -35,8 +35,8 @@ class STLReward(STLRewardConfig):
                 'x_dot', 'y_dot',
                 'theta', 'theta_dot',
                 'theta_limit', 'theta_dot_limit',
-                'dist_origin_tol', 'sign_x',
-                'fuel']
+                'dist_origin_tol', 'dist_origin',
+                'sign_x', 'fuel']
 
     @property
     def monitoring_types(self):
@@ -46,7 +46,7 @@ class STLReward(STLRewardConfig):
                 'float', 'float',
                 'float', 'float',
                 'float', 'float',
-                'float']
+                'float', 'float']
 
     def get_monitored_state(self, state, done, info) -> Dict[str, Any]:
         # compute monitoring variables
@@ -62,6 +62,7 @@ class STLReward(STLRewardConfig):
             'theta_limit': info['theta_limit'],
             'theta_dot_limit': info['theta_dot_limit'],
             'dist_origin_tol': info['dist_origin_tol'],
+            'dist_origin': np.linalg.norm([state[0], state[1]])
             'sign_x': np.sign(state[0]),
             'fuel': info['fuel']
         }
