@@ -283,7 +283,7 @@ class CPOGraphWithBinarySafetyScoreBinaryIndicator(GraphRewardConfig):
             nodes["H_nfeas"] = (zero_fn, nfeas_ind)
         return nodes
 
-    @propertyCPO
+    @property
     def topology(self):
         topology = get_cartpole_topology(self._env_params['task'])
         return topology
@@ -298,7 +298,7 @@ class CPOChainGraph(GraphRewardConfig):
     def nodes(self):
         nodes = {}
         # prepare env info
-        info = {'x_limit': self._env_pCPOarams['x_limit'],
+        info = {'x_limit': self._env_params['x_limit'],
                 'x_target': self._env_params['x_target'],
                 'x_target_tol': self._env_params['x_target_tol'],
                 'theta_limit': np.deg2rad(self._env_params['theta_limit']),
