@@ -23,4 +23,4 @@ register_reward('default', reward=DefaultReward)
 # Graph-based
 register_reward('gb_cr_bi', reward=GraphWithContinuousScoreBinaryIndicator)
 register_reward('stl', reward=STLReward)
-register_reward('bool_stl', reward=BoolSTLReward)
+register_reward('bool_stl', reward=STLReward)   # used for evaluation (the safety properties are already not continuous)

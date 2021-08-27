@@ -114,9 +114,9 @@ class BipedalWalker(gym.Env, EzPickle):
 
     hardcore = False
 
-    def __init__(self, task="forward", angle_hull_limit=np.pi/4,
+    def __init__(self, task="forward", max_episode_steps=1600, angle_hull_limit=np.pi / 4,
                  speed_y_limit=1.0, angle_vel_limit=.25, speed_x_target=0.0,
-                 eval=False, seed=0):
+                 terminate_on_collision=True, eval=False, seed=0):
         EzPickle.__init__(self)
         self.seed(seed=seed)
         self.viewer = None
@@ -149,11 +149,13 @@ class BipedalWalker(gym.Env, EzPickle):
 
         # env params
         self.task = task
-        self.eval = eval    # this can be eventually used to make eval deterministic (ie, test specific starting conds)
+        self.max_episode_steps = max_episode_steps
+        self.terminate_on_collision = terminate_on_collision
+        self.eval = eval  # this can be eventually used to make eval deterministic (ie, test specific starting conds)
         self.angle_hull_limit = angle_hull_limit
         self.speed_y_limit = speed_y_limit
         self.angle_vel_limit = angle_vel_limit
-        self.speed_x_target= speed_x_target
+        self.speed_x_target = speed_x_target
         self.step_count = 0
 
         # reward metrics
@@ -163,7 +165,6 @@ class BipedalWalker(gym.Env, EzPickle):
         self.action_reward = 0.0
 
         self.reset()
-
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
@@ -467,38 +468,33 @@ class BipedalWalker(gym.Env, EzPickle):
             reward = shaping - self.prev_shaping
         self.prev_shaping = shaping
 
-        for a in action:
-            reward -= 0.00035 * MOTORS_TORQUE * np.clip(np.abs(a), 0, 1)
+        for act in action:
+            reward -= 0.00035 * MOTORS_TORQUE * np.clip(np.abs(act), 0, 1)
             # normalized to about -50.0 using heuristic, more optimal agent should spend less
-
-        done = False
         if self.game_over or pos[0] < 0:
             reward = -100
-            done = True
-        if pos[0] > (TERRAIN_LENGTH - TERRAIN_GRASS) * TERRAIN_STEP:
-            done = True
 
-        # safety: always (not fall)
-        # game_over is True when the hulk has contact with the ground
-        self.safety_reward = -1 * self.game_over
-        # target: eventually (position >= target)
         target_x = (TERRAIN_LENGTH - TERRAIN_GRASS) * TERRAIN_STEP
-        self.target_reward = pos[0] - target_x
-        # comfort: action_cost <= 0.0 (as close to zero as possible)
-        # we keep the parameters of the original reward
-        self.comfort_reward = np.sum(-0.00035 * MOTORS_TORQUE * np.clip(action, 0, 1))
+
+        done = bool(
+            pos[0] < 0 or pos[0] > target_x
+            or self.step_count > self.max_episode_steps
+            or (self.terminate_on_collision and self.game_over))
 
         # define additional info for reward shaping
         info = {"time": self.step_count,
+                "position_x": pos[0],
+                "target_x": target_x,
                 "collision": self.game_over,
                 "angle_hull_limit": self.angle_hull_limit,
                 "speed_y_limit": self.speed_y_limit,
                 "angle_vel_limit": self.angle_vel_limit,
                 "speed_x_target": self.speed_x_target,
-                "default_reward": reward}
+                "default_reward": reward,
+                }
         return np.array(state), reward, done, info
 
-    def render(self, mode='human', **kwargs):
+    def render(self, mode='human', **kwargs):  # safety: always (not fall)
         from gym.envs.classic_control import rendering
         if self.viewer is None:
             self.viewer = rendering.Viewer(VIEWPORT_W, VIEWPORT_H)
