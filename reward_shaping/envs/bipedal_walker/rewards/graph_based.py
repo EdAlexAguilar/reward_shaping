@@ -40,8 +40,8 @@ class GraphWithContinuousScoreBinaryIndicator(GraphRewardConfig):
                 'speed_x_target': self._env_params['speed_x_target']}
 
         # safety rules
-        fun = fns.BinaryFalldownReward()
-        nodes["S_fall"] = (fun, ThresholdIndicator(fun, include_zero=False))
+        fun = fns.BinaryFalldownReward(falldown_penalty=-1.0, no_falldown_bonus=0.0)
+        nodes["S_fall"] = (fun, ThresholdIndicator(fun))
 
         # define target rule
         fun = fns.SpeedTargetReward()       # this is already normalized in +-1   (unless target is nonzero)

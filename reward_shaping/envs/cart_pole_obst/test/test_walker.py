@@ -30,4 +30,10 @@ class TestBipedalWalker(TestCase):
         result = generic_env_test(env_name, task, reward)
         self.assertTrue(result)
 
+    def test_weighted(self):
+        task = "forward"
+        reward = "weighted"
+        result = generic_env_test(env_name, task, reward)
+        self.assertTrue(result)
+
 

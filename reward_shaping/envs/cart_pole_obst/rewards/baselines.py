@@ -1,7 +1,7 @@
 import numpy as np
 
 from reward_shaping.core.configs import RewardConfig
-from reward_shaping.core.reward import RewardFunction
+from reward_shaping.core.reward import RewardFunction, WeightedReward
 from reward_shaping.core.utils import get_normalized_reward
 import reward_shaping.envs.cart_pole_obst.rewards.subtask_rewards as fns
 
@@ -44,24 +44,24 @@ class SparseReward(RewardFunction):
         return 0.0
 
 
-class WeightedReward(RewardConfig):
+class WeightedBaselineReward(WeightedReward):
     """
     reward(s,a) := w_s * sum([score in safeties]) + w_t * sum([score in targets]) + w_c * sum([score in comforts])
     """
 
     def __init__(self, env_params, safety_weight=1.0, target_weight=0.5, comfort_weight=0.25):
         # parameters
-        super().__init__(env_params)
+        super().__init__()
         self._safety_weight = safety_weight
         self._target_weight = target_weight
         self._comfort_weight = comfort_weight
         # prepare env info for normalize the functions
-        info = {'x_limit': self._env_params['x_limit'],
-                'x_target': self._env_params['x_target'],
-                'x_target_tol': self._env_params['x_target_tol'],
-                'theta_limit': np.deg2rad(self._env_params['theta_limit']),
-                'theta_target': np.deg2rad(self._env_params['theta_target']),
-                'theta_target_tol': np.deg2rad(self._env_params['theta_target_tol'])}
+        info = {'x_limit': env_params['x_limit'],
+                'x_target': env_params['x_target'],
+                'x_target_tol': env_params['x_target_tol'],
+                'theta_limit': np.deg2rad(env_params['theta_limit']),
+                'theta_target': np.deg2rad(env_params['theta_target']),
+                'theta_target_tol': np.deg2rad(env_params['theta_target_tol'])}
 
         # safety rules (no need returned indicators)
         collision_fn, _ = get_normalized_reward(fns.ContinuousCollisionReward(), min_r=-0.5, max_r=2.5)
@@ -87,11 +87,3 @@ class WeightedReward(RewardConfig):
         self._safety_rules = [collision_fn, falldown_fn, outside_fn]
         self._target_rules = [target_fn]
         self._comfort_rules = [balance_fn]
-
-    def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        safety_score = sum([fn(state, action, next_state, info) for fn in self._safety_rules])
-        target_score = sum([fn(state, action, next_state, info) for fn in self._target_rules])
-        comfort_score = sum([fn(state, action, next_state, info) for fn in self._comfort_rules])
-        return self._safety_weight * safety_score + \
-               self._target_weight * target_score + \
-               self._comfort_weight * comfort_score

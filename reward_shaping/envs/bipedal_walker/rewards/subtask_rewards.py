@@ -17,10 +17,13 @@ class ContinuousFalldownReward(RewardFunction):
 
 
 class BinaryFalldownReward(RewardFunction):
+    def __init__(self, falldown_penalty=-1.0, no_falldown_bonus=0.0):
+        self._falldown_penalty = falldown_penalty
+        self._no_falldown_bonus = no_falldown_bonus
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
         assert 'collision' in info
-        return 0.0 if info['collision'] else 1.0
+        return self._falldown_penalty if info['collision'] else self._no_falldown_bonus
 
 
 class SpeedTargetReward(RewardFunction):

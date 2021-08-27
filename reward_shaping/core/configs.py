@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List
 
 from reward_shaping.core.graph_based import GraphBasedReward
+from reward_shaping.core.reward import RewardFunction
 
 
 class RewardConfig(ABC):
@@ -50,6 +51,6 @@ class GraphRewardConfig(RewardConfig):
 
 class BuildGraphReward:
     @staticmethod
-    def from_conf(graph_config: GraphRewardConfig):
+    def from_conf(graph_config: GraphRewardConfig) -> RewardFunction:
         reward_fn = GraphBasedReward.from_collections(nodes=graph_config.nodes, topology=graph_config.topology)
         return reward_fn
