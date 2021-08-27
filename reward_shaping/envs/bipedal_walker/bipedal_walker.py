@@ -158,12 +158,6 @@ class BipedalWalker(gym.Env, EzPickle):
         self.speed_x_target = speed_x_target
         self.step_count = 0
 
-        # reward metrics
-        self.default_reward = 0.0
-        self.fall_reward = 0.0
-        self.target_reward = 0.0
-        self.action_reward = 0.0
-
         self.reset()
 
     def seed(self, seed=None):
@@ -396,13 +390,6 @@ class BipedalWalker(gym.Env, EzPickle):
                 return fraction
 
         self.lidar = [LidarCallback() for _ in range(10)]
-
-        # reward metrics
-        self.default_reward = 0.0
-        self.fall_reward = 0.0
-        self.target_reward = 0.0
-        self.action_reward = 0.0
-
         return self.step(np.array([0, 0, 0, 0]))[0]
 
     def step(self, action):
