@@ -30,7 +30,7 @@ def get_cartpole_topology(task):
     return topology
 
 
-class GraphWithContinuousScoreBinaryIndicator(GraphRewardConfig):
+class CPOGraphWithContinuousScoreBinaryIndicator(GraphRewardConfig):
     """
     rew(R) = Sum_{r in R} (Product_{r' in R st. r' <= r} sigma(r')) * rho(r)
     with sigma returns binary value {0,1}
@@ -94,7 +94,7 @@ class GraphWithContinuousScoreBinaryIndicator(GraphRewardConfig):
         return topology
 
 
-class GraphWithContinuousScoreContinuousIndicator(GraphRewardConfig):
+class CPOGraphWithContinuousScoreContinuousIndicator(GraphRewardConfig):
     """
         rew(R) = Sum_{r in R} (Product_{r' in R st. r' <= r} rho(r')) * rho(r)
     """
@@ -168,7 +168,7 @@ class GraphWithContinuousScoreContinuousIndicator(GraphRewardConfig):
         return topology
 
 
-class GraphWithProgressScoreBinaryIndicator(GraphRewardConfig):
+class CPOGraphWithProgressScoreBinaryIndicator(GraphRewardConfig):
     """
     rew(R) = Sum_{r in R} (Product_{r' in R st. r' <= r} sigma(r')) * rho(r)
     with sigma returns binary value {0,1}
@@ -231,7 +231,7 @@ class GraphWithProgressScoreBinaryIndicator(GraphRewardConfig):
         return topology
 
 
-class GraphWithBinarySafetyScoreBinaryIndicator(GraphRewardConfig):
+class CPOGraphWithBinarySafetyScoreBinaryIndicator(GraphRewardConfig):
     """
     the safety properties return -1 (violation) or 0 (sat)
     """
@@ -274,7 +274,7 @@ class GraphWithBinarySafetyScoreBinaryIndicator(GraphRewardConfig):
             # for random env, additional comfort node
             fun = fns.BalanceReward()
             min_r_state, max_r_state = {'theta': info['theta_limit']}, {'theta': info['theta_target']}
-            nodes["C_bal"] = get_normalized_reward(fun, min_r_state=min_r_state, max_r_state=max_r_state, info=info)
+            nodes["C_bal"] = get_normaCPOlized_reward(fun, min_r_state=min_r_state, max_r_state=max_r_state, info=info)
             # conditional nodes (ie, to check env conditions)
             zero_fn = lambda _: 0.0  # this is a static condition, do not score for it (depends on the env)
             feas_ind = ThresholdIndicator(fns.CheckOvercomingFeasibility())
@@ -289,7 +289,7 @@ class GraphWithBinarySafetyScoreBinaryIndicator(GraphRewardConfig):
         return topology
 
 
-class GraphWithSingleConjunctiveSafetyNode(GraphRewardConfig):
+class CPOChainGraph(GraphRewardConfig):
     """
     all the safety requirements are evaluated as a single conjunction
     """

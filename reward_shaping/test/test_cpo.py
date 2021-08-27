@@ -1,7 +1,7 @@
 import warnings
 from unittest import TestCase
 
-from reward_shaping.envs.cart_pole_obst.test.test import generic_env_test
+from reward_shaping.test.test import generic_env_test
 
 env_name = "cart_pole_obst"
 
@@ -54,6 +54,12 @@ class TestCartPoleObstacle(TestCase):
     def test_gb_boolsafety(self):
         task = "fixed_height"
         reward = "gb_bcr_bi"
+        result = generic_env_test(env_name, task, reward)
+        self.assertTrue(result)
+
+    def test_gb_chain(self):
+        task = "fixed_height"
+        reward = "gb_chain"
         result = generic_env_test(env_name, task, reward)
         self.assertTrue(result)
 

@@ -61,7 +61,7 @@ def train(env, task, reward, train_params, algo="sac", seed=0, expdir=None):
     logdir, checkpointdir = make_log_dirs(args)
     # prepare envs
     train_env, trainenv_params = make_env(env, task, reward, eval=False, logdir=logdir, seed=seed)
-    eval_env, evalenv_params = make_env(env, task, reward="bool_stl", eval=True, seed=seed)
+    eval_env, evalenv_params = make_env(env, task, reward="stl", eval=True, seed=seed)
     # create agent
     model = make_agent(env, train_env, algo, logdir)
     # train
