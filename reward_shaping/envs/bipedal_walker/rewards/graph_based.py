@@ -22,7 +22,7 @@ class GraphRewardConfig(ABC):
         pass
 
 
-class GraphWithContinuousScoreBinaryIndicator(GraphRewardConfig):
+class BWGraphWithContinuousScoreBinaryIndicator(GraphRewardConfig):
     """
     rew(R) = Sum_{r in R} (Product_{r' in R st. r' <= r} sigma(r')) * rho(r)
     with sigma returns binary value {0,1}
@@ -60,7 +60,7 @@ class GraphWithContinuousScoreBinaryIndicator(GraphRewardConfig):
                                                  info=info,
                                                  threshold=info['angle_hull_limit'])
         nodes["C_v_y"] = get_normalized_reward(fns.ContinuousVerticalSpeedReward(),
-                                               min_r_state=[0.0] * 3 + [info['']] + [0.0] * 20,
+                                               min_r_state=[0.0] * 3 + [info['speed_y_limit']] + [0.0] * 20,
                                                max_r_state=[0.0] * 24,
                                                info=info,
                                                threshold=info['speed_y_limit'])
@@ -86,7 +86,7 @@ class GraphWithContinuousScoreBinaryIndicator(GraphRewardConfig):
         return topology
 
 
-class ChainGraph(GraphRewardConfig):
+class BWChainGraph(GraphRewardConfig):
     """
     graph-based with 1 node for each level of the hierarchy
     """
@@ -123,7 +123,7 @@ class ChainGraph(GraphRewardConfig):
                                                     info=info,
                                                     threshold=info['angle_hull_limit'])
         vy_fn, vy_sat = get_normalized_reward(fns.ContinuousVerticalSpeedReward(),
-                                              min_r_state=[0.0] * 3 + [info['']] + [0.0] * 20,
+                                              min_r_state=[0.0] * 3 + [info['speed_y_limit']] + [0.0] * 20,
                                               max_r_state=[0.0] * 24,
                                               info=info,
                                               threshold=info['speed_y_limit'])

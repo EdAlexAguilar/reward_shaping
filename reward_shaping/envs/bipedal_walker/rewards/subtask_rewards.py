@@ -1,5 +1,3 @@
-import numpy as np
-
 from reward_shaping.core.reward import RewardFunction
 
 

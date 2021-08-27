@@ -1,11 +1,10 @@
 from reward_shaping.core.reward import WeightedReward
-import numpy as np
 
 from reward_shaping.core.utils import get_normalized_reward
 import reward_shaping.envs.bipedal_walker.rewards.subtask_rewards as fns
 
 
-class WeightedBaselineReward(WeightedReward):
+class BWWeightedBaselineReward(WeightedReward):
     """
     reward(s,a) := w_s * sum([score in safeties]) + w_t * sum([score in targets]) + w_c * sum([score in comforts])
     """
