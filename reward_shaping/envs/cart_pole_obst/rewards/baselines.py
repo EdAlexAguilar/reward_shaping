@@ -6,7 +6,7 @@ from reward_shaping.core.utils import get_normalized_reward
 import reward_shaping.envs.cart_pole_obst.rewards.subtask_rewards as fns
 
 
-class ContinuousReward(RewardFunction):
+class CPOContinuousReward(RewardFunction):
     """
     reward(s,a) := - dist_target + dist_obst
     """
@@ -27,7 +27,7 @@ class ContinuousReward(RewardFunction):
         return 5.0 * (1 - dist_target) - (1 - dist_obst)
 
 
-class SparseReward(RewardFunction):
+class CPOSparseReward(RewardFunction):
     """
     reward(s,a) := penalty, if collision or falldown
     reward(s,a) := bonus, if target is reached
@@ -44,7 +44,7 @@ class SparseReward(RewardFunction):
         return 0.0
 
 
-class WeightedBaselineReward(WeightedReward):
+class CPOWeightedBaselineReward(WeightedReward):
     """
     reward(s,a) := w_s * sum([score in safeties]) + w_t * sum([score in targets]) + w_c * sum([score in comforts])
     """
