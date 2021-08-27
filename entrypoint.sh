@@ -1,0 +1,1 @@
+xvfb-run -s "-screen 0 1400x900x24" python run_training.py
