@@ -12,5 +12,5 @@ fi
 
 for i in 1 2 3
 do 
-	echo docker run --name exp_${reward}_${i} --rm -it -u $(id -u):$(id -g) -v $(pwd):/src --gpus $gpus $image /bin/bash entrypoint.sh $reward
+	docker run --name exp_${reward}_${i} --rm -it -u $(id -u):$(id -g) -v $(pwd):/src --gpus $gpus $image /bin/bash entrypoint.sh $reward
 done
