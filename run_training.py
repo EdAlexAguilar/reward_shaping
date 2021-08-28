@@ -7,7 +7,7 @@ def main(args):
     train_params = {'steps': args.steps,
                     'video_every': int(args.steps/10),
                     'n_recorded_episodes': 5,
-                    'eval_every': int(args.steps/10),
+                    'eval_every': min(10000, int(args.steps/10)),
                     'n_eval_episodes': 10,
                     'checkpoint_every': int(args.steps/10)}
     train(args.env, args.task, args.reward, train_params, seed=args.seed)
