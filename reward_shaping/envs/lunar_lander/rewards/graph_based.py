@@ -55,14 +55,14 @@ class GraphWithContinuousScoreBinaryIndicator(GraphRewardConfig):
         fun = fns.MinimizeFuelConsumption()
         max_r = 1
         min_r = 0
-        node["S_fuel"] = (NormalizedReward(fun, min_r, max_r), ThresholdIndicator(fun))
+        nodes["S_fuel"] = (NormalizedReward(fun, min_r, max_r), ThresholdIndicator(fun))
 
         # TARGET RULES
         fun = fns.MinimizeDistanceToLandingArea()
         max_r_state = [1.0, 1.5] + [0]*6
         max_r = fun(max_r_state, info=info)
         min_r = 0
-        node["T_origin"] = (NormalizedReward(fun, min_r, max_r), ThresholdIndicator(fun))
+        nodes["T_origin"] = (NormalizedReward(fun, min_r, max_r), ThresholdIndicator(fun))
 
         # COMFORT RULES
         fun = fns.MinimizeXVelocity()

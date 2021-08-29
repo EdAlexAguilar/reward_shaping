@@ -1,4 +1,4 @@
-rom typing import List, Dict, Any
+from typing import List, Dict, Any
 import numpy as np
 
 from reward_shaping.core.configs import STLRewardConfig
@@ -62,7 +62,7 @@ class STLReward(STLRewardConfig):
             'theta_limit': info['theta_limit'],
             'theta_dot_limit': info['theta_dot_limit'],
             'dist_origin_tol': info['dist_origin_tol'],
-            'dist_origin': np.linalg.norm([state[0], state[1]])
+            'dist_origin': np.linalg.norm([state[0], state[1]]),
             'sign_x': np.sign(state[0]),
             'fuel': info['fuel']
         }
