@@ -11,8 +11,12 @@ from .utils import make_env, make_agent
 
 
 def make_log_dirs(args):
-    logdir_template = "logs/{}/{}_{}_Seed{}_{}"
-    logdir = pathlib.Path(logdir_template.format(args.env, args.task, args.reward, args.seed, int(time.time())))
+    if args.expdir is not None:
+        basedir = f"logs/{args.env}/{args.expdir}"
+    else:
+        basedir = f"logs/{args.env}"
+    logdir_template = "{}/{}_{}_Seed{}_{}"
+    logdir = pathlib.Path(logdir_template.format(basedir, args.task, args.reward, args.seed, int(time.time())))
     checkpointdir = logdir / "checkpoint"
     logdir.mkdir(parents=True, exist_ok=True)
     checkpointdir.mkdir(parents=True, exist_ok=True)
@@ -51,13 +55,13 @@ def evaluate(env, agent, steps):
     print(f"[Rollout {steps} steps] Result: episodes: {len(rewards)}, mean reward: {sum(rewards) / len(rewards)}")
 
 
-def train(env, task, reward, train_params, algo="sac", seed=0):
+def train(env, task, reward, train_params, algo="sac", seed=0, expdir=None):
     # logs
-    args = Namespace(env=env, task=task, reward=reward, algo=algo, seed=seed)
+    args = Namespace(env=env, task=task, reward=reward, algo=algo, seed=seed, expdir=expdir)
     logdir, checkpointdir = make_log_dirs(args)
     # prepare envs
     train_env, trainenv_params = make_env(env, task, reward, eval=False, logdir=logdir, seed=seed)
-    eval_env, evalenv_params = make_env(env, task, reward="bool_stl", eval=True, seed=seed)
+    eval_env, evalenv_params = make_env(env, task, reward="stl", eval=True, seed=seed)
     # create agent
     model = make_agent(env, train_env, algo, logdir)
     # train

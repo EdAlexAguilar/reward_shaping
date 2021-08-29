@@ -435,7 +435,7 @@ class CartPoleContObsEnv(gym.Env):
         obsty = (self.obstacle.bottom_y + 0.1 / 2.0) * scale
         self.obsttrans.set_translation(obstx, obsty)
 
-        self.label.text = f'episode: {self.n_resets}, feasible: {self.is_feasible}\n' \
+        self.label.text = f'episode:{self.n_resets}, feasible:{self.is_feasible}, height:{self.obstacle.height:.3f}\n' \
                           f'time: {self.step_count}, reward = {info["reward"]:.2f}, return = {info["return"]:.2f}'
         return self.viewer.render(return_rgb_array=mode == 'rgb_array')
 

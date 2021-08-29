@@ -38,9 +38,9 @@ import gym
 from gym import spaces
 from gym.utils import seeding, EzPickle
 
-FPS = 50
-SCALE = 30.0   # affects how fast-paced the game is, forces should be adjusted as well
 
+SCALE = 30.0   # affects how fast-paced the game is, forces should be adjusted as well
+FPS = 50
 MAIN_ENGINE_POWER = 13.0
 SIDE_ENGINE_POWER = 0.6
 
@@ -88,22 +88,22 @@ class LunarLander(gym.Env, EzPickle):
 
     continuous = False
 
-    def __init__(self, obstacle_coordinates=(10, 7), obstacle_size=(2, 0.5)):
+    def __init__(self, obstacle_coordinates=(10, 7), obstacle_size=(2, 0.5),
+                 theta_limit=1, theta_dot_limit=0.5, fuel_usage=0.01):
         EzPickle.__init__(self)
         self.seed()
         self.viewer = None
         self.obstacle_vertices = (*obstacle_coordinates, *[coord + size for coord, size in zip(obstacle_coordinates, obstacle_size)])
-
-
 
         self.world = Box2D.b2World()
         self.moon = None
         self.obstacle = None
         self.lander = None
         self.particles = []
-
+        self.discrete_fuel_usage = fuel_usage
         self.prev_reward = None
-
+        self.theta_limit = theta_limit
+        self.theta_dot_limit = theta_dot_limit
         # useful range is -1 .. +1, but spikes can be higher
         self.observation_space = spaces.Box(-np.inf, np.inf, shape=(8,), dtype=np.float32)
 
@@ -144,6 +144,9 @@ class LunarLander(gym.Env, EzPickle):
 
         W = VIEWPORT_W/SCALE
         H = VIEWPORT_H/SCALE
+
+        self.step_count = 0
+        self.fuel = 1
 
         # terrain
         CHUNKS = 11
@@ -271,6 +274,7 @@ class LunarLander(gym.Env, EzPickle):
             self.world.DestroyBody(self.particles.pop(0))
 
     def step(self, action):
+        self.step_count += 1
         if self.continuous:
             action = np.clip(action, -1, +1).astype(np.float32)
         else:
@@ -289,6 +293,7 @@ class LunarLander(gym.Env, EzPickle):
                 assert m_power >= 0.5 and m_power <= 1.0
             else:
                 m_power = 1.0
+                self.fuel -= self.discrete_fuel_usage
             ox = (tip[0] * (4/SCALE + 2 * dispersion[0]) +
                   side[0] * dispersion[1])  # 4 is move a bit downwards, +-2 for randomness
             oy = -tip[1] * (4/SCALE + 2 * dispersion[0]) - side[1] * dispersion[1]
@@ -314,6 +319,7 @@ class LunarLander(gym.Env, EzPickle):
             else:
                 direction = action-2
                 s_power = 1.0
+                self.fuel -= self.discrete_fuel_usage
             ox = tip[0] * dispersion[0] + side[0] * (3 * dispersion[1] + direction * SIDE_ENGINE_AWAY/SCALE)
             oy = -tip[1] * dispersion[0] - side[1] * (3 * dispersion[1] + direction * SIDE_ENGINE_AWAY/SCALE)
             impulse_pos = (self.lander.position[0] + ox - tip[0] * 17/SCALE,
@@ -356,13 +362,25 @@ class LunarLander(gym.Env, EzPickle):
         reward -= s_power*0.03
 
         done = False
-        if self.game_over or abs(state[0]) >= 1.0:
+        if self.game_over or abs(state[0]) >= 1.0 or self.fuel<=0:
             done = True
             reward = -100
         if not self.lander.awake:
             done = True
             reward = +100
-        return np.array(state, dtype=np.float32), reward, done, {}
+
+        info = {"time": self.step_count,
+                "collision": self.game_over,
+                "FPS": FPS,
+                "theta_limit": self.theta_limit,
+                "theta_dot_limit": self.theta_dot_limit,
+                "target_x": 0,
+                "target_y": 0,
+                "obstacle_vertices": self.obstacle_vertices,
+                "fuel": self.fuel,
+                "default_reward": reward}
+
+        return np.array(state, dtype=np.float32), reward, done, info
 
     @property
     def state(self) -> Dict:

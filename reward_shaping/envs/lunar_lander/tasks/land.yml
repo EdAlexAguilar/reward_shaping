@@ -1,0 +1,10 @@
+task: 'land'
+target_x: 0  # fixed from environment, helipad is always at (0,0) # Do not change
+target_y: 0  # fixed from environment, helipad is always at (0,0)
+theta_limit: 1.0471975511965976 # pi/3
+theta_dot_limit: 0.5 # ? arbitrary guess
+FPS: 50 # environment default  # Do not change value, it will change physics
+obstacle_coordinates: (10,7)  # represents Lower-Left corner
+obstacle_size: (2, 0.5) # width and height
+dist_origin_tol: 1 # eventually the spacecraft reaches the origin within this tolerance
+fuel_usage: 0.01 # Every non-zero action depletes this percentage (values in [0,1])
