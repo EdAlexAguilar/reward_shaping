@@ -18,5 +18,5 @@ do
 	docker run --name exp_${env}_${reward}_${i} --rm -it \
 	       -u $(id -u):$(id -g) -v $(pwd):/src \
 	       --gpus $gpus $image \
-	       /bin/bash entrypoint.sh $env $task $reward $exp_dir
+	       /bin/bash entrypoint.sh $env $task $reward $expdir
 done
