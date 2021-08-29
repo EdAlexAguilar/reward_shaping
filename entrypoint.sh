@@ -9,4 +9,4 @@ then
 	exit -1
 fi
 
-xvfb-run -s "-screen 0 1400x900x24" python run_training.py --env $env --task $task --reward $1 --steps 2000000 --expdir $expdir
+xvfb-run -s "-screen 0 1400x900x24" python run_training.py --env $env --task $task --reward $reward --steps 2000000 --expdir $expdir
