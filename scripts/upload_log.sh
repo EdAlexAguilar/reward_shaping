@@ -1,3 +1,11 @@
+#!/bin/bash
+
+if [ $# -ne 1 ]
+then
+	echo "illegal number of params. help: $0 <path-to-logdir>"
+	exit -1
+fi
+
 token=`cat .token`
 psw=`cat .password`
 logdir=$1
