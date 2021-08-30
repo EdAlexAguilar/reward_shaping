@@ -113,29 +113,29 @@ class CPOGraphWithContinuousScoreContinuousIndicator(GraphRewardConfig):
         # define safety rules
         # collision, note: defining the min/max robustness bounds depend on the obstacle position (not known a priori)
         # Then, the reward is normalized with approx. bounds
-        fn_coll = get_normalized_reward(fns.ContinuousCollisionReward(), min_r=-0.5, max_r=2.5)
+        fn_coll, _ = get_normalized_reward(fns.ContinuousCollisionReward(), min_r=-0.5, max_r=2.5)
         nodes["S_coll"] = (fn_coll, fn_coll)
 
         # falldown
-        fn_fall = get_normalized_reward(fns.ContinuousFalldownReward(),
+        fn_fall, _ = get_normalized_reward(fns.ContinuousFalldownReward(),
                                         min_r_state={'theta': info['theta_limit']},
                                         max_r_state={'theta': 0.0}, info=info)
         nodes["S_fall"] = (fn_fall, fn_fall)
 
         # outside
-        fn_out = get_normalized_reward(fns.ContinuousOutsideReward(),
+        fn_out, _ = get_normalized_reward(fns.ContinuousOutsideReward(),
                                        min_r_state={'x': info['x_limit']},
                                        max_r_state={'x': 0.0}, info=info)
         nodes["S_exit"] = (fn_out, fn_out)
 
         # define target rules
-        fn_target = get_normalized_reward(fns.ReachTargetReward(),
+        fn_target, _ = get_normalized_reward(fns.ReachTargetReward(),
                                           min_r_state={'x': info['x_limit']},
                                           max_r_state={'x': info['x_target']}, info=info)
         nodes["T_origin"] = (fn_target, fn_target)
 
         # define comfort rules
-        fn_balance = get_normalized_reward(fns.BalanceReward(),
+        fn_balance, _ = get_normalized_reward(fns.BalanceReward(),
                                            min_r_state={'theta': info['theta_limit']},
                                            max_r_state={'theta': info['theta_target']}, info=info)
         nodes["T_bal"] = (fn_balance, fn_balance)
