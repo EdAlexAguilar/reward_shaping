@@ -39,7 +39,7 @@ class ThresholdIndicator(RewardFunction):
 
     def __call__(self, state, action, next_state=None, info=None):
         # (default) if `reverse` is False, then indicator returns True when reward >= 0.0
-        # if `reverse` is True, then indicator returns True when reward < 0.0
+        # if `negate` is True, then indicator returns True when reward < 0.0
         reward = self.reward_fun(state, action, next_state, info)
         indicator = reward >= self.threshold if self.include_zero else reward > self.threshold
         result = indicator if not self.negate else not indicator
