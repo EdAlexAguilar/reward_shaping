@@ -30,21 +30,21 @@ class MinimizeDistanceToLandingArea(RewardFunction):
         return - ((x - x_target) ** 2 + (y - y_target) ** 2)
 
 
-class ProgressToTargetReward(RewardFunction):
+class ProgressToOriginReward(RewardFunction):
     """
     Target: reward(s, s') = progress_coeff * |distance_{t-1} - distance_{t}|
+    assume target is the origin
     """
 
     def __init__(self, progress_coeff=1.0):
         self._progress_coeff = progress_coeff
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        assert 'x_target' in info and 'y_target' in info
         if next_state is not None:
             x_pre, y_pre = state[0], state[1]
             x, y = next_state[0], next_state[1]
-            dist_pre = np.linalg.norm([info['x_target'] - x_pre, info['y_target'] - y_pre])
-            dist_now = np.linalg.norm([info['x_target'] - x, info['y_target'] - y])
+            dist_pre = np.linalg.norm([x_pre, y_pre])
+            dist_now = np.linalg.norm([x, y])
             return self._progress_coeff * (dist_pre - dist_now)
         else:
             # it should never happen but for robustness
@@ -72,7 +72,8 @@ class BinarySlowLandingReward(RewardFunction):
     but return sparse reward
     """
 
-    def __init__(self, slow_bonus=0.0, crash_penalty=0.0):
+    def __init__(self, slow_bonus=0.0, crash_penalty=0.0, **kwargs):
+        super().__init__(**kwargs)
         self._slow_bonus = slow_bonus
         self._crash_penalty = crash_penalty
 
@@ -101,9 +102,9 @@ class MinimizeCraftAngle(RewardFunction):
     """
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        theta = state[4]
-        # todo have they the same scale?
-        return info['theta_limit'] - abs(theta)
+        normalized_theta = state[4]
+        normalized_limit = info['theta_limit'] / np.pi
+        return normalized_limit - abs(normalized_theta)
 
 
 class FuelReward(RewardFunction):
@@ -122,7 +123,8 @@ class BinaryFuelReward(RewardFunction):
      fuel_usage = always(fuel >= 0)
     """
 
-    def __init__(self, still_fuel_bonus=0.0, no_fuel_penalty=0.0):
+    def __init__(self, still_fuel_bonus=0.0, no_fuel_penalty=0.0, **kwargs):
+        super().__init__(**kwargs)
         self._still_fuel_bonus = still_fuel_bonus
         self._no_fuel_penalty = no_fuel_penalty
 
@@ -149,9 +151,10 @@ class OutsideReward(RewardFunction):
         self.no_exit_bonus = no_exit_bonus
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        assert 'x' in next_state and 'x_limit' in info
-        x = next_state['x']
-        return self.exit_penalty if (abs(x) > info['x_limit']) else self.no_exit_bonus
+        assert 'x_limit' in info
+        normalized_x = next_state[0]
+        normalized_xlimit = (info['x_limit'] - info['half_width']) / info['half_width']
+        return self.exit_penalty if (abs(normalized_x) > normalized_xlimit) else self.no_exit_bonus
 
 
 class MinimizeAngleVelocity(RewardFunction):
@@ -161,10 +164,6 @@ class MinimizeAngleVelocity(RewardFunction):
     """
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        theta_dot = state[5]
-        return info['theta_dot_limit'] - abs(theta_dot)
-
-
-class AvoidCrashes(RewardFunction):
-    def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        pass
+        normalized_theta_dot = state[5]
+        normalized_theta_dot_limit = info['theta_dot_limit'] / np.pi
+        return normalized_theta_dot_limit - abs(normalized_theta_dot)

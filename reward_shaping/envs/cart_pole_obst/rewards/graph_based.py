@@ -188,7 +188,7 @@ class CPOGraphWithProgressScoreBinaryIndicator(GraphRewardConfig):
         nodes["S_exit"] = (fun, ThresholdIndicator(fun))
 
         # define target rules
-        fun = fns.ProgressToTargetReward(progress_coeff=1.0)
+        fun = fns.ProgressToTargetReward(progress_coeff=10.0)
         nodes["T_origin"] = (fun, ThresholdIndicator(fun, include_zero=False))
 
         # define comfort rules

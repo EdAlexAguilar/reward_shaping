@@ -403,6 +403,7 @@ class LunarLander(gym.Env, EzPickle):
                 "x_high_limit": self.x_high_limit,
                 "obstacle_vertices": self.obstacle_vertices,
                 "fuel": self.fuel,
+                "half_width": VIEWPORT_W / SCALE / 2,
                 "halfwidth_landing_area": self.halfwidth_landing_area,
                 "collision": self.game_over,
                 "default_reward": reward}

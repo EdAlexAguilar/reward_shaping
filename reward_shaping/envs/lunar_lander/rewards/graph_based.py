@@ -37,7 +37,6 @@ class LLGraphWithBinarySafetyBinaryIndicator(GraphRewardConfig):
         # prepare env info
         info = {'FPS': self._env_params['FPS'],
                 'theta_limit': self._env_params['theta_limit'],
-                'fuel': self._env_params['fuel'],
                 'theta_dot_limit': self._env_params['theta_dot_limit']}
 
         # SAFETY RULES
@@ -54,16 +53,21 @@ class LLGraphWithBinarySafetyBinaryIndicator(GraphRewardConfig):
         nodes["S_exit"] = (exit_fn, ThresholdIndicator(exit_fn))
 
         # TARGET RULES
-        progress_fn = fns.ProgressToTargetReward(progress_coeff=1.0)
+        progress_fn = fns.ProgressToOriginReward(progress_coeff=1.0)
         nodes["T_origin"] = (progress_fn, ThresholdIndicator(progress_fn, include_zero=False))
 
         # COMFORT RULES
-        # todo define min max to these!
-        nodes["C_angle"] = get_normalized_reward(fns.MinimizeCraftAngle(), min_r_state=[0] * 8,
-                                                 max_r_state=[0] * 8, info=info)
+        theta_limit = self._env_params['theta_limit']
+        thetadot_limit = self._env_params['theta_dot_limit']
+        nodes["C_angle"] = get_normalized_reward(fns.MinimizeCraftAngle(),
+                                                 min_r_state=[0] * 4 + [theta_limit/np.pi] + [0] * 9,
+                                                 max_r_state=[0] * 14,
+                                                 info=info)
 
-        nodes["C_angvel"] = get_normalized_reward(fns.MinimizeAngleVelocity(), min_r_state=[0] * 8,
-                                                 max_r_state=[0] * 8, info=info)
+        nodes["C_angvel"] = get_normalized_reward(fns.MinimizeAngleVelocity(),
+                                                  min_r_state=[0] * 4 + [thetadot_limit/np.pi] + [0] * 9,
+                                                  max_r_state=[0] * 14,
+                                                  info=info)
         return nodes
 
     @property
