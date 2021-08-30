@@ -29,7 +29,7 @@ def make_log_dirs(args):
 def get_callbacks(env, logdir, checkpointdir, train_params):
     video_cb = VideoRecorderCallback(Monitor(env, logdir / "videos"), render_freq=train_params['video_every'],
                                      n_eval_episodes=train_params['n_recorded_episodes'])
-    eval_cb = EvalCallback(Monitor(env), eval_freq=train_params['eval_every'],
+    eval_cb = EvalCallback(env, eval_freq=train_params['eval_every'],
                            n_eval_episodes=train_params['n_eval_episodes'],
                            deterministic=True, render=False)
     checkpoint_cb = CheckpointCallback(save_freq=train_params['checkpoint_every'], save_path=checkpointdir,
