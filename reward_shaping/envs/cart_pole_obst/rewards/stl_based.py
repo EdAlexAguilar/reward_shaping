@@ -12,7 +12,7 @@ class CPOSTLReward(STLRewardConfig):
         # Safety 2: G(|x|<=x_limit)
         no_outside = "always(abs(x) <= x_limit)"
         # Safety 3: G(no collision)
-        no_collision = f"always(collision<=0.0)"
+        no_collision = f"always(collision <= 0.0)"
         # All Safeties: AND_{i=1,2,3} Safety_i
         safety_requirements = f"({no_falldown}) and ({no_outside}) and ({no_collision})"
         # Target 1: F(G(|x-x_target|<=x_target_tolerance))
@@ -38,10 +38,11 @@ class CPOSTLReward(STLRewardConfig):
                 'float', 'float', 'float', 'float']
 
     def get_monitored_state(self, state, done, info) -> Dict[str, Any]:
-        x_norm = state['x'] / info['x_limit']   # allow normalized value to be out-of-bound to have neg robustness
+        x_norm = state['x'] / info['x_limit']  # allow normalized value to be out-of-bound to have neg robustness
         x_target_norm = np.clip(info['x_target'], -info['x_limit'], info['x_limit']) / info['x_limit']
         theta_norm = state['theta'] / info['theta_limit']
-        theta_target_norm = np.clip(info['theta_target'], -info['theta_limit'], info['theta_limit']) / info['theta_limit']
+        theta_target_norm = np.clip(info['theta_target'], -info['theta_limit'], info['theta_limit']) / info[
+            'theta_limit']
         # compute monitoring variables
         monitored_state = {
             'time': info['time'],
@@ -50,9 +51,10 @@ class CPOSTLReward(STLRewardConfig):
             'x_target': x_target_norm,
             'x_target_tol': np.clip(info['x_target_tol'], -info['x_limit'], info['x_limit']) / info['x_limit'],
             'theta': theta_norm,
-            'theta_limit': info['theta_limit'] / info['theta_limit'],   # 1.0
+            'theta_limit': info['theta_limit'] / info['theta_limit'],  # 1.0
             'theta_target': theta_target_norm,
-            'theta_target_tol': np.clip(info['theta_target_tol'], -info['theta_limit'], info['theta_limit']) / info['theta_limit'],
+            'theta_target_tol': np.clip(info['theta_target_tol'], -info['theta_limit'], info['theta_limit']) / info[
+                'theta_limit'],
             'collision': 1.0 if info['collision'] else 0.0,
             'dist_target_x': abs(x_norm - x_target_norm),
             'dist_target_theta': abs(theta_norm - theta_target_norm),

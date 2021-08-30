@@ -3,6 +3,7 @@ import reward_shaping.envs.lunar_lander.rewards.subtask_rewards as fns
 import numpy as np
 
 from reward_shaping.core.helper_fns import ThresholdIndicator, NormalizedReward
+from reward_shaping.core.utils import get_normalized_reward
 
 
 class GraphRewardConfig(ABC):
@@ -21,7 +22,7 @@ class GraphRewardConfig(ABC):
         pass
 
 
-class GraphWithContinuousScoreBinaryIndicator(GraphRewardConfig):
+class LLGraphWithBinarySafetyBinaryIndicator(GraphRewardConfig):
     """
     rew(R) = Sum_{r in R} (Product_{r' in R st. r' <= r} sigma(r')) * rho(r)
     with sigma returns binary value {0,1}
@@ -40,55 +41,44 @@ class GraphWithContinuousScoreBinaryIndicator(GraphRewardConfig):
                 'theta_dot_limit': self._env_params['theta_dot_limit']}
 
         # SAFETY RULES
-        fun = fns.MinimizeYVelocity()
-        max_r_state = [0, 1.5, 0, 0.5, 0, 0, 0, 0]
-        max_r = fun(max_r_state, info=info)
-        min_r = 0.0
-        nodes["S_crash_y"] = (NormalizedReward(fun, min_r, max_r), ThresholdIndicator(fun))
+        safe_landing_fn = fns.BinarySlowLandingReward(slow_bonus=0.0, crash_penalty=-1.0)
+        nodes["S_crash"] = (safe_landing_fn, ThresholdIndicator(safe_landing_fn))
 
-        fun = fns.MinimizeCraftAngle()
-        max_r_state = [0]*8
-        max_r = fun(max_r_state, info=info)
-        min_r = 0
-        nodes["S_theta"] = (NormalizedReward(fun, min_r, max_r), ThresholdIndicator(fun))
+        fuel_fn = fns.BinaryFuelReward(still_fuel_bonus=0.0, no_fuel_penalty=-1.0)
+        nodes["S_fuel"] = (fuel_fn, ThresholdIndicator(fuel_fn))
 
-        fun = fns.MinimizeFuelConsumption()
-        max_r = 1
-        min_r = 0
-        node["S_fuel"] = (NormalizedReward(fun, min_r, max_r), ThresholdIndicator(fun))
+        coll_fn = fns.CollisionReward(no_collision_bonus=0.0, collision_penalty=-1.0)
+        nodes["S_coll"] = (coll_fn, ThresholdIndicator(coll_fn))
+
+        exit_fn = fns.OutsideReward(no_exit_bonus=0.0, exit_penalty=-1.0)
+        nodes["S_exit"] = (exit_fn, ThresholdIndicator(exit_fn))
 
         # TARGET RULES
-        fun = fns.MinimizeDistanceToLandingArea()
-        max_r_state = [1.0, 1.5] + [0]*6
-        max_r = fun(max_r_state, info=info)
-        min_r = 0
-        node["T_origin"] = (NormalizedReward(fun, min_r, max_r), ThresholdIndicator(fun))
+        progress_fn = fns.ProgressToTargetReward(progress_coeff=1.0)
+        nodes["T_origin"] = (progress_fn, ThresholdIndicator(progress_fn, include_zero=False))
 
         # COMFORT RULES
-        fun = fns.MinimizeXVelocity()
-        max_r_state = [1.5, 0, 0.5, 0, 0, 0, 0, 0]
-        max_r = fun(max_r_state, info=info)
-        min_r = 0.0
-        nodes["C_x_dot"] = (NormalizedReward(fun, min_r, max_r), ThresholdIndicator(fun))
+        # todo define min max to these!
+        nodes["C_angle"] = get_normalized_reward(fns.MinimizeCraftAngle(), min_r_state=[0] * 8,
+                                                 max_r_state=[0] * 8, info=info)
 
-        fun = fns.MinimizeAngleVelocity()
-        max_r_state = [0] * 8
-        max_r = fun(max_r_state, info=info)
-        min_r = 0
-        nodes["C_theta_dot"] = (NormalizedReward(fun, min_r, max_r), ThresholdIndicator(fun))
+        nodes["C_angvel"] = get_normalized_reward(fns.MinimizeAngleVelocity(), min_r_state=[0] * 8,
+                                                 max_r_state=[0] * 8, info=info)
         return nodes
 
     @property
     def topology(self):
         """
-        Safety: crash_y  \
-        Safety: angle   -- Target  -- Comfort: Angular Velocity
-        Safety: fuel     /          \ Comfort: Horizontal Speed
+        S_crash \               / Comfort: Theta angle
+        S_coll  | __ Target  --|
+        S_fuel  |              \ Comfort: Ang Velocity
+        S_exit  /
         """
         topology = {
-            'S_crash_y': ['T_origin'],
-            'S_theta': ['T_origin'],
+            'S_crash': ['T_origin'],
+            'S_coll': ['T_origin'],
             'S_fuel': ['T_origin'],
-            'T_origin': ['C_theta_dot', 'C_x_dot']
+            'S_exit': ['T_origin'],
+            'T_origin': ['C_angle', 'C_angvel']
         }
         return topology
