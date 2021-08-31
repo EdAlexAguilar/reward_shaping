@@ -6,8 +6,7 @@ from reward_shaping.training.utils import make_env, make_reward_wrap
 def main(reward):
     env_name = "bipedal_walker"
     task = "forward"
-    env, env_params = make_env(env_name, task, logdir=None, seed=0)
-    env = make_reward_wrap(env_name, env, env_params, reward)
+    env, env_params = make_env(env_name, task, reward)
 
     # evaluation
     obs = env.reset()
@@ -35,4 +34,4 @@ def main(reward):
     print(f"Check env: {result}")
 
 if __name__=="__main__":
-    main("gb_cr_bi")
+    main("gb_bpr_ci")

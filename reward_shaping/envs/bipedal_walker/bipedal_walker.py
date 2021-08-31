@@ -443,9 +443,9 @@ class BipedalWalker(gym.Env, EzPickle):
             self.joints[3].angle + 1.0,
             self.joints[3].speed / SPEED_KNEE,
             1.0 if self.legs[3].ground_contact else 0.0,
-            pos[0] / target_x,  # x position norm in 0, 1
         ]
         state += [l.fraction for l in self.lidar]
+        state += [pos[0] / target_x]  # x position norm in 0, 1
         assert len(state) == 25
 
         self.scroll = pos.x - VIEWPORT_W / SCALE / 5

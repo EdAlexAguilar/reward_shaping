@@ -80,7 +80,6 @@ class GraphBasedReward(RewardFunction):
                     attributes.pop(attr)
 
     def render(self):
-        import matplotlib.pyplot as plt
         if not self._compiled:
             self._compile_graph()
         positioning = nx.multipartite_layout(self._graph, subset_key="layer")
