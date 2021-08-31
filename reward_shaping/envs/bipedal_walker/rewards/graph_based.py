@@ -107,7 +107,7 @@ class BWGraphWithBinarySafetyProgressTargetContinuousIndicator(GraphRewardConfig
                 'speed_y_limit': self._env_params['speed_y_limit'],
                 'angle_vel_limit': self._env_params['angle_vel_limit'],
                 'speed_x_target': self._env_params['speed_x_target'],
-                'norm_target_x': 1.0}
+                'norm_target_x': 1.0, 'collision': False}
 
         # safety rules
         binary_fall_fun = fns.BinaryFalldownReward(falldown_penalty=-1.0, no_falldown_bonus=0.0)

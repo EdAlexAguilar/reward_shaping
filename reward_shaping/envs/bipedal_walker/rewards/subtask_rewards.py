@@ -8,8 +8,8 @@ class ContinuousFalldownReward(RewardFunction):
     """
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        assert len(state) == 25 and 'dist_hull_limit' in info
-        lidar = min(state[-10:])
+        assert len(state) == 25 and 'dist_hull_limit' in info and 'collision' in info
+        lidar = min(state[-10:]) if not info['collision'] else 0.0  # if no collision, approx dist to ground wt lidars
         return lidar - info['dist_hull_limit']
 
 
