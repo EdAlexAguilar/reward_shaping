@@ -29,7 +29,7 @@ Then start the training:
 docker run --name exp_cartpole_gbased --rm -it \
 	       -u $(id -u):$(id -g) -v $(pwd):/src \
 	       --gpus all reward_shaping \
-	       /bin/bash entrypoint.sh cart_pole_obst fixed_height gb_bcr_bi my_exp
+	       /bin/bash entrypoint.sh cart_pole_obst fixed_height my_exp gb_bcr_bi
 ```
 
 This command will start the training for 2M steps using the reward `gb_bcr_bi` (graph-based with binary indicators).
