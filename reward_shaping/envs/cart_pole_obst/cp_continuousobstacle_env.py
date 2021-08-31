@@ -122,8 +122,9 @@ class CartPoleContObsEnv(gym.Env):
         # Obstacle spec
         self.obstacle_min_width = obstacle_min_w
         self.obstacle_max_width = obstacle_max_w
-        self.obstacle_min_height = obstacle_min_h
-        self.obstacle_max_height = obstacle_max_h
+        self.obstacle_min_height = obstacle_min_h   # this is distance to ground
+        self.obstacle_max_height = obstacle_max_h   # this is distance to groun
+        self.obstacle_height = 0.1  # this is the obstacle height (top_y-bottom_y)
 
         # Initial condition
         # cart_offset:=distance between the center of the cart and origin
@@ -234,7 +235,7 @@ class CartPoleContObsEnv(gym.Env):
             or (self.terminate_on_collision and collision))
 
         reward = self.reward()
-        info = {'time': self.step_count,
+        info = {'time': self.step_count, 'tau': self.tau,
                 'x_limit': self.x_threshold, 'theta_limit': self.theta_threshold_radians,
                 'x_target': self.x_target, 'x_target_tol': self.x_target_tol,
                 'theta_target': self.theta_target, 'theta_target_tol': self.theta_target_tol,
@@ -286,10 +287,10 @@ class CartPoleContObsEnv(gym.Env):
         # sample obstacle parameters: height, width, initial distance from cart
         if self.np_random.random() <= self.prob_sampling_feasible:
             self.is_feasible = True
-            obstacle_height = self.np_random.uniform(low=self.feasible_height, high=self.obstacle_max_height)
+            obst_dist_from_ground = self.np_random.uniform(low=self.feasible_height, high=self.obstacle_max_height)
         else:
             self.is_feasible = False
-            obstacle_height = self.np_random.uniform(low=self.obstacle_min_height, high=self.feasible_height)
+            obst_dist_from_ground = self.np_random.uniform(low=self.obstacle_min_height, high=self.feasible_height)
         obstacle_width = self.np_random.uniform(low=self.obstacle_min_width, high=self.obstacle_max_width)
         # distance between cart's initial position (x_init) and the obstacle center
         distance_obst_center_to_cart = self.np_random.uniform(low=self.obstacle_min_dist + obstacle_width / 2,
@@ -300,8 +301,8 @@ class CartPoleContObsEnv(gym.Env):
             left_x = self.state['x'] + distance_obst_center_to_cart - obstacle_width / 2.0
         axle_y = self.axle_y
         polelen = self.pole_length
-        obstacle_y = axle_y + obstacle_height  # this is the bottom y of the obstacle
-        self.obstacle = Obstacle(axle_y, polelen, left_x, obstacle_y, obstacle_width, obstacle_height)
+        obstacle_y = axle_y + obst_dist_from_ground  # this is the bottom y of the obstacle
+        self.obstacle = Obstacle(axle_y, polelen, left_x, obstacle_y, obstacle_width, self.obstacle_height)
         # store obstacle position into the state
         self.state['obstacle_left'] = self.obstacle.left_x
         self.state['obstacle_right'] = self.obstacle.right_x
@@ -399,7 +400,7 @@ class CartPoleContObsEnv(gym.Env):
             self._pole_geom = pole
             # Obstacle
             l, r = -obstacle_width * scale / 2.0, obstacle_width * scale / 2.0
-            t, b = -0.1 * scale / 2.0, 0.1 * scale / 2.0
+            t, b = -self.obstacle_height * scale / 2.0, self.obstacle_height * scale / 2.0
             obst = rendering.FilledPolygon([(l, b), (l, t), (r, t), (r, b)])
             self.obsttrans = rendering.Transform()
             obst.set_color(*obstacle_color)
@@ -432,10 +433,11 @@ class CartPoleContObsEnv(gym.Env):
         # new center:   x: left_x + obstacle_width
         #               y: cart_center_y + pole_length + obstacle_height/2
         obstx = (self.state['obstacle_left'] + obstacle_width / 2.0) * scale + screen_width / 2.0
-        obsty = (self.obstacle.bottom_y + 0.1 / 2.0) * scale
+        obsty = (self.obstacle.bottom_y + self.obstacle_height / 2.0) * scale
         self.obsttrans.set_translation(obstx, obsty)
 
-        self.label.text = f'episode:{self.n_resets}, feasible:{self.is_feasible}, height:{self.obstacle.height:.3f}\n' \
+        dist_to_ground = self.obstacle.bottom_y - self.obstacle.axle_y
+        self.label.text = f'episode:{self.n_resets}, feasible:{self.is_feasible}, height:{dist_to_ground:.3f}\n' \
                           f'time: {self.step_count}, reward = {info["reward"]:.2f}, return = {info["return"]:.2f}'
         return self.viewer.render(return_rgb_array=mode == 'rgb_array')
 

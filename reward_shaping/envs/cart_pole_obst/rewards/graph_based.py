@@ -6,6 +6,7 @@ import numpy as np
 
 from reward_shaping.core.utils import get_normalized_reward
 
+PROGCOEFF = 10.0
 
 def get_cartpole_topology(task):
     # just to avoid to rewrite it all the times
@@ -188,7 +189,7 @@ class CPOGraphWithProgressScoreBinaryIndicator(GraphRewardConfig):
         nodes["S_exit"] = (fun, ThresholdIndicator(fun))
 
         # define target rules
-        fun = fns.ProgressToTargetReward(progress_coeff=10.0)
+        fun = fns.ProgressToTargetReward(progress_coeff=PROGCOEFF)
         nodes["T_origin"] = (fun, ThresholdIndicator(fun, include_zero=False))
 
         # define comfort rules
@@ -321,7 +322,7 @@ class CPOGraphBinarySafetyProgressTargetContinuousIndicator(GraphRewardConfig):
         nodes["S_exit"] = (binary_exit_fn, cont_exit_fn)
 
         # define target rules
-        progress_fn = fns.ProgressToTargetReward(progress_coeff=1.0)
+        progress_fn = fns.ProgressToTargetReward(progress_coeff=PROGCOEFF)
         target_fun, _ = get_normalized_reward(fns.ReachTargetReward(),
                                               min_r_state={'x': info['x_limit']},
                                               max_r_state={'x': info['x_target']},

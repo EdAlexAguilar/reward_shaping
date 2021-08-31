@@ -1,7 +1,7 @@
 import warnings
 from unittest import TestCase
 
-from reward_shaping.test.test import generic_env_test, generic_training
+from reward_shaping.test.test import generic_env_test, generic_training, plot_cpole_reward, plot_cpole_progreward
 
 env_name = "cart_pole_obst"
 
@@ -99,3 +99,28 @@ class TestTrainingLoop(TestCase):
 
     def test_train_gbased_progress(self):
         generic_training(env_name, 'fixed_height', 'gb_pcr_bi')
+
+
+class PlotRewardLandscape(TestCase):
+
+    def test_plot_all(self):
+        import matplotlib.pyplot as plt
+        rewards = ['sparse', 'weighted', 'gb_chain',
+                   'gb_cr_ci', 'gb_cr_bi', 'gb_bcr_bi']
+        rows, cols, i = 2, 3, 1
+        for reward in rewards:
+            plt.subplot(rows, cols, i)
+            plot_cpole_reward(reward)
+            i += 1
+        plt.savefig("cp_rewards.pdf")
+
+    def test_plot_prog(self):
+        import matplotlib.pyplot as plt
+        import time
+        rewards = ['gb_pcr_bi', 'gb_bpr_ci']
+        rows, cols, i = 1, 2, 1
+        for reward in rewards:
+            plt.subplot(rows, cols, i)
+            plot_cpole_progreward(reward)
+            i += 1
+        plt.savefig(f"cp_prog_rewards_{time.time()}.pdf")
