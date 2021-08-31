@@ -3,7 +3,7 @@ from reward_shaping.envs.cart_pole_obst.rewards.baselines import CPOSparseReward
     CPOWeightedBaselineReward
 from reward_shaping.envs.cart_pole_obst.rewards.graph_based import CPOGraphWithContinuousScoreBinaryIndicator, \
     CPOGraphWithContinuousScoreContinuousIndicator, CPOGraphWithProgressScoreBinaryIndicator, \
-    CPOGraphWithBinarySafetyScoreBinaryIndicator, CPOChainGraph
+    CPOGraphWithBinarySafetyScoreBinaryIndicator, CPOChainGraph, CPOGraphBinarySafetyProgressTargetContinuousIndicator
 from reward_shaping.envs.cart_pole_obst.rewards.stl_based import CPOSTLReward, CPOBoolSTLReward
 
 _registry = {}
@@ -31,5 +31,7 @@ register_reward('gb_cr_ci', reward=CPOGraphWithContinuousScoreContinuousIndicato
 register_reward('gb_pcr_bi', reward=CPOGraphWithProgressScoreBinaryIndicator)
 # Graph-based with binary score only for safety nodes
 register_reward('gb_bcr_bi', reward=CPOGraphWithBinarySafetyScoreBinaryIndicator)
+# Graph-based with binary safety score, progress target score, continuous sat indicators
+register_reward('gb_bpr_ci', CPOGraphBinarySafetyProgressTargetContinuousIndicator)
 # Graph-based with 1 node for each level, evaluated as conjunction (eg, AND_{collision, falldown, outside})
 register_reward('gb_chain', reward=CPOChainGraph)

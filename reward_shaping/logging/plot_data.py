@@ -2,14 +2,13 @@
 import argparse
 import pathlib
 import warnings
-from typing import Dict, Union
+from typing import Dict, List
 
-import matplotlib.cm
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-PALETTE = ['#377eb8', '#4daf4a', '#377eb8', '#984ea3', '#e41a1c', '#ff7f00', '#a65628', '#888888', '#fdbf6f']
+PALETTE = ['#377eb8', '#4daf4a', '#984ea3', '#e41a1c', '#ff7f00', '#a65628', '#888888', '#fdbf6f']
 REWARDS = {'stl': 'STL', 'weighted': 'Weighted',
            'gb_chain': 'GB-Chain', 'gb_bcr_bi': 'GB-Hierarchy',
            'continuous': 'Continuous'}
@@ -17,8 +16,7 @@ PALETTE_REWARDS = {reward: v for reward, v in zip(REWARDS.keys(), PALETTE)}
 
 PALETTE_HLINES = {-1: 'red', 0: 'green'}
 
-STYLE = {'fill_alpha': 0.3, 'hline_alpha': 0.5, 'hline_style': 'dashed'}
-
+STYLE = {'fill_alpha': 0.2, 'hline_alpha': 0.5, 'hline_style': 'dashed'}
 
 
 def extract_reward(path):
@@ -28,15 +26,15 @@ def extract_reward(path):
     warnings.warn(f"skipped: not able to extract reward from {str(path)}")
 
 
-def load_data(inpath: pathlib.Path, regex: str, tag: str) -> Dict:
+def load_data(rewards: List[str], inpath: pathlib.Path, regex: str, tag: str) -> Dict:
     # load data and create a dict with x (steps) and y (tag)
-    data = {reward: {'x': [], 'y': []} for reward in REWARDS.keys()}
+    data = {reward: {'x': [], 'y': []} for reward in rewards}
     for filepath in inpath.glob(regex):
         if not filepath.parts[-1].endswith("csv"):
             print(f"Skip non-csv: {filepath}")
             continue
         reward = extract_reward(filepath)
-        if reward is None:
+        if reward not in rewards or reward is None:
             continue
         tdf = pd.read_csv(filepath, index_col=[0, 1])
         tdf = tdf.loc[tag, "value"]
@@ -69,7 +67,7 @@ def plot_line(reward, df):
 def plot_secondaries(xlabel, ylabel, hlines, minx, maxx):
     # draw horizonal lines
     for value in hlines:
-        plt.hlines(value, minx, maxx, label=f"y={value}",
+        plt.hlines(value, minx, maxx,
                    color=PALETTE_HLINES[value], alpha=STYLE['hline_alpha'], linestyles=STYLE['hline_style'])
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
@@ -78,7 +76,7 @@ def plot_secondaries(xlabel, ylabel, hlines, minx, maxx):
 
 
 def main(args):
-    all_data = load_data(args.path, args.regex, args.tag)
+    all_data = load_data(args.rewards, args.path, args.regex, args.tag)
     minx, maxx = np.Inf, 0
     for reward, data in all_data.items():
         if len(data['x']) == 0:
@@ -99,8 +97,10 @@ if __name__ == '__main__':
     parser.add_argument("--xlabel", type=str, default='Steps', help="label x axis")
     parser.add_argument("--ylabel", type=str, default='Y', help="label y axis")
     parser.add_argument("--hlines", type=float, nargs='*', default=[0, -1], help="horizontal lines in plot, eg. y=0")
+    parser.add_argument("--rewards", type=str, nargs='*', default=REWARDS.keys(), choices=REWARDS.keys(),
+                        help="rewards to be plotted")
     args = parser.parse_args()
 
     inpath = args.path
     main(args)
-    print(f"\n\nLogs exported in {inpath.absolute()}")
+    print(f"\n\nPlot exported in {inpath.absolute()}")

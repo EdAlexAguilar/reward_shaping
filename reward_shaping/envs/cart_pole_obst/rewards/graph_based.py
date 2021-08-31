@@ -250,19 +250,99 @@ class CPOGraphWithBinarySafetyScoreBinaryIndicator(GraphRewardConfig):
         nodes["T_origin"] = get_normalized_reward(fun, min_r_state=min_r_state, max_r_state=max_r_state, info=info)
 
         # define comfort rules
-        fun = fns.BalanceReward()
-        min_r_state, max_r_state = {'theta': info['theta_limit']}, {'theta': info['theta_target']}
-        nodes["T_bal"] = get_normalized_reward(fun, min_r_state=min_r_state, max_r_state=max_r_state, info=info)
+        cont_balance_fn = fns.BalanceReward()
+        nodes["T_bal"] = get_normalized_reward(cont_balance_fn, min_r_state={'theta': info['theta_limit']},
+                                               max_r_state={'theta': info['theta_target']},
+                                               info=info)
 
         if self._env_params['task'] == "random_height":
             # for random env, additional comfort node
-            fun = fns.BalanceReward()
+            cont_balance_fn = fns.BalanceReward()
             min_r_state, max_r_state = {'theta': info['theta_limit']}, {'theta': info['theta_target']}
-            nodes["C_bal"] = get_normaCPOlized_reward(fun, min_r_state=min_r_state, max_r_state=max_r_state, info=info)
+            nodes["C_bal"] = get_normalized_reward(cont_balance_fn, min_r_state={'theta': info['theta_limit']},
+                                                   max_r_state={'theta': info['theta_target']},
+                                                   info=info)
             # conditional nodes (ie, to check env conditions)
             zero_fn = lambda _: 0.0  # this is a static condition, do not score for it (depends on the env)
             feas_ind = ThresholdIndicator(fns.CheckOvercomingFeasibility())
             nfeas_ind = ThresholdIndicator(fns.CheckOvercomingFeasibility(), negate=True)
+            nodes["H_feas"] = (zero_fn, feas_ind)
+            nodes["H_nfeas"] = (zero_fn, nfeas_ind)
+        return nodes
+
+    @property
+    def topology(self):
+        topology = get_cartpole_topology(self._env_params['task'])
+        return topology
+
+
+class CPOGraphBinarySafetyProgressTargetContinuousIndicator(GraphRewardConfig):
+    """
+        rew(R) = Sum_{r in R} (Product_{r' in R st. r' <= r} rho(r')) * custom_rho(r)
+
+        where:
+            - rho(.) is the robustness evaluation (ie, normalized degree of satisfaction)
+            - custom_rho(.) is our semantics which is binary for safety, progress-based for target
+    """
+
+    @property
+    def nodes(self):
+        nodes = {}
+        # prepare env info
+        info = {'x_limit': self._env_params['x_limit'],
+                'x_target': self._env_params['x_target'],
+                'x_target_tol': self._env_params['x_target_tol'],
+                'theta_limit': np.deg2rad(self._env_params['theta_limit']),
+                'theta_target': np.deg2rad(self._env_params['theta_target']),
+                'theta_target_tol': np.deg2rad(self._env_params['theta_target_tol'])}
+
+        # define safety rules
+        # collision
+        binary_coll_fn = fns.CollisionReward(collision_penalty=-1.0, no_collision_bonus=0.0)
+        # note: defining the min/max robustness bounds depend on the obstacle position (not known a priori)
+        #       We approx. normalize the reward assuming range in +-0.5
+        cont_coll_fn, _ = get_normalized_reward(fns.ContinuousCollisionReward(), min_r=-0.5, max_r=0.5)
+        nodes["S_coll"] = (binary_coll_fn, cont_coll_fn)
+
+        # falldown
+        binary_fall_fn = fns.FalldownReward(falldown_penalty=-1.0, no_falldown_bonus=0.0)
+        cont_fall_fn, _ = get_normalized_reward(fns.ContinuousFalldownReward(),
+                                                min_r_state={'theta': info['theta_limit']},
+                                                max_r_state={'theta': 0.0},
+                                                info=info)
+        nodes["S_fall"] = (binary_fall_fn, cont_fall_fn)
+
+        # outside
+        binary_exit_fn = fns.OutsideReward(exit_penalty=-1.0, no_exit_bonus=0.0)
+        cont_exit_fn, _ = get_normalized_reward(fns.ContinuousOutsideReward(),
+                                                min_r_state={'x': info['x_limit']},
+                                                max_r_state={'x': 0.0},
+                                                info=info)
+        nodes["S_exit"] = (binary_exit_fn, cont_exit_fn)
+
+        # define target rules
+        progress_fn = fns.ProgressToTargetReward(progress_coeff=1.0)
+        target_fun, _ = get_normalized_reward(fns.ReachTargetReward(),
+                                              min_r_state={'x': info['x_limit']},
+                                              max_r_state={'x': info['x_target']},
+                                              info=info)
+        nodes["T_origin"] = (progress_fn, target_fun)
+
+        # define comfort rules
+        cont_balance_fn = fns.BalanceReward()
+        nodes["T_bal"] = get_normalized_reward(cont_balance_fn, min_r_state={'theta': info['theta_limit']},
+                                               max_r_state={'theta': info['theta_target']},
+                                               info=info)
+
+        if self._env_params['task'] == "random_height":
+            # for random env, additional comfort node
+            nodes["C_bal"] = get_normalized_reward(cont_balance_fn, min_r_state={'theta': info['theta_limit']},
+                                                   max_r_state={'theta': info['theta_target']},
+                                                   info=info)
+            # conditional nodes (ie, to check env conditions)
+            zero_fn = lambda _: 0.0  # this is a static condition, do not score for it (depends on the env)
+            feas_ind = ThresholdIndicator(fns.CheckOvercomingFeasibility())
+            nfeas_ind = ThresholdIndicator(fns.CheckOvercomingFeasibility())
             nodes["H_feas"] = (zero_fn, feas_ind)
             nodes["H_nfeas"] = (zero_fn, nfeas_ind)
         return nodes
