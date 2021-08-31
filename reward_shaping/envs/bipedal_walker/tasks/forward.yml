@@ -1,6 +1,6 @@
 task: "forward"
 # episode definition
-max_episode_steps: 200 #1600
+max_episode_steps: 1600
 terminate_on_collision: True
 # simulation parameters
 dist_hull_limit: 0.225 # empirically chosen, this is the dist to collision estimated as min(lidar) (norm in 0,1)
