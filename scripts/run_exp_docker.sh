@@ -13,7 +13,7 @@ then
 	exit -1
 fi
 
-docker run --name exp_${env}_${reward}_${i} --rm -it \
+docker run --rm -it \
 	       -u $(id -u):$(id -g) -v $(pwd):/src \
 	       --gpus $gpus $image \
 	       /bin/bash entrypoint.sh $env $task $expdir $reward
