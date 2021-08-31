@@ -68,7 +68,7 @@ def train(env, task, reward, train_params, algo="sac", seed=0, expdir=None):
     callbacks = get_callbacks(eval_env, logdir, checkpointdir, train_params)
     model.learn(total_timesteps=train_params['steps'], callback=callbacks)
     # evaluation
-    evaluate(eval_env, model, steps=500)
+    evaluate(eval_env, model, steps=1600)
     # close envs
     train_env.close()
     eval_env.close()
