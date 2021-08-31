@@ -49,6 +49,13 @@ class Obstacle:
     def on_left_side(self, x):
         return self.right_x < x
 
+    def get_pole_dist(self, x, theta):
+        center_x = self.left_x + (self.right_x - self.left_x) / 2.0
+        center_y = self.bottom_y + (self.top_y - self.bottom_y) / 2.0
+        pole_x = x + np.sin(theta) * self.polelen
+        pole_y = self.axle_y + np.cos(theta) * self.polelen
+        return np.linalg.norm([center_x-pole_x, center_y-pole_y])
+
 
 class CartPoleContObsEnv(gym.Env):
     """

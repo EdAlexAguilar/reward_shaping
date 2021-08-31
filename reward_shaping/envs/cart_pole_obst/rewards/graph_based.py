@@ -6,7 +6,7 @@ import numpy as np
 
 from reward_shaping.core.utils import get_normalized_reward
 
-PROGCOEFF = 10.0
+PROGCOEFF = 1.0
 
 def get_cartpole_topology(task):
     # just to avoid to rewrite it all the times
