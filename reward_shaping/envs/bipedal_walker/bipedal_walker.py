@@ -112,13 +112,18 @@ class BipedalWalker(gym.Env, EzPickle):
         'video.frames_per_second': FPS
     }
 
-    hardcore = False
 
-    def __init__(self, task="forward", max_episode_steps=1600, angle_hull_limit=np.pi / 4,
+
+    def __init__(self, task, max_episode_steps=1600, angle_hull_limit=np.pi / 4,
                  speed_y_limit=1.0, angle_vel_limit=.25, speed_x_target=0.0,
-                 terminate_on_collision=True, eval=False, seed=0):
+                 terminate_on_collision=True, eval=False, seed=0, hardcore=False):
         EzPickle.__init__(self)
         self.seed(seed=seed)
+
+        self.task = task
+
+        self.hardcore = hardcore
+
         self.viewer = None
 
         self.world = Box2D.b2World()
@@ -177,7 +182,7 @@ class BipedalWalker(gym.Env, EzPickle):
         self.legs = []
         self.joints = []
 
-    def _generate_terrain(self, hardcore):
+    def _generate_terrain(self):
         GRASS, STUMP, STAIRS, PIT, _STATES_ = range(5)
         state = GRASS
         velocity = 0.0
@@ -266,7 +271,7 @@ class BipedalWalker(gym.Env, EzPickle):
             counter -= 1
             if counter == 0:
                 counter = self.np_random.randint(TERRAIN_GRASS / 2, TERRAIN_GRASS)
-                if state == GRASS and hardcore:
+                if state == GRASS and self.hardcore:
                     state = self.np_random.randint(1, _STATES_)
                     oneshot = True
                 else:
@@ -318,7 +323,7 @@ class BipedalWalker(gym.Env, EzPickle):
         W = VIEWPORT_W / SCALE
         H = VIEWPORT_H / SCALE
 
-        self._generate_terrain(self.hardcore)
+        self._generate_terrain()
         self._generate_clouds()
 
         init_x = TERRAIN_STEP * TERRAIN_STARTPAD / 2
@@ -537,9 +542,10 @@ class BipedalWalker(gym.Env, EzPickle):
             self.viewer = None
 
 
+"""
 class BipedalWalkerHardcore(BipedalWalker):
     hardcore = True
-
+"""
 
 if __name__ == "__main__":
     # Heurisic: suboptimal, have no notion of balance.
