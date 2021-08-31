@@ -7,7 +7,8 @@ from reward_shaping.training.utils import make_env, make_agent
 
 
 def generic_env_test(env_name, task, reward_name, potential=False):
-    env, env_params = make_env(env_name, task, reward_name, use_potential=potential, eval=True, logdir=None, seed=0)
+    seed = np.random.randint(0, 1000000)
+    env, env_params = make_env(env_name, task, reward_name, use_potential=potential, eval=True, logdir=None, seed=seed)
     # check
     check_env(env)
     # evaluation

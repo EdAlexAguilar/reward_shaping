@@ -1,7 +1,7 @@
 import warnings
 from unittest import TestCase
 
-from reward_shaping.envs.cart_pole_obst.test.test import generic_env_test, generic_training
+from reward_shaping.test.test import generic_env_test, generic_training
 
 env_name = "cart_pole_obst"
 
@@ -68,6 +68,13 @@ class TestCartPoleObstacle(TestCase):
         reward = "weighted"
         result = generic_env_test(env_name, task, reward)
         self.assertTrue(result)
+
+    def test_binaryprogress_reward(self):
+        task = "fixed_height"
+        reward = "gb_bpr_ci"
+        for _ in range(10):
+            result = generic_env_test(env_name, task, reward)
+            self.assertTrue(result)
 
 
 class TestTrainingLoop(TestCase):
