@@ -145,6 +145,15 @@ class CollisionReward(RewardFunction):
 
 
 class OutsideReward(RewardFunction):
+    """ spec := |x| <= x_limit, score := x_limit - |x| """
+    def __call__(self, state, action=None, next_state=None, info=None) -> float:
+        assert 'x_high_limit' in info
+        normalized_x = next_state[0]
+        normalized_xlimit = (info['x_high_limit'] - info['half_width']) / info['half_width']
+        return normalized_xlimit - abs(normalized_x)
+
+
+class BinaryOutsideReward(RewardFunction):
     def __init__(self, exit_penalty=0.0, no_exit_bonus=0.0):
         super().__init__()
         self.exit_penalty = exit_penalty

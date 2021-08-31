@@ -23,3 +23,9 @@ class TestLunarLanderObstacle(TestCase):
         reward = "gb_cr_bi"
         result = generic_env_test(env_name, task, reward)
         self.assertTrue(result)
+
+    def test_landing_gb_chain(self):
+        task = "land"
+        reward = "gb_chain"
+        result = generic_env_test(env_name, task, reward)
+        self.assertTrue(result)

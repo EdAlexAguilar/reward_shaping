@@ -370,7 +370,7 @@ class LunarLander(gym.Env, EzPickle):
             self.fuel,
             1.0 if self.game_over else 0.0
         ]
-        assert len(state) == 8
+        assert len(state) == 14
 
         reward = 0
         shaping = \

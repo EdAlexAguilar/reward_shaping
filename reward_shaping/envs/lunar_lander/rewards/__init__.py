@@ -1,5 +1,5 @@
 from reward_shaping.core.helper_fns import DefaultReward
-from reward_shaping.envs.lunar_lander.rewards.graph_based import LLGraphWithBinarySafetyBinaryIndicator
+from reward_shaping.envs.lunar_lander.rewards.graph_based import LLGraphWithBinarySafetyBinaryIndicator, LLChainGraph
 from reward_shaping.envs.lunar_lander.rewards.stl_based import STLReward
 
 _registry = {}
@@ -23,3 +23,4 @@ register_reward('default', reward=DefaultReward)
 register_reward('stl', reward=STLReward)
 # Graph-based
 register_reward('gb_bcr_bi', reward=LLGraphWithBinarySafetyBinaryIndicator)
+register_reward('gb_chain', reward=LLChainGraph)
