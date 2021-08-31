@@ -12,17 +12,18 @@ def generic_env_test(env_name, task, reward_name, potential=False):
     # check
     check_env(env)
     # evaluation
-    _ = env.reset()
-    env.render()
-    tot_reward = 0.0
-    done = False
-    while not done:
-        action = env.action_space.sample()
-        obs, reward, done, info = env.step(action)
-        print(reward)
-        tot_reward += reward
+    for _ in range(10):
+        _ = env.reset()
         env.render()
-    print(f"[{reward_name}] tot reward: {tot_reward:.3f}")
+        tot_reward = 0.0
+        done = False
+        while not done:
+            action = env.action_space.sample()
+            obs, reward, done, info = env.step(action)
+            print(reward)
+            tot_reward += reward
+            env.render()
+        print(f"[{reward_name}] tot reward: {tot_reward:.3f}")
     env.close()
     return True
 

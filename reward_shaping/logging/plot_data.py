@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 PALETTE = ['#377eb8', '#4daf4a', '#984ea3', '#e41a1c', '#ff7f00', '#a65628', '#888888', '#fdbf6f']
 REWARDS = {'stl': 'STL', 'weighted': 'Weighted',
-           'gb_chain': 'GB-Chain', 'gb_bcr_bi': 'GB-Hierarchy',
+           'gb_chain': 'GB-Chain', 'gb_bcr_bi': 'GB-Hierarchy-DistTarget', 'gb_pcr_bi': 'GB-Hierarchy-ProgressTarget',
            'continuous': 'Continuous'}
 PALETTE_REWARDS = {reward: v for reward, v in zip(REWARDS.keys(), PALETTE)}
 

@@ -1,5 +1,6 @@
 from unittest import TestCase
-from reward_shaping.envs.cart_pole_obst.test.test import generic_env_test, generic_training
+
+from reward_shaping.test.test import generic_env_test, generic_training
 
 env_name = "bipedal_walker"
 
@@ -39,6 +40,12 @@ class TestBipedalWalker(TestCase):
     def test_chain(self):
         task = "forward"
         reward = "gb_chain"
+        result = generic_env_test(env_name, task, reward)
+        self.assertTrue(result)
+
+    def test_binary_progress(self):
+        task = "forward"
+        reward = "gb_bpr_ci"
         result = generic_env_test(env_name, task, reward)
         self.assertTrue(result)
 
