@@ -1,6 +1,7 @@
-from typing import List
+from typing import List, Dict, Any
 
 import numpy as np
+import rtamt
 
 from reward_shaping.core.reward import RewardFunction
 
@@ -88,3 +89,17 @@ class PotentialReward(RewardFunction):
         # not working
         # return self._potential_coeff * (next_reward - reward)
         return -1.0
+
+
+def monitor_episode(stl_spec: str, vars: List[str], types: List[str], episode: Dict[str, Any]):
+    spec = rtamt.STLSpecification()
+    for v, t in zip(vars, types):
+        spec.declare_var(v, f'{t}')
+    spec.spec = stl_spec
+    try:
+        spec.parse()
+    except rtamt.STLParseException:
+        return
+    # preprocess format, evaluate, post process
+    robustness_trace = spec.evaluate(episode)
+    return robustness_trace[0][1]

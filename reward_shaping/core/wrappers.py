@@ -1,8 +1,8 @@
 from typing import Any
-
 import gym
 
 from reward_shaping.core.configs import STLRewardConfig
+from reward_shaping.core.helper_fns import monitor_episode
 from reward_shaping.core.reward import RewardFunction
 
 
@@ -52,18 +52,11 @@ class STLRewardWrapper(gym.Wrapper):
         return state
 
     def _compute_episode_robustness(self):
-        import rtamt
-        spec = rtamt.STLSpecification()
-        for v, t in zip(self._stl_conf.monitoring_variables, self._stl_conf.monitoring_types):
-            spec.declare_var(v, f'{t}')
-        spec.spec = self._stl_conf.spec
-        try:
-            spec.parse()
-        except rtamt.STLParseException:
-            return
-        # preprocess format, evaluate, post process
-        robustness_trace = spec.evaluate(self._episode)
-        return robustness_trace[0][1]
+        return monitor_episode(self._stl_conf.spec, self._stl_conf.monitoring_variables,
+                               self._stl_conf.monitoring_types, self._episode)
+
+    def get_monitored_episode(self):
+        return self._episode
 
     def step(self, action):
         obs, _, done, info = super().step(action)
@@ -80,5 +73,3 @@ class STLRewardWrapper(gym.Wrapper):
     def render(self, mode='human', **kwargs):
         return super(STLRewardWrapper, self).render(mode=mode,
                                                     info={'reward': self._reward, 'return': self._return})
-
-

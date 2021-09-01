@@ -62,7 +62,7 @@ def make_base_env(env, env_params={}):
     return env
 
 
-def make_agent(env_name, env, rl_algo, logdir=None):
+def make_agent(env_name, env, reward, rl_algo, logdir=None):
     # load model parameters
     algo = rl_algo.split("_", 1)[0]
     algo_config = pathlib.Path(f"{os.path.dirname(__file__)}/../envs/{env_name}/hparams") / f"{algo}.yml"
@@ -71,6 +71,9 @@ def make_agent(env_name, env, rl_algo, logdir=None):
             algo_params = yaml.load(file, yaml.FullLoader)
     else:
         algo_params = {}
+    if 'stl' in reward:
+        # propagate the terminal reward over all the states in the episode
+        algo_params['gamma'] = 1.0
     # create model
     if algo == "ppo":
         from stable_baselines3 import PPO

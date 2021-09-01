@@ -62,7 +62,7 @@ def train(env, task, reward, train_params, algo="sac", seed=0, expdir=None):
     train_env, trainenv_params = make_env(env, task, reward, eval=False, logdir=logdir, seed=seed)
     eval_env, evalenv_params = make_env(env, task, reward="stl", eval=True, seed=seed)
     # create agent
-    model = make_agent(env, train_env, algo, logdir)
+    model = make_agent(env, train_env, reward, algo, logdir)
     # train
     callbacks = get_callbacks(eval_env, logdir, checkpointdir, train_params)
     model.learn(total_timesteps=train_params['steps'], callback=callbacks)

@@ -4,7 +4,7 @@ from reward_shaping.envs.cart_pole_obst.rewards.baselines import CPOSparseReward
 from reward_shaping.envs.cart_pole_obst.rewards.graph_based import CPOGraphWithContinuousScoreBinaryIndicator, \
     CPOGraphWithContinuousScoreContinuousIndicator, CPOGraphWithProgressScoreBinaryIndicator, \
     CPOGraphWithBinarySafetyScoreBinaryIndicator, CPOChainGraph, CPOGraphBinarySafetyProgressTargetContinuousIndicator
-from reward_shaping.envs.cart_pole_obst.rewards.stl_based import CPOSTLReward, CPOBoolSTLReward
+from reward_shaping.envs.cart_pole_obst.rewards.stl_based import CPOSTLReward
 
 _registry = {}
 
@@ -22,7 +22,6 @@ register_reward('default', reward=DefaultReward)
 register_reward('sparse', reward=CPOSparseReward)
 register_reward('continuous', reward=CPOContinuousReward)
 register_reward('stl', reward=CPOSTLReward)
-register_reward('bool_stl', reward=CPOBoolSTLReward)
 register_reward('weighted', reward=CPOWeightedBaselineReward)
 # Graph-based (gb) formulations
 register_reward('gb_cr_bi', reward=CPOGraphWithContinuousScoreBinaryIndicator)
