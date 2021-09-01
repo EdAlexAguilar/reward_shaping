@@ -7,6 +7,9 @@ from typing import List, Dict
 import numpy as np
 import yaml
 import json
+
+from gym.wrappers import Monitor
+from gym.wrappers.monitoring.video_recorder import VideoRecorder
 from stable_baselines3 import SAC
 
 from reward_shaping.core.helper_fns import monitor_episode
@@ -41,8 +44,9 @@ def evaluate_individual_requirements(env, monitored_episode):
         results[req] = robustness
     return results
 
+
 def evaluate_individual_nodes(env):
-    nodes = env.env._reward_fn._graph
+    nodes = env.env._reward_fn._graph.nodes
     result = {}
     for node in nodes:
         reward = nodes[node]['reward']
@@ -51,15 +55,18 @@ def evaluate_individual_nodes(env):
         result[node] = (reward, sat, score)
     return result
 
-def evaluate_model(env_name, model, env, reward_name, n_episodes=None, n_steps=None, logdir=None, render=True):
+
+def evaluate_model(env_name, model, env, reward_name, n_episodes=None, n_steps=None, logdir=None,
+                   render=True, record=False):
     assert not n_episodes or not n_steps
     assert not n_steps or not n_episodes
-    obs = env.reset()
     tot_reward = 0.0
     episodes, steps = 0, 0
     episode = []
     all_results = []
     all_node_status = []
+    recorder = VideoRecorder(env, base_path=str(logdir/f'episodes/episode_{episodes + 1}'))
+    obs = env.reset()
     while True:
         action, _states = model.predict(obs, deterministic=True)
         episode.append({'observation': obs, 'action': action})
@@ -71,6 +78,8 @@ def evaluate_model(env_name, model, env, reward_name, n_episodes=None, n_steps=N
             all_node_status.append(nodes_status)
         if render:
             env.render()
+        if record:
+            recorder.capture_frame()
         if done:
             episode.append({'observation': obs, 'action': None})
             # result
@@ -88,14 +97,16 @@ def evaluate_model(env_name, model, env, reward_name, n_episodes=None, n_steps=N
                 filename = logdir / "episodes" / f"episode_{episodes + 1}"
                 np.savez(file=filename, episode=episode, monitored_episode=monitored_episode,
                          results=results, nodes_status=all_node_status)
-                nodefilename = filename + "_nodes.txt"
+                nodefilename = str(filename) + "_nodes.txt"
                 with open(nodefilename, 'w') as outfile:
                     json.dump(all_node_status, outfile)
             # reset
+            episodes += 1
+            recorder.close()
+            recorder = VideoRecorder(env, base_path=str(logdir / f'episodes/episode_{episodes + 1}'))
             obs = env.reset()
             episode = []
             all_node_status = []
-            episodes += 1
             tot_reward = 0.0
             if n_episodes and episodes >= n_episodes:
                 print(f"[Info] episodes: {episodes}, step: {steps}, max number of episodes reached")
@@ -103,22 +114,24 @@ def evaluate_model(env_name, model, env, reward_name, n_episodes=None, n_steps=N
         if n_steps and steps >= n_steps:
             print(f"[Info] episodes: {episodes}, step: {steps}, max number of steps reached")
             break
-    filename = logdir / "episodes" / f"results.txt"
-    with open(filename, 'w') as outfile:
-        json.dump(all_results, outfile)
+    if logdir:
+        filename = logdir / "episodes" / f"results.txt"
+        with open(filename, 'w') as outfile:
+            json.dump(all_results, outfile)
 
 
 def main(args):
     env_name, task, reward = args.env, args.task, args.eval_reward
     cp_filepath = args.checkpoint
-    eval_episodes, no_render, save = args.eval_episodes, args.no_render, args.save
+    eval_episodes, no_render, save, record = args.eval_episodes, args.no_render, args.save, args.record
+    #
+    logdir = make_log_dirs(args) if save or record else None
     # make env
     env, env_params = make_env(env_name, task, reward)
     # resume agent
     model = SAC.load(cp_filepath)
-    #
-    logdir = make_log_dirs(args) if save else None
-    evaluate_model(env_name, model, env, reward, n_episodes=eval_episodes, logdir=logdir, render=not no_render)
+    evaluate_model(env_name, model, env, reward, n_episodes=eval_episodes, logdir=logdir, render=not no_render,
+                   record=record)
 
 
 def get_default_task(env):
@@ -139,6 +152,7 @@ if __name__ == "__main__":
     parser.add_argument("--eval_episodes", type=int, required=False, default=10)
     parser.add_argument("-no_render", action='store_true')
     parser.add_argument("-save", action='store_true')
+    parser.add_argument("-record", action='store_true')
     # parse args
     args = parser.parse_args()
     args.task = args.task if args.task is not None else get_default_task(args.env)
