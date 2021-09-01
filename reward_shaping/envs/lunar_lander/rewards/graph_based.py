@@ -66,7 +66,7 @@ class LLGraphWithBinarySafetyBinaryIndicator(GraphRewardConfig):
                                                  info=info)
 
         nodes["C_angvel"] = get_normalized_reward(fns.MinimizeAngleVelocity(),
-                                                  min_r_state=[0] * 4 + [thetadot_limit] + [0] * 9,
+                                                  min_r_state=[0] * 5 + [thetadot_limit] + [0] * 8,
                                                   max_r_state=[0] * 14,
                                                   info=info)
         return nodes
@@ -134,7 +134,7 @@ class LLChainGraph(GraphRewardConfig):
                                                     info=info)
 
         anglevel_fn, anglevel_sat = get_normalized_reward(fns.MinimizeAngleVelocity(),
-                                                          min_r_state=[0] * 5 + [thetadot_limit] + [0] * 8,
+                                                          min_r_state=[0] * 5 + [theta_dot_limit] + [0] * 8,
                                                           max_r_state=[0] * 14,
                                                           info=info)
         comfort_funs = [angle_fn, anglevel_fn]
