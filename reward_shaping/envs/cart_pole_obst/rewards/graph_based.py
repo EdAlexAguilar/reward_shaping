@@ -322,8 +322,8 @@ class CPOGraphBinarySafetyProgressTargetContinuousIndicator(GraphRewardConfig):
         nodes["S_exit"] = (binary_exit_fn, cont_exit_fn)
 
         # define target rules
-        # note: progress is computed as progress/time, bound it to +-1 to have approx same scale
-        progress_fn, _ = get_normalized_reward(fns.ProgressToTargetReward(progress_coeff=PROGCOEFF), min_r=-1, max_r=1.0)
+        # note: progress is computed as progress/time, bound it to have approx same scale
+        progress_fn, _ = get_normalized_reward(fns.ProgressToTargetReward(progress_coeff=PROGCOEFF), min_r=0.0, max_r=1.0)
         target_fun, _ = get_normalized_reward(fns.ReachTargetReward(),
                                               min_r_state={'x': info['x_limit']},
                                               max_r_state={'x': info['x_target']},
