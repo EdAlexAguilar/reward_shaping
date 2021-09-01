@@ -103,7 +103,7 @@ class MinimizeCraftAngle(RewardFunction):
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
         normalized_theta = state[4]
-        normalized_limit = info['theta_limit'] / np.pi
+        normalized_limit = info['theta_limit']
         return normalized_limit - abs(normalized_theta)
 
 
@@ -174,5 +174,5 @@ class MinimizeAngleVelocity(RewardFunction):
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
         normalized_theta_dot = state[5]
-        normalized_theta_dot_limit = info['theta_dot_limit'] / np.pi
+        normalized_theta_dot_limit = info['theta_dot_limit']
         return normalized_theta_dot_limit - abs(normalized_theta_dot)
