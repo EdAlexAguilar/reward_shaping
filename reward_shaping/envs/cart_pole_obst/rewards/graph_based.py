@@ -1,6 +1,6 @@
 import reward_shaping.envs.cart_pole_obst.rewards.subtask_rewards as fns
 from reward_shaping.core.configs import GraphRewardConfig
-from reward_shaping.core.helper_fns import ThresholdIndicator, NormalizedReward, MinAggregatorReward, \
+from reward_shaping.core.helper_fns import ThresholdIndicator, MinAggregatorReward, \
     ProdAggregatorReward
 import numpy as np
 
@@ -322,7 +322,8 @@ class CPOGraphBinarySafetyProgressTargetContinuousIndicator(GraphRewardConfig):
         nodes["S_exit"] = (binary_exit_fn, cont_exit_fn)
 
         # define target rules
-        progress_fn = fns.ProgressToTargetReward(progress_coeff=PROGCOEFF)
+        # note: progress is computed as progress/time, bound it to +-1 to have approx same scale
+        progress_fn, _ = get_normalized_reward(fns.ProgressToTargetReward(progress_coeff=PROGCOEFF), min_r=-1, max_r=1.0)
         target_fun, _ = get_normalized_reward(fns.ReachTargetReward(),
                                               min_r_state={'x': info['x_limit']},
                                               max_r_state={'x': info['x_target']},
