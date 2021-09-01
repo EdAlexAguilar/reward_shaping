@@ -4,12 +4,12 @@ from reward_shaping.core.reward import RewardFunction
 class ContinuousFalldownReward(RewardFunction):
     """
     always(dist_to_ground >= dist_hull_limit)
-    dist_to_ground is estimated with the min lidar ray (note: last 10 points of state are normalized lidar distances)
+    dist_to_ground is estimated with the min lidar ray (note: norm lidar dist are -11:-1, because the last is xpos)
     """
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
         assert len(state) == 25 and 'dist_hull_limit' in info and 'collision' in info
-        lidar = min(state[-10:]) if not info['collision'] else 0.0  # if no collision, approx dist to ground wt lidars
+        lidar = min(state[-11:-1]) if not info['collision'] else 0.0  # if no collision, approx dist to ground wt lidars
         return lidar - info['dist_hull_limit']
 
 
@@ -53,7 +53,8 @@ class ProgressToTargetReward(RewardFunction):
             x, next_x = state[24], next_state[24]
             dist_pre = abs(x - info['norm_target_x'])
             dist_now = abs(next_x - info['norm_target_x'])
-            return self._progress_coeff * (dist_pre - dist_now)
+            tau = 1/50  # 1/fps
+            return self._progress_coeff * (dist_pre - dist_now) / tau
         else:
             # it should never happen but for robustness
             return 0.0
