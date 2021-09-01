@@ -207,7 +207,7 @@ class LunarLander(gym.Env, EzPickle):
 
         initial_x = VIEWPORT_W / SCALE / 2 + 2 * self.initial_x_offset * (np.random.random() - .5)
         initial_y = VIEWPORT_H / SCALE
-        print(initial_x, initial_y)
+
         self.lander = self.world.CreateDynamicBody(
             position=(initial_x, initial_y),
             angle=0.0,
@@ -262,7 +262,6 @@ class LunarLander(gym.Env, EzPickle):
 
         self.drawlist = [self.lander, self.obstacle] + self.legs
 
-        print(self.lander.position)
         return self.step(np.array([0, 0]) if self.continuous else 0)[0]
 
     def _create_particle(self, mass, x, y, ttl):
