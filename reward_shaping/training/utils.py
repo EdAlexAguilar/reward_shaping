@@ -54,12 +54,15 @@ def make_base_env(env, env_params={}):
     elif env == "bipedal_walker":
         from reward_shaping.envs import BipedalWalker
         env = BipedalWalker(**env_params)
+    elif env == "lunar_lander":
+        from reward_shaping.envs import LunarLanderContinuous
+        env = LunarLanderContinuous(**env_params)
     else:
         raise NotImplementedError(f"not implemented env for {env}")
     return env
 
 
-def make_agent(env_name, env, rl_algo, logdir=None):
+def make_agent(env_name, env, reward, rl_algo, logdir=None):
     # load model parameters
     algo = rl_algo.split("_", 1)[0]
     algo_config = pathlib.Path(f"{os.path.dirname(__file__)}/../envs/{env_name}/hparams") / f"{algo}.yml"
@@ -68,6 +71,9 @@ def make_agent(env_name, env, rl_algo, logdir=None):
             algo_params = yaml.load(file, yaml.FullLoader)
     else:
         algo_params = {}
+    if 'stl' in reward:
+        # propagate the terminal reward over all the states in the episode
+        algo_params['gamma'] = 1.0
     # create model
     if algo == "ppo":
         from stable_baselines3 import PPO
@@ -85,14 +91,14 @@ def make_agent(env_name, env, rl_algo, logdir=None):
 
 
 def get_reward_conf(env_name, env_params, reward):
-    if env_name == "cart_pole":
-        # env = get_reward(reward)()
-        raise DeprecationWarning("this env is not updated")
-    elif env_name == "cart_pole_obst":
+    if env_name == "cart_pole_obst":
         from reward_shaping.envs.cart_pole_obst import get_reward
         reward_conf = get_reward(reward)(env_params=env_params)
     elif env_name == "bipedal_walker":
         from reward_shaping.envs.bipedal_walker import get_reward
+        reward_conf = get_reward(reward)(env_params=env_params)
+    elif env_name == "lunar_lander":
+        from reward_shaping.envs.lunar_lander import get_reward
         reward_conf = get_reward(reward)(env_params=env_params)
     else:
         raise NotImplementedError(f'{reward} not implemented for {env_name}')

@@ -1,6 +1,6 @@
 from reward_shaping.core.helper_fns import DefaultReward
-from reward_shaping.envs.lunar_lander.rewards.graph_based import GraphWithContinuousScoreBinaryIndicator
-from reward_shaping.envs.lunar_lander.rewards.stl_based import STLReward, BoolSTLReward
+from reward_shaping.envs.lunar_lander.rewards.graph_based import LLGraphWithBinarySafetyBinaryIndicator, LLChainGraph
+from reward_shaping.envs.lunar_lander.rewards.stl_based import STLReward
 
 _registry = {}
 
@@ -20,8 +20,7 @@ def register_reward(name: str, reward):
 
 # Baselines
 register_reward('default', reward=DefaultReward)
-# Graph-based
-register_reward('gb_cr_bi', reward=GraphWithContinuousScoreBinaryIndicator)
 register_reward('stl', reward=STLReward)
-# TODO: Bool STL
-# register_reward('bool_stl', reward=BoolSTLReward)
+# Graph-based
+register_reward('gb_bcr_bi', reward=LLGraphWithBinarySafetyBinaryIndicator)
+register_reward('gb_chain', reward=LLChainGraph)

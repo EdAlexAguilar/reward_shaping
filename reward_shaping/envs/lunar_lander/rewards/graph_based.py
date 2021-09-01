@@ -2,7 +2,9 @@ from abc import ABC, abstractmethod
 import reward_shaping.envs.lunar_lander.rewards.subtask_rewards as fns
 import numpy as np
 
-from reward_shaping.core.helper_fns import ThresholdIndicator, NormalizedReward
+from reward_shaping.core.helper_fns import ThresholdIndicator, NormalizedReward, MinAggregatorReward, \
+    ProdAggregatorReward
+from reward_shaping.core.utils import get_normalized_reward
 
 
 class GraphRewardConfig(ABC):
@@ -21,7 +23,7 @@ class GraphRewardConfig(ABC):
         pass
 
 
-class GraphWithContinuousScoreBinaryIndicator(GraphRewardConfig):
+class LLGraphWithBinarySafetyBinaryIndicator(GraphRewardConfig):
     """
     rew(R) = Sum_{r in R} (Product_{r' in R st. r' <= r} sigma(r')) * rho(r)
     with sigma returns binary value {0,1}
@@ -36,59 +38,116 @@ class GraphWithContinuousScoreBinaryIndicator(GraphRewardConfig):
         # prepare env info
         info = {'FPS': self._env_params['FPS'],
                 'theta_limit': self._env_params['theta_limit'],
-                'fuel': self._env_params['fuel'],
                 'theta_dot_limit': self._env_params['theta_dot_limit']}
 
         # SAFETY RULES
-        fun = fns.MinimizeYVelocity()
-        max_r_state = [0, 1.5, 0, 0.5, 0, 0, 0, 0]
-        max_r = fun(max_r_state, info=info)
-        min_r = 0.0
-        nodes["S_crash_y"] = (NormalizedReward(fun, min_r, max_r), ThresholdIndicator(fun))
+        safe_landing_fn = fns.BinarySlowLandingReward(slow_bonus=0.0, crash_penalty=-1.0)
+        nodes["S_crash"] = (safe_landing_fn, ThresholdIndicator(safe_landing_fn))
 
-        fun = fns.MinimizeCraftAngle()
-        max_r_state = [0]*8
-        max_r = fun(max_r_state, info=info)
-        min_r = 0
-        nodes["S_theta"] = (NormalizedReward(fun, min_r, max_r), ThresholdIndicator(fun))
+        fuel_fn = fns.BinaryFuelReward(still_fuel_bonus=0.0, no_fuel_penalty=-1.0)
+        nodes["S_fuel"] = (fuel_fn, ThresholdIndicator(fuel_fn))
 
-        fun = fns.MinimizeFuelConsumption()
-        max_r = 1
-        min_r = 0
-        nodes["S_fuel"] = (NormalizedReward(fun, min_r, max_r), ThresholdIndicator(fun))
+        coll_fn = fns.CollisionReward(no_collision_bonus=0.0, collision_penalty=-1.0)
+        nodes["S_coll"] = (coll_fn, ThresholdIndicator(coll_fn))
+
+        exit_fn = fns.OutsideReward(no_exit_bonus=0.0, exit_penalty=-1.0)
+        nodes["S_exit"] = (exit_fn, ThresholdIndicator(exit_fn))
 
         # TARGET RULES
-        fun = fns.MinimizeDistanceToLandingArea()
-        max_r_state = [1.0, 1.5] + [0]*6
-        max_r = fun(max_r_state, info=info)
-        min_r = 0
-        nodes["T_origin"] = (NormalizedReward(fun, min_r, max_r), ThresholdIndicator(fun))
+        progress_fn = fns.ProgressToOriginReward(progress_coeff=1.0)
+        nodes["T_origin"] = (progress_fn, ThresholdIndicator(progress_fn, include_zero=False))
 
         # COMFORT RULES
-        fun = fns.MinimizeXVelocity()
-        max_r_state = [1.5, 0, 0.5, 0, 0, 0, 0, 0]
-        max_r = fun(max_r_state, info=info)
-        min_r = 0.0
-        nodes["C_x_dot"] = (NormalizedReward(fun, min_r, max_r), ThresholdIndicator(fun))
+        theta_limit = self._env_params['theta_limit']
+        thetadot_limit = self._env_params['theta_dot_limit']
+        nodes["C_angle"] = get_normalized_reward(fns.MinimizeCraftAngle(),
+                                                 min_r_state=[0] * 4 + [theta_limit / np.pi] + [0] * 9,
+                                                 max_r_state=[0] * 14,
+                                                 info=info)
 
-        fun = fns.MinimizeAngleVelocity()
-        max_r_state = [0] * 8
-        max_r = fun(max_r_state, info=info)
-        min_r = 0
-        nodes["C_theta_dot"] = (NormalizedReward(fun, min_r, max_r), ThresholdIndicator(fun))
+        nodes["C_angvel"] = get_normalized_reward(fns.MinimizeAngleVelocity(),
+                                                  min_r_state=[0] * 4 + [thetadot_limit / np.pi] + [0] * 9,
+                                                  max_r_state=[0] * 14,
+                                                  info=info)
         return nodes
 
     @property
     def topology(self):
         """
-        Safety: crash_y  \
-        Safety: angle   -- Target  -- Comfort: Angular Velocity
-        Safety: fuel     /          \ Comfort: Horizontal Speed
+        S_crash \               / Comfort: Theta angle
+        S_coll  | __ Target  --|
+        S_fuel  |              \ Comfort: Ang Velocity
+        S_exit  /
         """
         topology = {
-            'S_crash_y': ['T_origin'],
-            'S_theta': ['T_origin'],
+            'S_crash': ['T_origin'],
+            'S_coll': ['T_origin'],
             'S_fuel': ['T_origin'],
-            'T_origin': ['C_theta_dot', 'C_x_dot']
+            'S_exit': ['T_origin'],
+            'T_origin': ['C_angle', 'C_angvel']
+        }
+        return topology
+
+
+class LLChainGraph(GraphRewardConfig):
+    """
+    all the safety and comfort requirements are evaluated as a single reqiurement
+    """
+
+    def __init__(self, env_params):
+        self._env_params = env_params
+
+    @property
+    def nodes(self):
+        nodes = {}
+        # prepare env info
+        info = {'FPS': self._env_params['FPS'],
+                'theta_limit': self._env_params['theta_limit'],
+                'theta_dot_limit': self._env_params['theta_dot_limit'],
+                'x_high_limit': self._env_params['x_high_limit'], 'half_width': 600 / 30 / 2}
+
+        # SAFETY RULES
+        safe_landing_fn, safe_landing_sat = get_normalized_reward(fns.SlowLandingReward(), min_r=-0.1, max_r=1.5)
+
+        fuel_fn = fns.FuelReward()
+        fuel_sat = ThresholdIndicator(fuel_fn, include_zero=False)
+
+        coll_fn, coll_sat = get_normalized_reward(fns.CollisionReward(no_collision_bonus=0.0, collision_penalty=-1.0),
+                                                  min_r=-1.0, max_r=0.0)
+
+        exit_fn, exit_sat = get_normalized_reward(fns.OutsideReward(), min_r_state=[1.0], max_r_state=[0.0], info=info)
+
+        safety_funs = [safe_landing_fn, fuel_fn, coll_fn, exit_fn]
+        safety_sats = [safe_landing_sat, fuel_sat, coll_sat, exit_sat]
+        nodes["S_all"] = (MinAggregatorReward(safety_funs), ProdAggregatorReward(safety_sats))
+
+        # TARGET RULES
+        progress_fn = fns.ProgressToOriginReward(progress_coeff=1.0)
+        nodes["T_origin"] = (progress_fn, ThresholdIndicator(progress_fn, include_zero=False))
+
+        # COMFORT RULES
+        theta_limit = self._env_params['theta_limit']
+        thetadot_limit = self._env_params['theta_dot_limit']
+        angle_fn, angle_sat = get_normalized_reward(fns.MinimizeCraftAngle(),
+                                                    min_r_state=[0] * 4 + [theta_limit / np.pi] + [0] * 9,
+                                                    max_r_state=[0] * 14,
+                                                    info=info)
+
+        anglevel_fn, anglevel_sat = get_normalized_reward(fns.MinimizeAngleVelocity(),
+                                                          min_r_state=[0] * 5 + [thetadot_limit / np.pi] + [0] * 8,
+                                                          max_r_state=[0] * 14,
+                                                          info=info)
+        comfort_funs = [angle_fn, anglevel_fn]
+        comfort_sats = [angle_sat, anglevel_sat]
+        nodes["C_all"] = (MinAggregatorReward(comfort_funs), ProdAggregatorReward(comfort_sats))
+
+        return nodes
+
+    @property
+    def topology(self):
+        # just to avoid to rewrite it all the times
+        topology = {
+            'S_all': ['T_origin'],
+            'T_origin': ['C_all'],
         }
         return topology

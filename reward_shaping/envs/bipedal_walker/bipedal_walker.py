@@ -65,6 +65,8 @@ TERRAIN_GRASS = 10  # low long are grass spots, in steps
 TERRAIN_STARTPAD = 20  # in steps
 FRICTION = 2.5
 
+target_x = (TERRAIN_LENGTH - TERRAIN_GRASS) * TERRAIN_STEP
+
 HULL_FD = fixtureDef(
     shape=polygonShape(vertices=[(x / SCALE, y / SCALE) for x, y in HULL_POLY]),
     density=5.0,
@@ -112,11 +114,10 @@ class BipedalWalker(gym.Env, EzPickle):
         'video.frames_per_second': FPS
     }
 
-
-
-    def __init__(self, task, max_episode_steps=1600, angle_hull_limit=np.pi / 4,
+    def __init__(self, task="forward", hardcore=False, dist_hull_limit=0.25, max_episode_steps=1600,
+                 angle_hull_limit=np.pi / 4,
                  speed_y_limit=1.0, angle_vel_limit=.25, speed_x_target=0.0,
-                 terminate_on_collision=True, eval=False, seed=0, hardcore=False):
+                 terminate_on_collision=True, eval=False, seed=0):
         EzPickle.__init__(self)
         self.seed(seed=seed)
 
@@ -148,7 +149,7 @@ class BipedalWalker(gym.Env, EzPickle):
             categoryBits=0x0001,
         )
 
-        high = np.array([np.inf] * 24)
+        high = np.array([np.inf] * 25)
         self.action_space = spaces.Box(np.array([-1, -1, -1, -1]), np.array([1, 1, 1, 1]), dtype=np.float32)
         self.observation_space = spaces.Box(-high, high, dtype=np.float32)
 
@@ -158,6 +159,7 @@ class BipedalWalker(gym.Env, EzPickle):
         self.terminate_on_collision = terminate_on_collision
         self.eval = eval  # this can be eventually used to make eval deterministic (ie, test specific starting conds)
         self.angle_hull_limit = angle_hull_limit
+        self.dist_hull_limit = dist_hull_limit
         self.speed_y_limit = speed_y_limit
         self.angle_vel_limit = angle_vel_limit
         self.speed_x_target = speed_x_target
@@ -447,7 +449,8 @@ class BipedalWalker(gym.Env, EzPickle):
             1.0 if self.legs[3].ground_contact else 0.0,
         ]
         state += [l.fraction for l in self.lidar]
-        assert len(state) == 24
+        state += [pos[0] / target_x]  # x position norm in 0, 1
+        assert len(state) == 25
 
         self.scroll = pos.x - VIEWPORT_W / SCALE / 5
 
@@ -466,8 +469,6 @@ class BipedalWalker(gym.Env, EzPickle):
         if self.game_over or pos[0] < 0:
             reward = -100
 
-        target_x = (TERRAIN_LENGTH - TERRAIN_GRASS) * TERRAIN_STEP
-
         done = bool(
             pos[0] < 0 or pos[0] > target_x
             or self.step_count > self.max_episode_steps
@@ -477,7 +478,9 @@ class BipedalWalker(gym.Env, EzPickle):
         info = {"time": self.step_count,
                 "position_x": pos[0],
                 "target_x": target_x,
+                "norm_target_x": 1.0,
                 "collision": self.game_over,
+                "dist_hull_limit": self.dist_hull_limit,
                 "angle_hull_limit": self.angle_hull_limit,
                 "speed_y_limit": self.speed_y_limit,
                 "angle_vel_limit": self.angle_vel_limit,
@@ -541,11 +544,6 @@ class BipedalWalker(gym.Env, EzPickle):
             self.viewer.close()
             self.viewer = None
 
-
-"""
-class BipedalWalkerHardcore(BipedalWalker):
-    hardcore = True
-"""
 
 if __name__ == "__main__":
     # Heurisic: suboptimal, have no notion of balance.

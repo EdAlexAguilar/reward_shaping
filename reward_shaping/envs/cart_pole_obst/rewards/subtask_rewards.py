@@ -84,8 +84,8 @@ class ContinuousOutsideReward(RewardFunction):
     """
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        assert 'x' in state and 'x_limit' in info
-        return info['x_limit'] - abs(state['x'])
+        assert 'x' in next_state and 'x_limit' in info
+        return info['x_limit'] - abs(next_state['x'])
 
 
 class ReachTargetReward(RewardFunction):
@@ -100,11 +100,11 @@ class ProgressToTargetReward(RewardFunction):
         self._progress_coeff = progress_coeff
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        assert 'x' in next_state and 'x_target' in info and 'x_target_tol' in info
+        assert 'x' in next_state and 'x_target' in info and 'x_target_tol' in info and 'tau' in info
         if next_state is not None:
-            prev_closeness = 1 - (abs(state['x'] - info['x_target']) / abs(info['x_limit'] - info['x_target']))
-            closeness = 1 - (abs(next_state['x'] - info['x_target']) / abs(info['x_limit'] - info['x_target']))
-            return self._progress_coeff * (closeness - prev_closeness)
+            dist_pre = abs(state['x'] - info['x_target'])
+            dist = abs(next_state['x'] - info['x_target'])
+            return self._progress_coeff * (dist_pre - dist)/info['tau']
         else:
             # it should never happen but for robustness
             return 0.0

@@ -1,11 +1,12 @@
 import reward_shaping.envs.cart_pole_obst.rewards.subtask_rewards as fns
 from reward_shaping.core.configs import GraphRewardConfig
-from reward_shaping.core.helper_fns import ThresholdIndicator, NormalizedReward, MinAggregatorReward, \
+from reward_shaping.core.helper_fns import ThresholdIndicator, MinAggregatorReward, \
     ProdAggregatorReward
 import numpy as np
 
 from reward_shaping.core.utils import get_normalized_reward
 
+PROGCOEFF = 1.0
 
 def get_cartpole_topology(task):
     # just to avoid to rewrite it all the times
@@ -111,53 +112,42 @@ class CPOGraphWithContinuousScoreContinuousIndicator(GraphRewardConfig):
                 'theta_target_tol': np.deg2rad(self._env_params['theta_target_tol'])}
 
         # define safety rules
-        # collision
-        fun = fns.ContinuousCollisionReward()
-        # note: defining the min/max robustness bounds depend on the obstacle position (not known a priori)
-        #       Then, the reward is normalized with approx. bounds
-        min_r, max_r = -0.5, 2.5
-        nodes["S_coll"] = (NormalizedReward(fun, min_r, max_r), NormalizedReward(fun, min_r, max_r))
+        # collision, note: defining the min/max robustness bounds depend on the obstacle position (not known a priori)
+        # Then, the reward is normalized with approx. bounds
+        fn_coll, _ = get_normalized_reward(fns.ContinuousCollisionReward(), min_r=-0.5, max_r=2.5)
+        nodes["S_coll"] = (fn_coll, fn_coll)
 
         # falldown
-        fun = fns.ContinuousFalldownReward()
-        min_r_state = {'theta': info['theta_limit']}
-        max_r_state = {'theta': 0.0}
-        min_r, max_r = fun(min_r_state, info=info, next_state=min_r_state), fun(max_r_state, info=info,
-                                                                                next_state=max_r_state)
-        nodes["S_fall"] = (NormalizedReward(fun, min_r, max_r), NormalizedReward(fun, min_r, max_r))
+        fn_fall, _ = get_normalized_reward(fns.ContinuousFalldownReward(),
+                                        min_r_state={'theta': info['theta_limit']},
+                                        max_r_state={'theta': 0.0}, info=info)
+        nodes["S_fall"] = (fn_fall, fn_fall)
 
         # outside
-        fun = fns.ContinuousOutsideReward()
-        min_r_state = {'x': info['x_limit']}
-        max_r_state = {'x': 0.0}
-        min_r, max_r = fun(min_r_state, info=info, next_state=min_r_state), fun(max_r_state, info=info,
-                                                                                next_state=max_r_state)
-        nodes["S_exit"] = (NormalizedReward(fun, min_r, max_r), NormalizedReward(fun, min_r, max_r))
+        fn_out, _ = get_normalized_reward(fns.ContinuousOutsideReward(),
+                                       min_r_state={'x': info['x_limit']},
+                                       max_r_state={'x': 0.0}, info=info)
+        nodes["S_exit"] = (fn_out, fn_out)
 
         # define target rules
-        fun = fns.ReachTargetReward()
-        min_r_state = {'x': info['x_limit']}
-        max_r_state = {'x': info['x_target']}
-        min_r, max_r = fun(min_r_state, info=info, next_state=min_r_state), fun(max_r_state, info=info,
-                                                                                next_state=max_r_state)
-        nodes["T_origin"] = (NormalizedReward(fun, min_r, max_r), NormalizedReward(fun, min_r, max_r))
+        fn_target, _ = get_normalized_reward(fns.ReachTargetReward(),
+                                          min_r_state={'x': info['x_limit']},
+                                          max_r_state={'x': info['x_target']}, info=info)
+        nodes["T_origin"] = (fn_target, fn_target)
 
         # define comfort rules
-        fun = fns.BalanceReward()
-        min_r_state = {'theta': info['theta_limit']}
-        max_r_state = {'theta': info['theta_target']}
-        min_r, max_r = fun(min_r_state, info=info, next_state=min_r_state), fun(max_r_state, info=info,
-                                                                                next_state=max_r_state)
-        balance_reward_fn = NormalizedReward(fun, min_r, max_r)
-        nodes["T_bal"] = (balance_reward_fn, balance_reward_fn)
+        fn_balance, _ = get_normalized_reward(fns.BalanceReward(),
+                                           min_r_state={'theta': info['theta_limit']},
+                                           max_r_state={'theta': info['theta_target']}, info=info)
+        nodes["T_bal"] = (fn_balance, fn_balance)
 
         if self._env_params['task'] == "random_height":
             # for random env, additional comfort node
-            nodes["C_bal"] = (balance_reward_fn, balance_reward_fn)
+            nodes["C_bal"] = (fn_balance, fn_balance)
             # conditional nodes (ie, to check env conditions)
             zero_fn = lambda _: 0.0  # this is a static condition, do not score for it (depends on the env)
             feas_ind = ThresholdIndicator(fns.CheckOvercomingFeasibility())
-            nfeas_ind = ThresholdIndicator(fns.CheckOvercomingFeasibility())
+            nfeas_ind = ThresholdIndicator(fns.CheckOvercomingFeasibility(), negate=True)
             nodes["H_feas"] = (zero_fn, feas_ind)
             nodes["H_nfeas"] = (zero_fn, nfeas_ind)
         return nodes
@@ -187,24 +177,19 @@ class CPOGraphWithProgressScoreBinaryIndicator(GraphRewardConfig):
 
         # define safety rules
         # collision
-        fun = fns.ContinuousCollisionReward()
-        # note: defining the min/max robustness bounds depend on the obstacle position (not known a priori)
-        #       Then, the reward is normalized with approx. bounds
-        min_r, max_r = -0.5, 2.5
-        nodes["S_coll"] = get_normalized_reward(fun, min_r, max_r, info=info)
+        fun = fns.CollisionReward(collision_penalty=-1.0, no_collision_bonus=0.0)
+        nodes["S_coll"] = (fun, ThresholdIndicator(fun))
 
         # falldown
-        fun = fns.ContinuousFalldownReward()
-        min_r_state, max_r_state = {'theta': info['theta_limit']}, {'theta': 0.0}
-        nodes["S_fall"] = get_normalized_reward(fun, min_r_state=min_r_state, max_r_state=max_r_state, info=info)
+        fun = fns.FalldownReward(falldown_penalty=-1.0, no_falldown_bonus=0.0)
+        nodes["S_fall"] = (fun, ThresholdIndicator(fun))
 
         # outside
-        fun = fns.ContinuousOutsideReward()
-        min_r_state, max_r_state = {'x': info['x_limit']}, {'x': 0.0}
-        nodes["S_exit"] = get_normalized_reward(fun, min_r_state=min_r_state, max_r_state=max_r_state, info=info)
+        fun = fns.OutsideReward(exit_penalty=-1.0, no_exit_bonus=0.0)
+        nodes["S_exit"] = (fun, ThresholdIndicator(fun))
 
         # define target rules
-        fun = fns.ProgressToTargetReward(progress_coeff=1.0)
+        fun = fns.ProgressToTargetReward(progress_coeff=PROGCOEFF)
         nodes["T_origin"] = (fun, ThresholdIndicator(fun, include_zero=False))
 
         # define comfort rules
@@ -337,7 +322,8 @@ class CPOGraphBinarySafetyProgressTargetContinuousIndicator(GraphRewardConfig):
         nodes["S_exit"] = (binary_exit_fn, cont_exit_fn)
 
         # define target rules
-        progress_fn = fns.ProgressToTargetReward(progress_coeff=1.0)
+        # note: progress is computed as progress/time, bound it to have approx same scale
+        progress_fn, _ = get_normalized_reward(fns.ProgressToTargetReward(progress_coeff=PROGCOEFF), min_r=0.0, max_r=1.0)
         target_fun, _ = get_normalized_reward(fns.ReachTargetReward(),
                                               min_r_state={'x': info['x_limit']},
                                               max_r_state={'x': info['x_target']},
