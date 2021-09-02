@@ -1,6 +1,7 @@
 # assumption: all the files in the logdir referring the same reward have to be aggregated
 import argparse
 import pathlib
+import time
 import warnings
 from typing import Dict, List
 
@@ -10,7 +11,8 @@ import matplotlib.pyplot as plt
 
 PALETTE = ['#377eb8', '#4daf4a', '#984ea3', '#e41a1c', '#ff7f00', '#a65628', '#888888', '#fdbf6f']
 REWARDS = {'stl': 'STL', 'weighted': 'Weighted',
-           'gb_chain': 'GB-Chain', 'gb_bcr_bi': 'GB-Hierarchy-DistTarget', 'gb_pcr_bi': 'GB-Hierarchy-ProgressTarget',
+           'gb_chain': 'GB-Chain', 'gb_bcr_bi': 'GBH-DistTarget-BinarySat', 'gb_pcr_bi': 'GBH-ProgressTarget-BinarySat',
+           'gb_bpr_ci': 'GBH-ProgressTarget-ContinuousSat',
            'continuous': 'Continuous'}
 PALETTE_REWARDS = {reward: v for reward, v in zip(REWARDS.keys(), PALETTE)}
 
@@ -72,7 +74,6 @@ def plot_secondaries(xlabel, ylabel, hlines, minx, maxx):
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.legend()
-    plt.show()
 
 
 def main(args):
@@ -86,7 +87,13 @@ def main(args):
         aggregated = aggregate_mean_std(data, binning=args.binning)
         plot_line(reward, aggregated)
     plot_secondaries(xlabel=args.xlabel, ylabel=args.ylabel, hlines=args.hlines, minx=minx, maxx=maxx)
+    if args.save:
+        outfile = args.path / f'learning_curves_{int(time.time())}.pdf'
+        plt.savefig(outfile)
+        print(f"\n\nPlot exported in {outfile}")
 
+    else:
+        plt.show()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -99,8 +106,8 @@ if __name__ == '__main__':
     parser.add_argument("--hlines", type=float, nargs='*', default=[0, -1], help="horizontal lines in plot, eg. y=0")
     parser.add_argument("--rewards", type=str, nargs='*', default=REWARDS.keys(), choices=REWARDS.keys(),
                         help="rewards to be plotted")
+    parser.add_argument("-save", action='store_true')
     args = parser.parse_args()
 
     inpath = args.path
     main(args)
-    print(f"\n\nPlot exported in {inpath.absolute()}")
