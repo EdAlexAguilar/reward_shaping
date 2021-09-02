@@ -587,11 +587,13 @@ if __name__ == "__main__":
         s = _convert_dict_to_array(s_dict)
         total_reward += r
         if steps % 20 == 0 or done:
-            print("\naction " + str(["{:+0.2f}".format(x) for x in a]))
+            """print("\naction " + str(["{:+0.2f}".format(x) for x in a]))
             print("step {} total_reward {:+0.2f}".format(steps, total_reward))
             print("hull " + str(["{:+0.2f}".format(x) for x in s[0:4]]))
             print("leg0 " + str(["{:+0.2f}".format(x) for x in s[4:9]]))
             print("leg1 " + str(["{:+0.2f}".format(x) for x in s[9:14]]))
+            """
+            print(s_dict['lidar'])
         steps += 1
 
         contact0 = s[8]

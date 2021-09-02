@@ -87,7 +87,6 @@ class BWGraphWithContinuousScoreBinaryIndicator(GraphRewardConfig):
 
 
 class BWGraphWithBinarySafetyProgressTargetContinuousIndicator(GraphRewardConfig):
-    """ STILL TO BE ADAPTED TO DICT ENVIRONMENT """
     """
     This reward uses CONTINUOUS INDICATORS, meaning that it weights the hierarchy with the sat degree of ancestors
     In particular, this reward uses:
@@ -182,7 +181,7 @@ class BWChainGraph(GraphRewardConfig):
                 'speed_x_target': self._env_params['speed_x_target']}
 
         # safety rules
-        fun = fns.BinaryFalldownReward(falldown_penalty=-1.0, no_falldown_bonus=0.0)
+        fun = fns.ContinuousFalldownReward()
         nodes["S_fall"] = (fun, ThresholdIndicator(fun))
 
         # define target rule: speed_x >= speed__xtarget

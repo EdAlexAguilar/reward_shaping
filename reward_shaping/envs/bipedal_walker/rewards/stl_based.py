@@ -15,9 +15,9 @@ class BWSTLReward(STLRewardConfig):
         # Comfort 1, Small Hull Angle (|phinorm|==1 <-> |phi|==angle_limit)
         hull_angle = "always(abs(phi_norm) <= 1.0)"
         # Comfort 2: Vertical Speed
-        vertical_speed = "(abs(vy_norm) <= 1.0)"
+        vertical_speed = "always(abs(vy_norm) <= 1.0)"
         # Comfort 3: Hull Angle Vel
-        hull_angle_velocity = "(abs(phidot_norm) <= 1.0)"
+        hull_angle_velocity = "always(abs(phidot_norm) <= 1.0)"
         # Comfort Requirements
         comfort_requirement = f"({hull_angle} and {vertical_speed} and {hull_angle_velocity})"
         # all together

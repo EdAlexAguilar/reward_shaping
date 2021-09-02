@@ -418,6 +418,63 @@ class CPOGraphContinuousSafetyProgressTargetContinuousIndicator(GraphRewardConfi
         return topology
 
 
+class CPOGraphContinuousSafetyProgressDistanceTargetContinuousIndicator(GraphRewardConfig):
+
+    @property
+    def nodes(self):
+        nodes = {}
+        # prepare env info
+        info = {'x_limit': self._env_params['x_limit'],
+                'x_target': self._env_params['x_target'],
+                'x_target_tol': self._env_params['x_target_tol'],
+                'theta_limit': np.deg2rad(self._env_params['theta_limit']),
+                'theta_target': np.deg2rad(self._env_params['theta_target']),
+                'theta_target_tol': np.deg2rad(self._env_params['theta_target_tol'])}
+
+        # define safety rules
+        # collision: not(pole_coordinates in obstacle_area), rob range ~ [-0.05, 4.0]
+        # note: clip the upperbound to a lower value in order to consider safe all the state that are
+        # far enough from the obstacle, otherwise it would be incentivated to extreme values in x, theta (falldown)
+        collision_fn, _ = get_normalized_reward(fns.ContinuousCollisionReward(), min_r=-0.05, max_r=1.0,
+                                                info=info)
+        nodes["S_coll"] = (collision_fn, collision_fn)
+
+        # falldown: theta_limit - |theta|, rob range: [0.0, 1.55]
+        cont_fall_fn, _ = get_normalized_reward(fns.ContinuousFalldownReward(),
+                                                min_r_state={'theta': info['theta_limit']},
+                                                max_r_state={'theta': 0.0},
+                                                info=info)
+        nodes["S_fall"] = (cont_fall_fn, cont_fall_fn)
+
+        # outside: x_limit - |x|, rob range: [0.0, 2.5]
+        cont_exit_fn, _ = get_normalized_reward(fns.ContinuousOutsideReward(),
+                                                min_r_state={'x': info['x_limit']},
+                                                max_r_state={'x': 0.0},
+                                                info=info)
+        nodes["S_exit"] = (cont_exit_fn, cont_exit_fn)
+
+        # define target rules
+        # note: progress is computed as progress/time, bound it to have approx same scale
+        progress_fn = fns.ProgressTimesDistanceToTargetReward()
+        nodes["T_origin"] = (progress_fn, progress_fn)
+
+        # define comfort rules
+        # balance: theta_tol - |theta - theta_target|, rob range: [-1.25, 0.4] (considering all theta domain +-pi/2)
+        # Q: better to normalize over the rob of theta domain, or the rob of the comfort domain?
+        nodes["T_bal"] = get_normalized_reward(fns.BalanceReward(),
+                                               min_r_state={'theta': info['theta_target'] - info['theta_target_tol']},
+                                               max_r_state={'theta': info['theta_target']},
+                                               info=info)
+
+        if self._env_params['task'] == "random_height":
+            raise NotImplemented("task random height not implemented")
+        return nodes
+
+    @property
+    def topology(self):
+        topology = get_cartpole_topology(self._env_params['task'])
+        return topology
+
 class CPOChainGraph(GraphRewardConfig):
     """
     all the safety requirements are evaluated as a single conjunction

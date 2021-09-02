@@ -20,16 +20,17 @@ def register_reward(name: str, reward):
         _registry[name] = reward
 
 
-register_reward('default', reward=DefaultReward)
+# Baselines
+register_reward('stl', reward=BWSTLReward)
 register_reward('weighted', reward=BWWeightedBaselineReward)
+register_reward('default', reward=DefaultReward)
+register_reward('gb_chain', reward=BWChainGraph)
 # Graph-based
+register_reward('gb_bpr_ci', reward=BWGraphWithBinarySafetyProgressTargetContinuousIndicator)
+#register_reward('gb_cpr_ci', reward=TODO)
+
+
 # note: the gbased reward already uses binary formulation for safety rules, then 'gb_cr_bi'=='gb_bcr_bi'
 # so both of them are registered referring to the same implementation, just for consistency with other envs (eg, cpole)
-register_reward('gb_cr_bi', reward=BWGraphWithContinuousScoreBinaryIndicator)
 register_reward('gb_bcr_bi', reward=BWGraphWithContinuousScoreBinaryIndicator)
-register_reward('gb_bpr_ci', reward=BWGraphWithBinarySafetyProgressTargetContinuousIndicator)
-register_reward('gb_chain', reward=BWChainGraph)
-# STL-based
-# note: also here, the safety requirements are not continuous (as instead cpole), so there is no distinction between
-# stl and boolstl but both of them are registered for consistency with other envs
-register_reward('stl', reward=BWSTLReward)
+

@@ -4,7 +4,8 @@ from reward_shaping.envs.cart_pole_obst.rewards.baselines import CPOSparseReward
 from reward_shaping.envs.cart_pole_obst.rewards.graph_based import CPOGraphWithContinuousScoreBinaryIndicator, \
     CPOGraphWithContinuousScoreContinuousIndicator, CPOGraphWithProgressScoreBinaryIndicator, \
     CPOGraphWithBinarySafetyScoreBinaryIndicator, CPOChainGraph, CPOGraphBinarySafetyProgressTargetContinuousIndicator, \
-    CPOGraphContinuousSafetyProgressTargetContinuousIndicator
+    CPOGraphContinuousSafetyProgressTargetContinuousIndicator, \
+    CPOGraphContinuousSafetyProgressDistanceTargetContinuousIndicator
 from reward_shaping.envs.cart_pole_obst.rewards.stl_based import CPOSTLReward
 
 _registry = {}
@@ -21,11 +22,12 @@ def register_reward(name: str, reward):
 # Baselines
 register_reward('stl', reward=CPOSTLReward)
 register_reward('weighted', reward=CPOWeightedBaselineReward)
-register_reward('gb_chain', reward=CPOChainGraph)
 register_reward('sparse', reward=CPOSparseReward)
+register_reward('gb_chain', reward=CPOChainGraph)
 # Graph-based with binary safety score, progress target score, continuous sat indicators
 register_reward('gb_bpr_ci', CPOGraphBinarySafetyProgressTargetContinuousIndicator)
 register_reward('gb_cpr_ci', CPOGraphContinuousSafetyProgressTargetContinuousIndicator)
+register_reward('gb_cpdr_ci', CPOGraphContinuousSafetyProgressDistanceTargetContinuousIndicator)  # from Dejan meeting
 
 # Graph-based with binary score only for safety nodes (THIS IS BEFORE THE UNIFIED APPROACH PROGRESS-BASED)
 register_reward('gb_bcr_bi', reward=CPOGraphWithBinarySafetyScoreBinaryIndicator)   # old one working
