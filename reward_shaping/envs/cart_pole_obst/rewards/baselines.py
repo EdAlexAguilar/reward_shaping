@@ -80,7 +80,7 @@ class CPOWeightedBaselineReward(WeightedReward):
 
         # comfort rules
         balance_fn, _ = get_normalized_reward(fns.BalanceReward(),
-                                              min_r_state={'theta': info['theta_target']} - info['theta_target_tol'],
+                                              min_r_state={'theta': info['theta_target'] - info['theta_target_tol']},
                                               max_r_state={'theta': info['theta_target']},
                                               info=info)
         # comfort rules
