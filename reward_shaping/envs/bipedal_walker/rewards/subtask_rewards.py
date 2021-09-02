@@ -8,8 +8,8 @@ class ContinuousFalldownReward(RewardFunction):
     """
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        assert len(state) == 25 and 'dist_hull_limit' in info and 'collision' in info
-        lidar = min(state[-11:-1]) if not info['collision'] else 0.0  # if no collision, approx dist to ground wt lidars
+        assert 'lidar' in next_state and 'dist_hull_limit' in info and 'collision' in info
+        lidar = min(next_state['lidar']) if not info['collision'] else 0.0  # if no collision, approx dist to ground wt lidars
         return lidar - info['dist_hull_limit']
 
 
@@ -29,7 +29,8 @@ class SpeedTargetReward(RewardFunction):
         always(v_x >= speed_x_target)
         state[2] = 0.3 * vel.x * (VIEWPORT_W / SCALE) / FPS,  # Normalized to get -1..1 range
         """
-        return state[2] - info['speed_x_target']
+        assert 'horizontal_speed' in next_state
+        return next_state['horizontal_speed'] - info['speed_x_target']
 
 
 class ReachTargetReward(RewardFunction):
@@ -38,8 +39,8 @@ class ReachTargetReward(RewardFunction):
     x_position in state[24], already normalized in 0..1
     """
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        assert 'norm_target_x' in info
-        x = next_state[24]
+        assert 'hull_x' in next_state and 'norm_target_x' in info
+        x = next_state['hull_x']
         return x - info['norm_target_x']
 
 
@@ -48,9 +49,9 @@ class ProgressToTargetReward(RewardFunction):
         self._progress_coeff = progress_coeff
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        assert 'norm_target_x' in info
         if next_state is not None:
-            x, next_x = state[24], next_state[24]
+            assert 'hull_x' in state and 'x' in next_state and 'norm_target_x' in info
+            x, next_x = state['hull_x'], next_state['hull_x']
             dist_pre = abs(x - info['norm_target_x'])
             dist_now = abs(next_x - info['norm_target_x'])
             tau = 1/50  # 1/fps
@@ -67,8 +68,8 @@ class ContinuousHullAngleReward(RewardFunction):
     """
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        assert 'angle_hull_limit' in info
-        phi = state[0]
+        assert 'hull_angle' in next_state and 'angle_hull_limit' in info
+        phi = next_state['hull_angle']
         return info['angle_hull_limit'] - abs(phi)
 
 
@@ -79,8 +80,8 @@ class ContinuousVerticalSpeedReward(RewardFunction):
     """
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        assert 'speed_y_limit' in info
-        return info['speed_y_limit'] - abs(state[3])
+        assert 'vertical_speed' in next_state and 'speed_y_limit' in info
+        return info['speed_y_limit'] - abs(next_state['vertical_speed'])
 
 
 class ContinuousHullAngleVelocityReward(RewardFunction):
@@ -90,6 +91,6 @@ class ContinuousHullAngleVelocityReward(RewardFunction):
     """
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        assert 'angle_vel_limit' in info
-        phi_dot = state[1]
+        assert 'hull_angle_speed' in next_state and 'angle_vel_limit' in info
+        phi_dot = next_state['hull_angle_speed']
         return info['angle_vel_limit'] - abs(phi_dot)

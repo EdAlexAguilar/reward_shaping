@@ -7,6 +7,7 @@ from Box2D.b2 import (edgeShape, circleShape, fixtureDef, polygonShape, revolute
 
 import gym
 from gym import spaces
+from gym.spaces import Box
 from gym.utils import colorize, seeding, EzPickle
 
 # This is simple 4-joints walker robot environment.
@@ -149,9 +150,24 @@ class BipedalWalker(gym.Env, EzPickle):
             categoryBits=0x0001,
         )
 
-        high = np.array([np.inf] * 25)
         self.action_space = spaces.Box(np.array([-1, -1, -1, -1]), np.array([1, 1, 1, 1]), dtype=np.float32)
-        self.observation_space = spaces.Box(-high, high, dtype=np.float32)
+        self.observation_space = gym.spaces.Dict(dict(
+            hull_angle=Box(low=-np.Inf, high=np.Inf, dtype=np.float32, shape=(1,)),
+            hull_angle_speed=Box(low=-np.Inf, high=np.Inf, dtype=np.float32, shape=(1,)),
+            horizontal_speed=Box(low=-np.Inf, high=np.Inf, dtype=np.float32, shape=(1,)),
+            vertical_speed=Box(low=-np.Inf, high=np.Inf, dtype=np.float32, shape=(1,)),
+            joint0_angle=Box(low=-np.Inf, high=np.Inf, dtype=np.float32, shape=(1,)),
+            joint0_angle_speed=Box(low=-np.Inf, high=np.Inf, dtype=np.float32, shape=(1,)),
+            joint1_angle=Box(low=-np.Inf, high=np.Inf, dtype=np.float32, shape=(1,)),
+            joint1_angle_speed=Box(low=-np.Inf, high=np.Inf, dtype=np.float32, shape=(1,)),
+            ground_contact_leg0=Box(low=0.0, high=1.0, dtype=np.float32, shape=(1,)),
+            joint2_angle=Box(low=-np.Inf, high=np.Inf, dtype=np.float32, shape=(1,)),
+            joint2_angle_speed=Box(low=-np.Inf, high=np.Inf, dtype=np.float32, shape=(1,)),
+            joint3_angle=Box(low=-np.Inf, high=np.Inf, dtype=np.float32, shape=(1,)),
+            joint3_angle_speed=Box(low=-np.Inf, high=np.Inf, dtype=np.float32, shape=(1,)),
+            ground_contact_leg1=Box(low=0.0, high=1.0, dtype=np.float32, shape=(1,)),
+            lidar=Box(low=0.0, high=1.0, dtype=np.float32, shape=(10,)),
+        ))
 
         # env params
         self.task = task
@@ -431,32 +447,31 @@ class BipedalWalker(gym.Env, EzPickle):
                 pos[1] - math.cos(1.5 * i / 10.0) * LIDAR_RANGE)
             self.world.RayCast(self.lidar[i], self.lidar[i].p1, self.lidar[i].p2)
 
-        state = [
-            self.hull.angle,  # Normal angles up to 0.5 here, but sure more is possible.
-            2.0 * self.hull.angularVelocity / FPS,
-            0.3 * vel.x * (VIEWPORT_W / SCALE) / FPS,  # Normalized to get -1..1 range
-            0.3 * vel.y * (VIEWPORT_H / SCALE) / FPS,
-            self.joints[0].angle,
-            # This will give 1.1 on high up, but it's still OK (and there should be spikes on hiting the ground, that's normal too)
-            self.joints[0].speed / SPEED_HIP,
-            self.joints[1].angle + 1.0,
-            self.joints[1].speed / SPEED_KNEE,
-            1.0 if self.legs[1].ground_contact else 0.0,
-            self.joints[2].angle,
-            self.joints[2].speed / SPEED_HIP,
-            self.joints[3].angle + 1.0,
-            self.joints[3].speed / SPEED_KNEE,
-            1.0 if self.legs[3].ground_contact else 0.0,
-        ]
-        state += [l.fraction for l in self.lidar]
-        state += [pos[0] / target_x]  # x position norm in 0, 1
-        assert len(state) == 25
+        state = {
+            "hull_x": pos[0] / target_x,
+            "hull_angle": self.hull.angle,
+            "hull_angle_speed": 2.0 * self.hull.angularVelocity / FPS,
+            "horizontal_speed": 0.3 * vel.x * (VIEWPORT_W / SCALE) / FPS,
+            "vertical_speed": 0.3 * vel.y * (VIEWPORT_H / SCALE) / FPS,
+            "joint0_angle": self.joints[0].angle,
+            "joint0_angle_speed": self.joints[0].speed / SPEED_HIP,
+            "joint1_angle": self.joints[1].angle + 1.0,
+            "joint1_angle_speed": self.joints[1].speed / SPEED_KNEE,
+            "ground_contact_leg0": 1.0 if self.legs[1].ground_contact else 0.0,
+            "joint2_angle": self.joints[2].angle,
+            "joint2_angle_speed": self.joints[2].speed / SPEED_HIP,
+            "joint3_angle": self.joints[3].angle + 1.0,
+            "joint3_angle_speed": self.joints[3].speed / SPEED_KNEE,
+            "ground_contact_leg1": 1.0 if self.legs[3].ground_contact else 0.0,
+            "lidar": np.array([l.fraction for l in self.lidar])
+        }
 
         self.scroll = pos.x - VIEWPORT_W / SCALE / 5
 
         shaping = 130 * pos[
             0] / SCALE  # moving forward is a way to receive reward (normalized to get 300 on completion)
-        shaping -= 5.0 * abs(state[0])  # keep head straight, other than that and falling, any behavior is unpunished
+        shaping -= 5.0 * abs(
+            state['hull_angle'])  # keep head straight, other than that and falling, any behavior is unpunished
 
         reward = 0
         if self.prev_shaping is not None:
@@ -487,7 +502,7 @@ class BipedalWalker(gym.Env, EzPickle):
                 "speed_x_target": self.speed_x_target,
                 "default_reward": reward,
                 }
-        return np.array(state), reward, done, info
+        return state, reward, done, info
 
     def render(self, mode='human', **kwargs):  # safety: always (not fall)
         from gym.envs.classic_control import rendering
@@ -546,8 +561,16 @@ class BipedalWalker(gym.Env, EzPickle):
 
 
 if __name__ == "__main__":
+    def _convert_dict_to_array(state):
+        vars = "hull_angle,hull_angle_speed,horizontal_speed,vertical_speed," \
+               "joint0_angle,joint0_angle_speed,joint1_angle,joint1_angle_speed," \
+               "ground_contact_leg0,joint2_angle,joint2_angle_speed,joint3_angle," \
+               "joint3_angle_speed,ground_contact_leg1"
+        return np.concatenate([[state[k] for k in vars.split(",")], state['lidar']])
+
+
     # Heurisic: suboptimal, have no notion of balance.
-    env = BipedalWalker()
+    env = BipedalWalker(seed=np.random.randint(0, 10000))
     env.reset()
     steps = 0
     total_reward = 0
@@ -560,7 +583,8 @@ if __name__ == "__main__":
     SUPPORT_KNEE_ANGLE = +0.1
     supporting_knee_angle = SUPPORT_KNEE_ANGLE
     while True:
-        s, r, done, info = env.step(a)
+        s_dict, r, done, info = env.step(a)
+        s = _convert_dict_to_array(s_dict)
         total_reward += r
         if steps % 20 == 0 or done:
             print("\naction " + str(["{:+0.2f}".format(x) for x in a]))

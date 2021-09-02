@@ -19,12 +19,6 @@ class TestBipedalWalker(TestCase):
         result = generic_env_test(env_name, task, reward)
         self.assertTrue(result)
 
-    def test_bool_stl(self):
-        task = "forward"
-        reward = "bool_stl"
-        result = generic_env_test(env_name, task, reward)
-        self.assertTrue(result)
-
     def test_gb_cr_bi(self):
         task = "forward"
         reward = "gb_bcr_bi"
@@ -57,9 +51,6 @@ class TestTrainingLoop(TestCase):
 
     def test_train_stl(self):
         generic_training(env_name, 'forward', 'stl')
-
-    def test_train_bool_stl(self):
-        generic_training(env_name, 'forward', 'bool_stl')
 
     def test_train_gbased_binary_ind(self):
         generic_training(env_name, 'forward', 'gb_cr_bi')

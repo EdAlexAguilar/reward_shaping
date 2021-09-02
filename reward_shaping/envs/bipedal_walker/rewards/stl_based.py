@@ -38,10 +38,11 @@ class BWSTLReward(STLRewardConfig):
             'time': info['time'],
             'collision': info['collision'],  # already 0 or 1
             'progress_x': np.clip(info['position_x'], 0.0, info['target_x']) / info['target_x'],
-            'phi_norm': np.clip(state[0], -info['angle_hull_limit'], info['angle_hull_limit']) / info[
+            'phi_norm': np.clip(state['hull_angle'], -info['angle_hull_limit'], info['angle_hull_limit']) / info[
                 'angle_hull_limit'],
-            'vy_norm': np.clip(state[3], -info['speed_y_limit'], info['speed_y_limit']) / info['speed_y_limit'],
-            'phidot_norm': np.clip(state[1], -info['angle_vel_limit'], info['angle_vel_limit']) / info[
+            'vy_norm': np.clip(state['vertical_speed'], -info['speed_y_limit'], info['speed_y_limit']) / info[
+                'speed_y_limit'],
+            'phidot_norm': np.clip(state['hull_angle_speed'], -info['angle_vel_limit'], info['angle_vel_limit']) / info[
                 'angle_vel_limit']
         }
         return monitored_state

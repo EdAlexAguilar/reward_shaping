@@ -26,21 +26,21 @@ class BWWeightedBaselineReward(WeightedReward):
         falldown_fn = fns.BinaryFalldownReward(falldown_penalty=0.0, no_falldown_bonus=1.0)
         # target rules (no need indicators)
         target_fn, _ = get_normalized_reward(fns.SpeedTargetReward(),
-                                             min_r_state=[0] * 2 + [info['speed_x_target']] + [0] * 21,
-                                             max_r_state=[0] * 2 + [1] + [0] * 21,
+                                             min_r_state={'horizontal_speed': info['speed_x_target']},
+                                             max_r_state={'horizontal_speed': 1.0},
                                              info=info)
         # comfort rules
         angle_comfort_fn, _ = get_normalized_reward(fns.ContinuousHullAngleReward(),
-                                                    min_r_state=[info['angle_hull_limit']] + [0.0] * 23,
-                                                    max_r_state=[0.0] + [0.0] * 23,
+                                                    min_r_state={'hull_angle': info['angle_hull_limit']},
+                                                    max_r_state={'hull_angle': 0.0},
                                                     info=info)
         vert_speed_comfort_fn, _ = get_normalized_reward(fns.ContinuousVerticalSpeedReward(),
-                                                         min_r_state=[0.0] * 3 + [info['speed_y_limit']] + [0.0] * 20,
-                                                         max_r_state=[0.0] * 24,
+                                                         min_r_state={'vertical_speed': info['speed_y_limit']},
+                                                         max_r_state={'vertical_speed': 0.0},
                                                          info=info)
         angle_vel_comfort_fn, _ = get_normalized_reward(fns.ContinuousHullAngleVelocityReward(),
-                                                        min_r_state=[0.0] + [info['angle_vel_limit']] + [0.0] * 22,
-                                                        max_r_state=[0.0] * 24,
+                                                        min_r_state={'hull_angle_speed': info['angle_vel_limit']},
+                                                        max_r_state={'hull_angle_speed': 0.0},
                                                         info=info)
 
         self._safety_rules = [falldown_fn]

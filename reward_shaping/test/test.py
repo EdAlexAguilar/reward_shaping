@@ -14,7 +14,7 @@ def generic_env_test(env_name, task, reward_name, potential=False):
     # check
     check_env(env)
     # evaluation
-    for _ in range(10):
+    for _ in range(1):
         _ = env.reset()
         env.render()
         tot_reward = 0.0
