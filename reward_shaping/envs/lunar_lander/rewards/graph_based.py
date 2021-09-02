@@ -61,12 +61,12 @@ class LLGraphWithBinarySafetyBinaryIndicator(GraphRewardConfig):
         theta_limit = self._env_params['theta_limit']
         thetadot_limit = self._env_params['theta_dot_limit']
         nodes["C_angle"] = get_normalized_reward(fns.MinimizeCraftAngle(),
-                                                 min_r_state=[0] * 4 + [theta_limit / np.pi] + [0] * 9,
+                                                 min_r_state=[0] * 4 + [theta_limit] + [0] * 9,
                                                  max_r_state=[0] * 14,
                                                  info=info)
 
         nodes["C_angvel"] = get_normalized_reward(fns.MinimizeAngleVelocity(),
-                                                  min_r_state=[0] * 4 + [thetadot_limit / np.pi] + [0] * 9,
+                                                  min_r_state=[0] * 5 + [thetadot_limit] + [0] * 8,
                                                   max_r_state=[0] * 14,
                                                   info=info)
         return nodes
@@ -129,12 +129,12 @@ class LLChainGraph(GraphRewardConfig):
         theta_limit = self._env_params['theta_limit']
         thetadot_limit = self._env_params['theta_dot_limit']
         angle_fn, angle_sat = get_normalized_reward(fns.MinimizeCraftAngle(),
-                                                    min_r_state=[0] * 4 + [theta_limit / np.pi] + [0] * 9,
+                                                    min_r_state=[0] * 4 + [theta_limit] + [0] * 9,
                                                     max_r_state=[0] * 14,
                                                     info=info)
 
         anglevel_fn, anglevel_sat = get_normalized_reward(fns.MinimizeAngleVelocity(),
-                                                          min_r_state=[0] * 5 + [thetadot_limit / np.pi] + [0] * 8,
+                                                          min_r_state=[0] * 5 + [theta_dot_limit] + [0] * 8,
                                                           max_r_state=[0] * 14,
                                                           info=info)
         comfort_funs = [angle_fn, anglevel_fn]
