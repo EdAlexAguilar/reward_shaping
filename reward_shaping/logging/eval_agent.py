@@ -65,7 +65,7 @@ def evaluate_model(env_name, model, env, reward_name, n_episodes=None, n_steps=N
     episode = []
     all_results = []
     all_node_status = []
-    recorder = VideoRecorder(env, base_path=str(logdir/f'episodes/episode_{episodes + 1}'))
+    recorder = VideoRecorder(env, base_path=str(logdir/f'episodes/episode_{episodes + 1}')) if record else None
     obs = env.reset()
     while True:
         action, _states = model.predict(obs, deterministic=True)
@@ -102,8 +102,9 @@ def evaluate_model(env_name, model, env, reward_name, n_episodes=None, n_steps=N
                     json.dump(all_node_status, outfile)
             # reset
             episodes += 1
-            recorder.close()
-            recorder = VideoRecorder(env, base_path=str(logdir / f'episodes/episode_{episodes + 1}'))
+            if record:
+                recorder.close()
+                recorder = VideoRecorder(env, base_path=str(logdir / f'episodes/episode_{episodes + 1}'))
             obs = env.reset()
             episode = []
             all_node_status = []
