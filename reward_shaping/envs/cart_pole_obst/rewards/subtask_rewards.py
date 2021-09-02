@@ -122,7 +122,8 @@ class ProgressTimesDistanceToTargetReward(RewardFunction):
             dist = abs(next_state['x'] - info['x_target']) / info['x_limit']
             # note: to ensure velocity in the x scale (and not too small), rescale it with factor x_limit
             velocity = np.clip((dist_pre - dist) / info['tau'], 0.0, 1.0)
-            assert 0.0 <= dist <= 1.0 and 0.0 <= velocity <= 1.0
+            dist = np.clip(dist, 0.0, 1.0)
+            assert 0.0 <= dist <= 1.0 and 0.0 <= velocity <= 1.0, f'dist={dist}, velocity={velocity}'
             return (1 - dist) + dist * velocity
         else:
             # it should never happen but for robustness
