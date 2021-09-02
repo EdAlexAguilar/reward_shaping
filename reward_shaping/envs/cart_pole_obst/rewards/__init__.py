@@ -6,7 +6,8 @@ from reward_shaping.envs.cart_pole_obst.rewards.graph_based import CPOGraphWithC
     CPOGraphWithBinarySafetyScoreBinaryIndicator, CPOChainGraph, CPOGraphBinarySafetyProgressTargetContinuousIndicator, \
     CPOGraphContinuousSafetyProgressTargetContinuousIndicator, \
     CPOGraphContinuousSafetyProgressDistanceTargetContinuousIndicator, \
-    CPOGraphContinuousSafetyProgressMaxTargetContinuousIndicator
+    CPOGraphContinuousSafetyProgressMaxTargetContinuousIndicator, \
+    CPOGraphBinarySafetyProgressDistanceTargetContinuousIndicator
 from reward_shaping.envs.cart_pole_obst.rewards.stl_based import CPOSTLReward
 
 _registry = {}
@@ -29,7 +30,9 @@ register_reward('gb_chain', reward=CPOChainGraph)
 register_reward('gb_bpr_ci', CPOGraphBinarySafetyProgressTargetContinuousIndicator)
 register_reward('gb_cpr_ci', CPOGraphContinuousSafetyProgressTargetContinuousIndicator)
 register_reward('gb_cpdr_ci', CPOGraphContinuousSafetyProgressDistanceTargetContinuousIndicator)  # from Dejan meeting
+register_reward('gb_bpdr_ci', CPOGraphBinarySafetyProgressDistanceTargetContinuousIndicator)  # Dejan Target, Bin safety
 register_reward('gb_cpmr_ci', CPOGraphContinuousSafetyProgressMaxTargetContinuousIndicator)  # target: max(bsat,progr)
+
 
 # Graph-based with binary score only for safety nodes (THIS IS BEFORE THE UNIFIED APPROACH PROGRESS-BASED)
 register_reward('gb_bcr_bi', reward=CPOGraphWithBinarySafetyScoreBinaryIndicator)   # old one working
