@@ -18,5 +18,5 @@ fi
 
 for i in `seq 1 $n_exps`
 do
-	./scripts/run_exp_docker.sh $env $task $expdir $reward
+	./scripts/run_exp_docker.sh $env $task $algo $expdir $reward
 done
