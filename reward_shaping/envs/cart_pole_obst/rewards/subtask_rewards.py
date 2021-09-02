@@ -89,6 +89,7 @@ class ContinuousOutsideReward(RewardFunction):
 
 
 class ReachTargetReward(RewardFunction):
+    """ |x-x_target| <= x_tolerance """
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
         assert 'x' in next_state and 'x_target' in info and 'x_target_tol' in info
         x = next_state['x']

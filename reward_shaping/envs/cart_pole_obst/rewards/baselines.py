@@ -64,7 +64,8 @@ class CPOWeightedBaselineReward(WeightedReward):
                 'theta_target_tol': np.deg2rad(env_params['theta_target_tol'])}
 
         # safety rules (no need returned indicators)
-        collision_fn, _ = get_normalized_reward(fns.ContinuousCollisionReward(), min_r=-0.5, max_r=2.5)
+        collision_fn, _ = get_normalized_reward(fns.ContinuousCollisionReward(), min_r=-0.05, max_r=1.0, info=info)
+
         falldown_fn, _ = get_normalized_reward(fns.ContinuousFalldownReward(),
                                                min_r_state={'theta': info['theta_limit']},
                                                max_r_state={'theta': 0.0},
@@ -74,16 +75,15 @@ class CPOWeightedBaselineReward(WeightedReward):
                                               max_r_state={'x': 0.0},
                                               info=info)
         # target rules
-        target_fn, _ = get_normalized_reward(fns.ReachTargetReward(),
-                                             min_r_state={'x': info['x_limit']},
-                                             max_r_state={'x': info['x_target']},
-                                             info=info)
+        progress_fn, _ = get_normalized_reward(fns.ProgressToTargetReward(progress_coeff=1.0),
+                                               min_r=-1.0, max_r=1.0)
+
         # comfort rules
         balance_fn, _ = get_normalized_reward(fns.BalanceReward(),
-                                              min_r_state={'theta': info['theta_limit']},
+                                              min_r_state={'theta': info['theta_target']} - info['theta_target_tol'],
                                               max_r_state={'theta': info['theta_target']},
                                               info=info)
         # comfort rules
         self._safety_rules = [collision_fn, falldown_fn, outside_fn]
-        self._target_rules = [target_fn]
+        self._target_rules = [progress_fn]
         self._comfort_rules = [balance_fn]
