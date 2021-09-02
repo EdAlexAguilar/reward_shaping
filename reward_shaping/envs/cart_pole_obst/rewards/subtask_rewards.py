@@ -130,6 +130,22 @@ class ProgressTimesDistanceToTargetReward(RewardFunction):
             return 0.0
 
 
+class ProgressAndStayToTargetReward(RewardFunction):
+    def __init__(self, progress_coeff=1.0):
+        self._progress_coeff = progress_coeff
+
+    def __call__(self, state, action=None, next_state=None, info=None) -> float:
+        assert 'x' in next_state and 'x_target' in info and 'x_target_tol' in info and 'tau' in info
+        if next_state is not None:
+            dist_pre = abs(state['x'] - info['x_target']) / info['x_limit']
+            dist = abs(next_state['x'] - info['x_target']) / info['x_limit']
+            progress = np.clip((dist_pre - dist) / info['tau'], 0.0, 1.0)
+            reached = float(abs(next_state['x'] - info['x_target']) <= info['x_target_tol'])
+            return max(reached, progress)
+        else:
+            # it should never happen but for robustness
+            return 0.0
+
 class SparseReachTargetReward(RewardFunction):
     def __init__(self, target_reward=5.0):
         self.target_reward = target_reward
