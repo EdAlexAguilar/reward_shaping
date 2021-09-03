@@ -35,6 +35,7 @@ from Box2D.b2 import (edgeShape, circleShape, fixtureDef, polygonShape, revolute
 
 import gym
 from gym import spaces
+from gym.spaces import Box
 from gym.utils import seeding, EzPickle
 
 SCALE = 30.0  # affects how fast-paced the game is, forces should be adjusted as well
@@ -118,6 +119,22 @@ class LunarLander(gym.Env, EzPickle):
         self.theta_dot_limit = theta_dot_limit
         # useful range is -1 .. +1, but spikes can be higher
         self.observation_space = spaces.Box(-np.inf, np.inf, shape=(14,), dtype=np.float32)
+        self.observation_space = gym.spaces.Dict(dict(
+            x=Box(low=-np.Inf, high=np.Inf, shape=(1,), dtype=np.float32),
+            y=Box(low=-np.Inf, high=np.Inf, shape=(1,), dtype=np.float32),
+            horizontal_speed=Box(low=-np.Inf, high=np.Inf, shape=(1,), dtype=np.float32),
+            vertical_speed=Box(low=-np.Inf, high=np.Inf, shape=(1,), dtype=np.float32),
+            angle=Box(low=-np.Inf, high=np.Inf, shape=(1,), dtype=np.float32),
+            angle_speed=Box(low=-np.Inf, high=np.Inf, shape=(1,), dtype=np.float32),
+            ground_contact_leg0=Box(low=0.0, high=1.0, shape=(1,), dtype=np.float32),
+            ground_contact_leg1=Box(low=0.0, high=1.0, shape=(1,), dtype=np.float32),
+            obstacle_left=Box(low=-np.Inf, high=np.Inf, shape=(1,), dtype=np.float32),
+            obstacle_right=Box(low=-np.Inf, high=np.Inf, shape=(1,), dtype=np.float32),
+            obstacle_top=Box(low=-np.Inf, high=np.Inf, shape=(1,), dtype=np.float32),
+            obstacle_bottom=Box(low=-np.Inf, high=np.Inf, shape=(1,), dtype=np.float32),
+            fuel=Box(low=0.0, high=1.0, shape=(1,), dtype=np.float32),
+            collision=Box(low=0.0, high=1.0, shape=(1,), dtype=np.float32),
+        ))
 
         if self.continuous:
             # Action is two floats [main engine, left-right engines].
@@ -356,27 +373,31 @@ class LunarLander(gym.Env, EzPickle):
         obstacle_botleft_y = (obstacle_botleft_y - (self.helipad_y + LEG_DOWN / SCALE)) / (VIEWPORT_H / SCALE / 2)
         obstacle_topright_x = (obstacle_topright_x - VIEWPORT_W / SCALE / 2) / (VIEWPORT_W / SCALE / 2)
         obstacle_topright_y = (obstacle_topright_y - (self.helipad_y + LEG_DOWN / SCALE)) / (VIEWPORT_H / SCALE / 2)
-        state = [
-            (pos.x - VIEWPORT_W / SCALE / 2) / (VIEWPORT_W / SCALE / 2),
-            (pos.y - (self.helipad_y + LEG_DOWN / SCALE)) / (VIEWPORT_H / SCALE / 2),
-            vel.x * (VIEWPORT_W / SCALE / 2) / self.FPS,
-            vel.y * (VIEWPORT_H / SCALE / 2) / self.FPS,
-            self.lander.angle,
-            20.0 * self.lander.angularVelocity / self.FPS,
-            1.0 if self.legs[0].ground_contact else 0.0,
-            1.0 if self.legs[1].ground_contact else 0.0,
-            obstacle_botleft_x, obstacle_botleft_y,
-            obstacle_topright_x, obstacle_topright_y,
-            self.fuel,
-            1.0 if self.game_over else 0.0
-        ]
-        assert len(state) == 14
+
+        state = {
+            "x": (pos.x - VIEWPORT_W / SCALE / 2) / (VIEWPORT_W / SCALE / 2),
+            "y": (pos.y - (self.helipad_y + LEG_DOWN / SCALE)) / (VIEWPORT_H / SCALE / 2),
+            "horizontal_speed": vel.x * (VIEWPORT_W / SCALE / 2) / self.FPS,
+            "vertical_speed": vel.y * (VIEWPORT_H / SCALE / 2) / self.FPS,
+            "angle": self.lander.angle,
+            "angle_speed": 20.0 * self.lander.angularVelocity / self.FPS,
+            "ground_contact_leg0": 1.0 if self.legs[0].ground_contact else 0.0,
+            "ground_contact_leg1": 1.0 if self.legs[1].ground_contact else 0.0,
+            "obstacle_left": obstacle_botleft_x,
+            "obstacle_right": obstacle_topright_x,
+            "obstacle_top": obstacle_topright_y,
+            "obstacle_bottom": obstacle_botleft_y,
+            "fuel": self.fuel,
+            "collision": 1.0 if self.game_over else 0.0
+        }
 
         reward = 0
         shaping = \
-            - 100 * np.sqrt(state[0] * state[0] + state[1] * state[1]) \
-            - 100 * np.sqrt(state[2] * state[2] + state[3] * state[3]) \
-            - 100 * abs(state[4]) + 10 * state[6] + 10 * state[7]  # And ten points for legs contact, the idea is if you
+            - 100 * np.sqrt(state["x"] * state["x"] + state["y"] * state["y"]) \
+            - 100 * np.sqrt(state["horizontal_speed"] * state["horizontal_speed"] + state["vertical_speed"] * state[
+                "vertical_speed"]) \
+            - 100 * abs(state["angle"]) + 10 * state["ground_contact_leg0"] + 10 * state[
+                "ground_contact_leg1"]  # And ten points for legs contact, the idea is if you
         # lose contact again after landing, you get negative reward
         if self.prev_shaping is not None:
             reward = shaping - self.prev_shaping
@@ -386,7 +407,7 @@ class LunarLander(gym.Env, EzPickle):
         reward -= s_power * 0.03
 
         done = False
-        if self.game_over or abs(state[0]) >= 1.0 or self.fuel <= 0:
+        if self.game_over or abs(state["x"]) >= 1.0 or self.fuel <= 0:
             done = True
             reward = -100
         if not self.lander.awake:
@@ -411,7 +432,7 @@ class LunarLander(gym.Env, EzPickle):
                 "collision": self.game_over,
                 "default_reward": reward}
 
-        return np.array(state, dtype=np.float32), reward, done, info
+        return state, reward, done, info
 
     @property
     def state(self) -> Dict:
@@ -513,14 +534,22 @@ def heuristic(env, s):
 
 
 def demo_heuristic_lander(env, seed=None, render=False):
+    def _convert_dict_to_array(state):
+        vars = ["x", "y", "horizontal_speed", "vertical_speed",
+                "angle", "angle_speed", "ground_contact_leg0", "ground_contact_leg1",
+                "obstacle_left", "obstacle_right", "obstacle_top", "obstacle_bottom",
+                "fuel", "collision"]
+        return np.array([state[k] for k in vars])
+
     env.seed(seed)
     for _ in range(10):
         total_reward = 0
         steps = 0
-        s = env.reset()
+        s_dict = env.reset()
         while True:
+            s = _convert_dict_to_array(s_dict)
             a = heuristic(env, s)
-            s, r, done, info = env.step(a)
+            s_dict, r, done, info = env.step(a)
             total_reward += r
 
             if render:

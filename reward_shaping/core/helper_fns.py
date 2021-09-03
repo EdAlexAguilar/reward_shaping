@@ -102,4 +102,4 @@ def monitor_episode(stl_spec: str, vars: List[str], types: List[str], episode: D
         return
     # preprocess format, evaluate, post process
     robustness_trace = spec.evaluate(episode)
-    return robustness_trace[0][1]
+    return robustness_trace

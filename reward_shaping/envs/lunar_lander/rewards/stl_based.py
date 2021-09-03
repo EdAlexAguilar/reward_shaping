@@ -6,29 +6,21 @@ from reward_shaping.core.configs import STLRewardConfig
 
 
 class STLReward(STLRewardConfig):
+    # Safety 1 : y-velocity should never be such that it crashes (ie. y+delta*y_dot >= 0)
+    _no_y_crash = "always(y_pred >= 0)"
+    _fuel_usage = "always(fuel >= 0)"   # Safety 2 : fuel must be always be positive
+    _no_collision = "always(collision <= 0.0)"  # Safety 3: no collision with obstacle
+    _no_outside = "always(abs(x) <= x_limit)"   # Safety 4: craft always within the x limits
+    _reach_origin = "eventually(always(dist_target <= halfwidth_landing_area))"     # Target: reach origin
+    _comfort_theta = "always(abs(theta) <= theta_limit)"   # Comfort 1: Small Horizontal Speed (same as for no_y_crash)
+    _comfort_theta_dot = "always(abs(theta_dot) <= theta_dot_limit)"   # Comfort 2: Small Angle Velocity
+
     @property
     def spec(self) -> str:
-        # Safety 1 : y-velocity should never be such that it crashes (ie. y+delta*y_dot >= 0)
-        no_y_crash = "always(y_pred >= 0)"
-        # Safety 2 : fuel must be always be positive
-        fuel_usage = "always(fuel >= 0)"
-        # Safety 3: no collision with obstacle
-        no_collision = "always(collision <= 0.0)"
-        # Safety 4: craft always within the x limits
-        no_outside = "always(abs(x) <= x_limit)"
-        # all safeties
-        safety_requirement = f"(({no_y_crash}) and ({fuel_usage}) and ({no_collision}) and ({no_outside}))"
-
-        # Target : reach origin
-        target_requirement = "eventually(always(dist_target <= halfwidth_landing_area))"
-
-        # Comfort 1: Small Horizontal Speed (same as for no_y_crash)
-        limit_theta = "always(abs(theta) <= theta_limit)"
-        # Comfort 2: Small Angle Velocity
-        limit_theta_dot = "always(abs(theta_dot) <= theta_dot_limit)"
-        # Comfort Requirements
-        comfort_requirement = f"({limit_theta} and {limit_theta_dot})"
-
+        safety_requirement = f"(({self._no_y_crash}) and ({self._fuel_usage}) and " \
+                             f"({self._no_collision}) and ({self._no_outside}))"
+        target_requirement = self._reach_origin
+        comfort_requirement = f"({self._comfort_theta} and {self._comfort_theta_dot})"
         # all together
         spec = f"({safety_requirement} and {target_requirement} and {comfort_requirement})"
         return spec

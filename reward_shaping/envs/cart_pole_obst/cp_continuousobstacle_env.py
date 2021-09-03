@@ -243,6 +243,7 @@ class CartPoleContObsEnv(gym.Env):
 
         reward = self.reward()
         info = {'time': self.step_count, 'tau': self.tau,
+                'max_episode_len': self.max_episode_steps,
                 'x_limit': self.x_threshold, 'theta_limit': self.theta_threshold_radians,
                 'x_target': self.x_target, 'x_target_tol': self.x_target_tol,
                 'theta_target': self.theta_target, 'theta_target_tol': self.theta_target_tol,

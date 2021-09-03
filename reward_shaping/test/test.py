@@ -14,7 +14,7 @@ def generic_env_test(env_name, task, reward_name, potential=False):
     # check
     check_env(env)
     # evaluation
-    for _ in range(10):
+    for _ in range(1):
         _ = env.reset()
         env.render()
         tot_reward = 0.0
@@ -84,11 +84,13 @@ def plot_cpole_reward(reward):
                     'pole_length': polelen, 'axle_y': axle_y,
                     'is_feasible': True, 'feasible_height': dist_to_ground,
                     'collision': collision, 'outside': outside, 'falldown': falldown,
-                    'default_reward': 0.0}
+                    'default_reward': 0.0, 'tau': 0.02}
             reward_landscape[i, j] = reward_fn(state=state, action=None, next_state=next_state, info=info)
     import matplotlib.pyplot as plt
     plt.title(reward)
-    plt.imshow(reward_landscape)
+    plt.imshow(reward_landscape, vmin=-1, vmax=5.0)
+    plt.xticks([0, len(thetas)], [f"{thetas[0]:.2f}", f"{thetas[-1]:.2}"])
+    plt.yticks([0, len(xs)], [f"{xs[0]:.2f}", f"{xs[-1]:.2}"])
     plt.xlabel("Theta")
     plt.ylabel("X")
     plt.colorbar()

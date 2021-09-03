@@ -111,6 +111,9 @@ def make_reward_wrap(env_name, env, env_params, reward, use_potential=False, log
         assert not use_potential, 'potential function not support for stl reward'
         from reward_shaping.core.wrappers import STLRewardWrapper
         env = STLRewardWrapper(env, stl_conf=reward_conf)
+    elif 'eval' in reward:
+        from reward_shaping.core.wrappers import EvaluationRewardWrapper
+        env = EvaluationRewardWrapper(env, conf=reward_conf)
     else:
         if 'gb' in reward:
             from reward_shaping.core.configs import BuildGraphReward

@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 import reward_shaping.envs.bipedal_walker.rewards.subtask_rewards as fns
-
+import numpy as np
 from reward_shaping.core.helper_fns import ThresholdIndicator, MinAggregatorReward, \
-    ProdAggregatorReward
+    ProdAggregatorReward, NormalizedReward
 from reward_shaping.core.utils import get_normalized_reward
 
 
@@ -41,13 +41,13 @@ class BWGraphWithContinuousScoreBinaryIndicator(GraphRewardConfig):
                 'speed_x_target': self._env_params['speed_x_target']}
 
         # safety rules
-        fun = fns.BinaryFalldownReward(falldown_penalty=-1.0, no_falldown_bonus=0.0)
+        fun = fns.get_subtask_reward("binary_falldown")
         nodes["S_fall"] = (fun, ThresholdIndicator(fun))
 
         # define target rule: speed_x >= speed__xtarget
         nodes["T_move"] = get_normalized_reward(fns.SpeedTargetReward(),  # this is already normalized in +-1
-                                                min_r_state=[0] * 2 + [info['speed_x_target']] + [0] * 21,
-                                                max_r_state=[0] * 2 + [1] + [0] * 21,
+                                                min_r_state={'horizontal_speed': info['speed_x_target']},
+                                                max_r_state={'horizontal_speed': 1.0},
                                                 info=info,
                                                 threshold=info['speed_x_target'])
 
@@ -55,18 +55,18 @@ class BWGraphWithContinuousScoreBinaryIndicator(GraphRewardConfig):
         # note: for comfort rules, the indicators do not necessarly need to reflect the satisfaction
         # since they are last layer in the hierarchy, we do not care (for simplicity)
         nodes["C_angle"] = get_normalized_reward(fns.ContinuousHullAngleReward(),
-                                                 min_r_state=[info['angle_hull_limit']] + [0.0] * 23,
-                                                 max_r_state=[0.0] + [0.0] * 23,
+                                                 min_r_state={'hull_angle': info['angle_hull_limit']},
+                                                 max_r_state={'hull_angle': 0.0},
                                                  info=info,
                                                  threshold=info['angle_hull_limit'])
         nodes["C_v_y"] = get_normalized_reward(fns.ContinuousVerticalSpeedReward(),
-                                               min_r_state=[0.0] * 3 + [info['speed_y_limit']] + [0.0] * 20,
-                                               max_r_state=[0.0] * 24,
+                                               min_r_state={'vertical_speed': info['speed_y_limit']},
+                                               max_r_state={'vertical_speed': 0.0},
                                                info=info,
                                                threshold=info['speed_y_limit'])
         nodes["C_angle_vel"] = get_normalized_reward(fns.ContinuousHullAngleVelocityReward(),
-                                                     min_r_state=[0.0] + [info['angle_vel_limit']] + [0.0] * 22,
-                                                     max_r_state=[0.0] * 24,
+                                                     min_r_state={'hull_angle_speed': info['angle_vel_limit']},
+                                                     max_r_state={'hull_angle_speed': 0.0},
                                                      info=info,
                                                      threshold=info['angle_vel_limit'])
 
@@ -110,36 +110,33 @@ class BWGraphWithBinarySafetyProgressTargetContinuousIndicator(GraphRewardConfig
                 'norm_target_x': 1.0, 'collision': False}
 
         # safety rules
-        binary_fall_fun = fns.BinaryFalldownReward(falldown_penalty=-1.0, no_falldown_bonus=0.0)
-        cont_fall_fun, _ = get_normalized_reward(fns.ContinuousFalldownReward(), min_r_state=[0.0] * 25,
-                                                 max_r_state=[1.0] * 25, info=info)
+        binary_fall_fun = fns.get_subtask_reward("binary_falldown")
+        cont_fall_fun =  fns.get_subtask_reward("continuous_falldown")
         nodes["S_fall"] = (binary_fall_fun, cont_fall_fun)
 
         # define target rule: speed_x >= speed__xtarget
         progress_fn, _ = get_normalized_reward(fns.SpeedTargetReward(),  # this is already normalized in +-1
-                                               min_r_state=[0] * 25,
-                                               max_r_state=[0] * 2 + [1.0] + [0] * 21,
+                                               min_r_state={'horizontal_speed': info['speed_x_target']},
+                                               max_r_state={'horizontal_speed': 1.0},
                                                info=info)
-        reach_fn, _ = get_normalized_reward(fns.ReachTargetReward(), min_r=-1.0,
-                                            max_r=0.0)  # min return is in state wt x=0 -> 0-1=-1
-        nodes["T_move"] = (progress_fn, reach_fn)
+        nodes["T_move"] = (progress_fn, progress_fn)
 
         # define comfort rules
         # note: for comfort rules, the indicators do not necessarly need to reflect the satisfaction
         # since they are last layer in the hierarchy, we do not care (for simplicity)
         nodes["C_angle"] = get_normalized_reward(fns.ContinuousHullAngleReward(),
-                                                 min_r_state=[info['angle_hull_limit']] + [0.0] * 24,
-                                                 max_r_state=[0.0] + [0.0] * 24,
+                                                 min_r_state={'hull_angle': info['angle_hull_limit']},
+                                                 max_r_state={'hull_angle': 0.0},
                                                  info=info,
                                                  threshold=info['angle_hull_limit'])
         nodes["C_v_y"] = get_normalized_reward(fns.ContinuousVerticalSpeedReward(),
-                                               min_r_state=[0.0] * 3 + [info['speed_y_limit']] + [0.0] * 21,
-                                               max_r_state=[0.0] * 25,
+                                               min_r_state={'vertical_speed': info['speed_y_limit']},
+                                               max_r_state={'vertical_speed': 0.0},
                                                info=info,
                                                threshold=info['speed_y_limit'])
         nodes["C_angle_vel"] = get_normalized_reward(fns.ContinuousHullAngleVelocityReward(),
-                                                     min_r_state=[0.0] + [info['angle_vel_limit']] + [0.0] * 23,
-                                                     max_r_state=[0.0] * 25,
+                                                     min_r_state={'hull_angle_speed': info['angle_vel_limit']},
+                                                     max_r_state={'hull_angle_speed': 0.0},
                                                      info=info,
                                                      threshold=info['angle_vel_limit'])
 
@@ -150,7 +147,7 @@ class BWGraphWithBinarySafetyProgressTargetContinuousIndicator(GraphRewardConfig
         """
                           / Comfort: Hull Angle
         Safety -- Target  - Comfort: Hull Angle Vel.
-                          \ Comfort: Vertical Speed
+                          \ Comfort: Vertical Speedinfo['angle_vel_limit']
         """
         topology = {
             'S_fall': ['T_move'],
@@ -177,34 +174,35 @@ class BWChainGraph(GraphRewardConfig):
                 'speed_x_target': self._env_params['speed_x_target']}
 
         # safety rules
-        fun = fns.BinaryFalldownReward(falldown_penalty=-1.0, no_falldown_bonus=0.0)
-        nodes["S_fall"] = (fun, ThresholdIndicator(fun))
+        nodes["S_fall"] = (fns.get_subtask_reward("binary_falldown"), fns.get_subtask_reward("continuous_falldown"))
 
         # define target rule: speed_x >= speed__xtarget
-        nodes["T_move"] = get_normalized_reward(fns.SpeedTargetReward(),  # this is already normalized in +-1
-                                                min_r_state=[0] * 2 + [info['speed_x_target']] + [0] * 21,
-                                                max_r_state=[0] * 2 + [1] + [0] * 21,
-                                                info=info,
-                                                threshold=info['speed_x_target'])
+        progress_fn, _ = get_normalized_reward(fns.SpeedTargetReward(),  # this is already normalized in +-1
+                                         min_r_state={'horizontal_speed': info['speed_x_target']},
+                                         max_r_state={'horizontal_speed': 1.0},
+                                         info=info,
+                                         threshold=info['speed_x_target'])
+        nodes["T_move"] = (progress_fn, progress_fn)
 
         # define comfort rules
         # note: for comfort rules, the indicators do not necessarly need to reflect the satisfaction
         # since they are last layer in the hierarchy, we do not care (for simplicity)
         angle_fn, angle_sat = get_normalized_reward(fns.ContinuousHullAngleReward(),
-                                                    min_r_state=[info['angle_hull_limit']] + [0.0] * 23,
-                                                    max_r_state=[0.0] + [0.0] * 23,
+                                                    min_r_state={'hull_angle': info['angle_hull_limit']},
+                                                    max_r_state={'hull_angle': 0.0},
                                                     info=info,
                                                     threshold=info['angle_hull_limit'])
         vy_fn, vy_sat = get_normalized_reward(fns.ContinuousVerticalSpeedReward(),
-                                              min_r_state=[0.0] * 3 + [info['speed_y_limit']] + [0.0] * 20,
-                                              max_r_state=[0.0] * 24,
+                                              min_r_state={'vertical_speed': info['speed_y_limit']},
+                                              max_r_state={'vertical_speed': 0.0},
                                               info=info,
                                               threshold=info['speed_y_limit'])
         angle_vel_fn, angle_vel_sat = get_normalized_reward(fns.ContinuousHullAngleVelocityReward(),
-                                                            min_r_state=[0.0] + [info['angle_vel_limit']] + [0.0] * 22,
-                                                            max_r_state=[0.0] * 24,
+                                                            min_r_state={'hull_angle_speed': info['angle_vel_limit']},
+                                                            max_r_state={'hull_angle_speed': 0.0},
                                                             info=info,
                                                             threshold=info['angle_vel_limit'])
+
         # define single comfort rule as conjunction of the three
         funs = [angle_fn, vy_fn, angle_vel_fn]
         sats = [angle_sat, vy_sat, angle_vel_sat]

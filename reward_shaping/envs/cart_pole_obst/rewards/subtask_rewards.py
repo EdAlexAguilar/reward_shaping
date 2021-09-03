@@ -89,6 +89,7 @@ class ContinuousOutsideReward(RewardFunction):
 
 
 class ReachTargetReward(RewardFunction):
+    """ |x-x_target| <= x_tolerance """
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
         assert 'x' in next_state and 'x_target' in info and 'x_target_tol' in info
         x = next_state['x']
@@ -109,6 +110,41 @@ class ProgressToTargetReward(RewardFunction):
             # it should never happen but for robustness
             return 0.0
 
+
+class ProgressTimesDistanceToTargetReward(RewardFunction):
+    def __init__(self, progress_coeff=1.0):
+        self._progress_coeff = progress_coeff
+
+    def __call__(self, state, action=None, next_state=None, info=None) -> float:
+        assert 'x' in next_state and 'x_target' in info and 'x_target_tol' in info and 'tau' in info
+        if next_state is not None:
+            dist_pre = abs(state['x'] - info['x_target']) / info['x_limit']     # norm in 0,1
+            dist = abs(next_state['x'] - info['x_target']) / info['x_limit']
+            # note: to ensure velocity in the x scale (and not too small), rescale it with factor x_limit
+            velocity = np.clip((dist_pre - dist) / info['tau'], 0.0, 1.0)
+            dist = np.clip(dist, 0.0, 1.0)
+            assert 0.0 <= dist <= 1.0 and 0.0 <= velocity <= 1.0, f'dist={dist}, velocity={velocity}'
+            return (1 - dist) + dist * velocity
+        else:
+            # it should never happen but for robustness
+            return 0.0
+
+
+class ProgressAndStayToTargetReward(RewardFunction):
+    def __init__(self, progress_coeff=1.0):
+        self._progress_coeff = progress_coeff
+
+    def __call__(self, state, action=None, next_state=None, info=None) -> float:
+        assert 'x' in next_state and 'x_target' in info and 'x_target_tol' in info and 'tau' in info
+        if next_state is not None:
+            dist_pre = abs(state['x'] - info['x_target']) / info['x_limit']
+            dist = abs(next_state['x'] - info['x_target']) / info['x_limit']
+            progress = np.clip((dist_pre - dist) / info['tau'], 0.0, 1.0)
+            reached = float(abs(next_state['x'] - info['x_target']) <= info['x_target_tol'])
+            return max(reached, progress)
+        else:
+            # it should never happen but for robustness
+            return 0.0
 
 class SparseReachTargetReward(RewardFunction):
     def __init__(self, target_reward=5.0):

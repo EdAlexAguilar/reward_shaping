@@ -1,6 +1,6 @@
 task: "forward_hardcore"
 # episode definition
-max_episode_steps: 1600
+max_episode_steps: 500
 terminate_on_collision: True
 hardcore: True
 # simulation parameters
@@ -8,4 +8,4 @@ dist_hull_limit: 0.225 # empirically chosen, this is the dist to collision estim
 angle_hull_limit: 0.7853981633974483 #pi/4
 speed_y_limit: 0.5  # domain in [0,1], 0.5 choosen arbitrarly
 angle_vel_limit: .25
-speed_x_target: 0.1  # arbitrary
+speed_x_target: 0.0

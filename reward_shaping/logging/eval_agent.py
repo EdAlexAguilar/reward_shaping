@@ -40,7 +40,7 @@ def evaluate_individual_requirements(env, monitored_episode):
     variables, types = stl_conf.monitoring_variables, stl_conf.monitoring_types
     results = {}
     for req, spec in stl_conf.requirements_dict.items():
-        robustness = monitor_episode(spec, variables, types, monitored_episode)
+        robustness = monitor_episode(spec, variables, types, monitored_episode)[0][1]
         results[req] = robustness
     return results
 
@@ -146,7 +146,7 @@ def get_default_task(env):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--env", type=str, choices=['cart_pole_obst', 'bipedal_walker', 'lunar_lander'])
+    parser.add_argument("--env", type=str, required=True, choices=['cart_pole_obst', 'bipedal_walker', 'lunar_lander'])
     parser.add_argument("--task", type=str, default=None)
     parser.add_argument("--eval_reward", type=str, required=True)
     parser.add_argument("--checkpoint", type=pathlib.Path, required=True)

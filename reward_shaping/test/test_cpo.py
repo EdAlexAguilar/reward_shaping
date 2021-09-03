@@ -1,3 +1,4 @@
+import time
 import warnings
 from unittest import TestCase
 
@@ -69,6 +70,12 @@ class TestCartPoleObstacle(TestCase):
         result = generic_env_test(env_name, task, reward)
         self.assertTrue(result)
 
+    def test_eval_reward(self):
+        task = "fixed_height"
+        reward = "eval"
+        result = generic_env_test(env_name, task, reward)
+        self.assertTrue(result)
+
     def test_binaryprogress_reward(self):
         task = "fixed_height"
         reward = "gb_bpr_ci"
@@ -107,17 +114,19 @@ class PlotRewardLandscape(TestCase):
         import matplotlib.pyplot as plt
         rewards = ['sparse', 'weighted', 'gb_chain',
                    'gb_cr_ci', 'gb_cr_bi', 'gb_bcr_bi']
-        rows, cols, i = 2, 3, 1
+        rewards = ['gb_cpdr_ci', 'gb_cpr_ci']
+        rows, cols, i = 1, 2, 1
+        plt.figure(figsize=(10,4))
         for reward in rewards:
             plt.subplot(rows, cols, i)
             plot_cpole_reward(reward)
             i += 1
-        plt.savefig("cp_rewards.pdf")
+        plt.savefig(f"cp_rewards_{time.time()}.pdf")
+
 
     def test_plot_prog(self):
         import matplotlib.pyplot as plt
-        import time
-        rewards = ['gb_pcr_bi', 'gb_bpr_ci']
+        rewards = ['gb_cpr_ci', 'gb_bpdr_ci']
         rows, cols, i = 1, 2, 1
         for reward in rewards:
             plt.subplot(rows, cols, i)
