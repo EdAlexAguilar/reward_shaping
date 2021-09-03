@@ -111,7 +111,7 @@ class BWGraphWithBinarySafetyProgressTargetContinuousIndicator(GraphRewardConfig
 
         # safety rules
         binary_fall_fun = fns.get_subtask_reward("binary_falldown")
-        cont_fall_fun =  fns.get_subtask_reward("continuous_falldown")
+        cont_fall_fun = fns.get_subtask_reward("continuous_falldown")
         nodes["S_fall"] = (binary_fall_fun, cont_fall_fun)
 
         # define target rule: speed_x >= speed__xtarget
@@ -174,14 +174,14 @@ class BWChainGraph(GraphRewardConfig):
                 'speed_x_target': self._env_params['speed_x_target']}
 
         # safety rules
-        nodes["S_fall"] = (fns.get_subtask_reward("binary_falldown"), fns.get_subtask_reward("continuous_falldown"))
+        nodes["S_fall"] = (fns.get_subtask_reward("binary_falldown"), fns.get_subtask_reward("binary_falldown"))
 
         # define target rule: speed_x >= speed__xtarget
         progress_fn, _ = get_normalized_reward(fns.SpeedTargetReward(),  # this is already normalized in +-1
-                                         min_r_state={'horizontal_speed': info['speed_x_target']},
-                                         max_r_state={'horizontal_speed': 1.0},
-                                         info=info,
-                                         threshold=info['speed_x_target'])
+                                               min_r_state={'horizontal_speed': info['speed_x_target']},
+                                               max_r_state={'horizontal_speed': 1.0},
+                                               info=info,
+                                               threshold=info['speed_x_target'])
         nodes["T_move"] = (progress_fn, progress_fn)
 
         # define comfort rules

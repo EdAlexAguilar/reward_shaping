@@ -40,7 +40,6 @@ def _get_cpo_default_monitoring_procedure(state, done, info):
         'collision': 1.0 if info['collision'] else 0.0,
         'dist_target_x': abs(x_norm - x_target_norm),
         'dist_target_theta': abs(theta_norm - theta_target_norm),
-        'is_feasible': 1.0 if info['is_feasible'] else 0.0
     }
     return monitored_state
 
@@ -50,15 +49,13 @@ class CPOSTLReward(STLRewardConfig):
     _no_outside = "always(abs(x) <= x_limit)"
     _no_collision = "always(collision <= 0.0)"
     _reach_origin = "eventually(always(dist_target_x <= x_target_tol))"
-    _balance = "eventually(always(dist_target_theta <= theta_target_tol))"
 
     @property
     def spec(self) -> str:
         safety_requirements = f"({self._no_falldown}) and ({self._no_outside}) and ({self._no_collision})"
         target_requirement = self._reach_origin
-        comfort_requirement = self._balance
         # All toghether: Safeties and BalanceReq and (env_feasible->TargetReq)
-        spec = f"({safety_requirements}) and ((is_feasible>0)->{target_requirement}) and ({comfort_requirement})"
+        spec = f"({safety_requirements}) and ({target_requirement})"
         return spec
 
     @property

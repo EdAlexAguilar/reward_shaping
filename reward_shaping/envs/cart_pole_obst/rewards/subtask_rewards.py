@@ -1,6 +1,22 @@
 import numpy as np
 
+from reward_shaping.core.helper_fns import ThresholdIndicator, NormalizedReward
 from reward_shaping.core.reward import RewardFunction
+
+_registry = {}
+
+
+def get_subtask_reward(name: str):
+    try:
+        reward = _registry[name]
+    except KeyError:
+        raise KeyError(f"the reward {name} is not registered")
+    return reward
+
+
+def register_subtask_reward(name: str, reward):
+    if name not in _registry.keys():
+        _registry[name] = reward
 
 
 class CollisionReward(RewardFunction):
@@ -90,6 +106,7 @@ class ContinuousOutsideReward(RewardFunction):
 
 class ReachTargetReward(RewardFunction):
     """ |x-x_target| <= x_tolerance """
+
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
         assert 'x' in next_state and 'x_target' in info and 'x_target_tol' in info
         x = next_state['x']
@@ -105,7 +122,7 @@ class ProgressToTargetReward(RewardFunction):
         if next_state is not None:
             dist_pre = abs(state['x'] - info['x_target'])
             dist = abs(next_state['x'] - info['x_target'])
-            return self._progress_coeff * (dist_pre - dist)/info['tau']
+            return self._progress_coeff * (dist_pre - dist) / info['tau']
         else:
             # it should never happen but for robustness
             return 0.0
@@ -118,7 +135,7 @@ class ProgressTimesDistanceToTargetReward(RewardFunction):
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
         assert 'x' in next_state and 'x_target' in info and 'x_target_tol' in info and 'tau' in info
         if next_state is not None:
-            dist_pre = abs(state['x'] - info['x_target']) / info['x_limit']     # norm in 0,1
+            dist_pre = abs(state['x'] - info['x_target']) / info['x_limit']  # norm in 0,1
             dist = abs(next_state['x'] - info['x_target']) / info['x_limit']
             # note: to ensure velocity in the x scale (and not too small), rescale it with factor x_limit
             velocity = np.clip((dist_pre - dist) / info['tau'], 0.0, 1.0)
@@ -145,6 +162,7 @@ class ProgressAndStayToTargetReward(RewardFunction):
         else:
             # it should never happen but for robustness
             return 0.0
+
 
 class SparseReachTargetReward(RewardFunction):
     def __init__(self, target_reward=5.0):
@@ -175,3 +193,20 @@ class CheckOvercomingFeasibility(RewardFunction):
         assert 'obstacle_bottom' in state
         assert 'axle_y' in info and 'feasible_height' in info
         return state['obstacle_bottom'] - info['axle_y'] - info['feasible_height']
+
+
+register_subtask_reward("binary_collision", CollisionReward(collision_penalty=-1.0, no_collision_bonus=0.0))
+register_subtask_reward("binary_falldown", FalldownReward(falldown_penalty=-1.0, no_falldown_bonus=0.0))
+register_subtask_reward("binary_outside", OutsideReward(exit_penalty=-1.0, no_exit_bonus=0.0))
+register_subtask_reward("collision_sat", ThresholdIndicator(CollisionReward(collision_penalty=-1.0,
+                                                                            no_collision_bonus=0.0)))
+register_subtask_reward("falldown_sat", ThresholdIndicator(FalldownReward(falldown_penalty=-1.0,
+                                                                          no_falldown_bonus=0.0)))
+register_subtask_reward("outside_sat", ThresholdIndicator(OutsideReward(exit_penalty=-1.0,
+                                                                        no_exit_bonus=0.0)))
+register_subtask_reward("continuous_progress", NormalizedReward(ProgressToTargetReward(progress_coeff=1.0),
+                                                                min_reward=0.0, max_reward=1.0))
+register_subtask_reward("progress_x_distance", ProgressTimesDistanceToTargetReward())
+register_subtask_reward("continuous_collision", NormalizedReward(ContinuousCollisionReward(),
+                                                                 min_reward=-0.05, max_reward=1.0))
+register_subtask_reward("target_sat", ThresholdIndicator(ReachTargetReward()))

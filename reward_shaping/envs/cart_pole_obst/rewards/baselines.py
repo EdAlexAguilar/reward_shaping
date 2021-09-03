@@ -67,19 +67,12 @@ class CPOWeightedBaselineReward(WeightedReward):
                 'theta_target_tol': np.deg2rad(env_params['theta_target_tol'])}
 
         # safety rules (no need returned indicators)
-        collision_fn, _ = get_normalized_reward(fns.ContinuousCollisionReward(), min_r=-0.05, max_r=1.0, info=info)
+        binary_collision = fns.get_subtask_reward("binary_collision")
+        binary_falldown = fns.get_subtask_reward("binary_falldown")
+        binary_outside = fns.get_subtask_reward("binary_outside")
 
-        falldown_fn, _ = get_normalized_reward(fns.ContinuousFalldownReward(),
-                                               min_r_state={'theta': info['theta_limit']},
-                                               max_r_state={'theta': 0.0},
-                                               info=info)
-        outside_fn, _ = get_normalized_reward(fns.ContinuousOutsideReward(),
-                                              min_r_state={'x': info['x_limit']},
-                                              max_r_state={'x': 0.0},
-                                              info=info)
         # target rules
-        progress_fn, _ = get_normalized_reward(fns.ProgressToTargetReward(progress_coeff=1.0),
-                                               min_r=-1.0, max_r=1.0)
+        progress_fn = fns.get_subtask_reward("continuous_progress")
 
         # comfort rules
         balance_fn, _ = get_normalized_reward(fns.BalanceReward(),
@@ -87,21 +80,13 @@ class CPOWeightedBaselineReward(WeightedReward):
                                               max_r_state={'theta': info['theta_target']},
                                               info=info)
         # comfort rules
-        self._safety_rules = [collision_fn, falldown_fn, outside_fn]
+        self._safety_rules = [binary_collision, binary_falldown, binary_outside]
         self._target_rules = [progress_fn]
         self._comfort_rules = [balance_fn]
 
 
 class CPOEvalConfig(EvalConfig):
-    """
-    Eval(phi1,w) = sign(rho(phi1, w)) safety
-    Eval(phi2,w) = 0.5*sign(rho(phi2, w)) reach target
 
-    phi3 = G phi' Eval(phi3, w) = 0.25*(\Sum_i sign(rho(phi',w,i)))/n comfort
-    Eval(phi2', w) = 0.5*(\Sum_i sign(rho(phi',w,i)))/n recurrence target
-
-    Eval(Phi, w) = Eval(phi1, w) + Eval(phi2, w) + Eval(phi3, w)
-    """
     def __init__(self, **kwargs):
         super(CPOEvalConfig, self).__init__(**kwargs)
         self._max_episode_len = 0
@@ -151,7 +136,7 @@ class CPOEvalConfig(EvalConfig):
         comfort_trace = monitor_episode(stl_spec=comfort_spec,
                                         vars=self.monitoring_variables, types=self.monitoring_types,
                                         episode=episode)
-        comfort_trace = comfort_trace + [[-1, -1]  for _ in  range((self._max_episode_len - len(comfort_trace)))]
+        comfort_trace = comfort_trace + [[-1, -1] for _ in range((self._max_episode_len - len(comfort_trace)))]
         comfort_mean = np.mean([float(rob >= 0) for t, rob in comfort_trace])
         tot_score = float(safety_rho >= 0) + 0.5 * float(target_rho >= 0) + 0.25 * comfort_mean
         return tot_score

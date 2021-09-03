@@ -21,6 +21,7 @@ def register_reward(name: str, reward):
     if name not in _registry.keys():
         _registry[name] = reward
 
+
 # Baselines
 register_reward('stl', reward=CPOSTLReward)
 register_reward('eval', reward=CPOEvalConfig)
@@ -29,9 +30,8 @@ register_reward('sparse', reward=CPOSparseReward)
 register_reward('gb_chain', reward=CPOChainGraph)
 # Graph-based with binary safety score, progress target score, continuous sat indicators
 register_reward('gb_bpr_ci', CPOGraphBinarySafetyProgressTargetContinuousIndicator)
-register_reward('gb_bpr_bi', reward=CPOGraphWithBinarySafetyScoreBinaryIndicator)   # old one working
-register_reward('gb_bpdr_ci', CPOGraphBinarySafetyProgressDistanceTargetContinuousIndicator)  # Dejan Target, Bin safety
-
+register_reward('gb_bpr_bi', reward=CPOGraphWithBinarySafetyScoreBinaryIndicator)
+register_reward('gb_bpdr_ci', CPOGraphBinarySafetyProgressDistanceTargetContinuousIndicator)
 
 # Continuous Safety Reward (not working well)
 register_reward('gb_cpr_ci', CPOGraphContinuousSafetyProgressTargetContinuousIndicator)
