@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import reward_shaping.envs.bipedal_walker.rewards.subtask_rewards as fns
 import numpy as np
 from reward_shaping.core.helper_fns import ThresholdIndicator, MinAggregatorReward, \
-    ProdAggregatorReward
+    ProdAggregatorReward, NormalizedReward
 from reward_shaping.core.utils import get_normalized_reward
 
 
@@ -41,7 +41,7 @@ class BWGraphWithContinuousScoreBinaryIndicator(GraphRewardConfig):
                 'speed_x_target': self._env_params['speed_x_target']}
 
         # safety rules
-        fun = fns.BinaryFalldownReward(falldown_penalty=-1.0, no_falldown_bonus=0.0)
+        fun = fns.get_subtask_reward("binary_falldown")
         nodes["S_fall"] = (fun, ThresholdIndicator(fun))
 
         # define target rule: speed_x >= speed__xtarget
@@ -110,23 +110,16 @@ class BWGraphWithBinarySafetyProgressTargetContinuousIndicator(GraphRewardConfig
                 'norm_target_x': 1.0, 'collision': False}
 
         # safety rules
-        binary_fall_fun = fns.BinaryFalldownReward(falldown_penalty=-1.0, no_falldown_bonus=0.0)
-        cont_fall_fun, _ = get_normalized_reward(fns.ContinuousFalldownReward(),
-                                                 min_r_state={'lidar': np.zeros(10)},
-                                                 max_r_state={'lidar': np.ones(10)},
-                                                 info=info)
+        binary_fall_fun = fns.get_subtask_reward("binary_falldown")
+        cont_fall_fun =  fns.get_subtask_reward("continuous_falldown")
         nodes["S_fall"] = (binary_fall_fun, cont_fall_fun)
 
         # define target rule: speed_x >= speed__xtarget
         progress_fn, _ = get_normalized_reward(fns.SpeedTargetReward(),  # this is already normalized in +-1
-                                               min_r_state={'horizontal_speed': 0.0},
+                                               min_r_state={'horizontal_speed': info['speed_x_target']},
                                                max_r_state={'horizontal_speed': 1.0},
                                                info=info)
-        reach_fn, _ = get_normalized_reward(fns.ReachTargetReward(),
-                                            min_r_state={'hull_x': 0.0},
-                                            max_r_state={'hull_x': 1.0},
-                                            info=info)
-        nodes["T_move"] = (progress_fn, reach_fn)
+        nodes["T_move"] = (progress_fn, progress_fn)
 
         # define comfort rules
         # note: for comfort rules, the indicators do not necessarly need to reflect the satisfaction
@@ -181,15 +174,15 @@ class BWChainGraph(GraphRewardConfig):
                 'speed_x_target': self._env_params['speed_x_target']}
 
         # safety rules
-        fun = fns.ContinuousFalldownReward()
-        nodes["S_fall"] = (fun, ThresholdIndicator(fun))
+        nodes["S_fall"] = (fns.get_subtask_reward["binary_falldown"], fns.get_subtask_reward["continuous_falldown"])
 
         # define target rule: speed_x >= speed__xtarget
-        nodes["T_move"] = get_normalized_reward(fns.SpeedTargetReward(),  # this is already normalized in +-1
-                                                min_r_state={'horizontal_speed': info['speed_x_target']},
-                                                max_r_state={'horizontal_speed': 1.0},
-                                                info=info,
-                                                threshold=info['speed_x_target'])
+        progress_fn, _ = get_normalized_reward(fns.SpeedTargetReward(),  # this is already normalized in +-1
+                                         min_r_state={'horizontal_speed': info['speed_x_target']},
+                                         max_r_state={'horizontal_speed': 1.0},
+                                         info=info,
+                                         threshold=info['speed_x_target'])
+        nodes["T_move"] = (progress_fn, progress_fn)
 
         # define comfort rules
         # note: for comfort rules, the indicators do not necessarly need to reflect the satisfaction

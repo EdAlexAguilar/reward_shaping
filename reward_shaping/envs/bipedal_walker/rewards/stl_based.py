@@ -7,10 +7,8 @@ from reward_shaping.core.configs import STLRewardConfig
 
 class BWSTLReward(STLRewardConfig):
     _no_collision = "always(collision<=0)"
-    _continuous_progress = "always(eventually(vx>=0.0))"
-    _comfort_angle = "always(abs(phi_norm) <= 1.0)"
-    _comfort_y_speed = "always(abs(vy_norm) <= 1.0)"
-    _comfort_angle_speed = "always(abs(phidot_norm) <= 1.0)"
+    _continuous_progress = "always(eventually[0:5](vx>=0.0))"
+
 
     @property
     def spec(self) -> str:
@@ -19,18 +17,14 @@ class BWSTLReward(STLRewardConfig):
         # Target
         target_requirement = self._continuous_progress
         # Comfort
-        comfort_requirement = f"({self._comfort_angle} and {self._comfort_y_speed} and {self._comfort_angle_speed})"
         # all together
-        spec = f"({safety_requirement} and {target_requirement} and {comfort_requirement})"
+        spec = f"({safety_requirement} and {target_requirement})"
         return spec
 
     @property
     def requirements_dict(self):
         return {'no_collision': self._no_collision,
-                'cont_progress': self._continuous_progress,
-                'comfort_angle': self._comfort_angle,
-                'comfort_y_speed': self._comfort_y_speed,
-                'comfort_angle_speed': self._comfort_angle_speed}
+                'cont_progress': self._continuous_progress}
 
     @property
     def monitoring_variables(self):
@@ -54,3 +48,5 @@ class BWSTLReward(STLRewardConfig):
                 'angle_vel_limit']
         }
         return monitored_state
+
+

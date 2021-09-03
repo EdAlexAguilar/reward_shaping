@@ -43,6 +43,12 @@ class TestBipedalWalker(TestCase):
         result = generic_env_test(env_name, task, reward)
         self.assertTrue(result)
 
+    def test_eval_reward(self):
+        task = "forward"
+        reward = "eval"
+        result = generic_env_test(env_name, task, reward)
+        self.assertTrue(result)
+
 
 class TestTrainingLoop(TestCase):
 

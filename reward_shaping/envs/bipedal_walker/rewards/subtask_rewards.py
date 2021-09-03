@@ -1,4 +1,22 @@
+from reward_shaping.core.helper_fns import NormalizedReward
 from reward_shaping.core.reward import RewardFunction
+
+
+_registry = {}
+
+
+def get_subtask_reward(name: str):
+    try:
+        reward = _registry[name]
+    except KeyError:
+        raise KeyError(f"the reward {name} is not registered")
+    return reward
+
+
+def register_subtask_reward(name: str, reward):
+    if name not in _registry.keys():
+        _registry[name] = reward
+
 
 
 class ContinuousFalldownReward(RewardFunction):
@@ -94,3 +112,8 @@ class ContinuousHullAngleVelocityReward(RewardFunction):
         assert 'hull_angle_speed' in next_state and 'angle_vel_limit' in info
         phi_dot = next_state['hull_angle_speed']
         return info['angle_vel_limit'] - abs(phi_dot)
+
+
+
+register_subtask_reward("binary_falldown", BinaryFalldownReward(falldown_penalty=-1.0, no_falldown_bonus=0.0))
+register_subtask_reward("continuous_falldown", NormalizedReward(ContinuousFalldownReward(), min_r=0.0, max_r=0.5))

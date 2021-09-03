@@ -37,6 +37,30 @@ class STLRewardConfig(RewardConfig):
         pass
 
 
+class EvalConfig(RewardConfig):
+    @property
+    @abstractmethod
+    def monitoring_variables(self) -> List[str]:
+        """List of monitored variables (ie, the variables which occur in the stl spec)."""
+        pass
+
+    @property
+    @abstractmethod
+    def monitoring_types(self) -> List[str]:
+        """List of variables types."""
+        pass
+
+    @abstractmethod
+    def get_monitored_state(self, state, done, info):
+        """Given observed quantities (eg, state,info..), prepare the variable monitored in the stl spec."""
+        pass
+
+    @abstractmethod
+    def eval_episode(self, episode) -> float:
+        """custom method to eval episode """
+        pass
+
+
 class GraphRewardConfig(RewardConfig):
     @property
     @abstractmethod

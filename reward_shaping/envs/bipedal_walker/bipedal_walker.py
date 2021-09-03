@@ -491,6 +491,7 @@ class BipedalWalker(gym.Env, EzPickle):
 
         # define additional info for reward shaping
         info = {"time": self.step_count,
+                "max_episode_len": self.max_episode_steps,
                 "position_x": pos[0],
                 "target_x": target_x,
                 "norm_target_x": 1.0,
