@@ -9,21 +9,10 @@ env_name = "cart_pole_obst"
 
 class TestCartPoleObstacle(TestCase):
 
-    def test_fixedheight_default(self):
-        task = "fixed_height"
-        reward = "default"
-        result = generic_env_test(env_name, task, reward)
-        self.assertTrue(result)
 
     def test_fixedheight_sparse(self):
         task = "fixed_height"
         reward = "sparse"
-        result = generic_env_test(env_name, task, reward)
-        self.assertTrue(result)
-
-    def test_fixedheight_continuous(self):
-        task = "fixed_height"
-        reward = "continuous"
         result = generic_env_test(env_name, task, reward)
         self.assertTrue(result)
 
@@ -33,28 +22,9 @@ class TestCartPoleObstacle(TestCase):
         result = generic_env_test(env_name, task, reward)
         self.assertTrue(result)
 
-    def test_fixedheight_boolstl(self):
-        task = "fixed_height"
-        reward = "bool_stl"
-        result = generic_env_test(env_name, task, reward)
-        self.assertTrue(result)
-
-    def test_gb_potential(self):
-        task = "fixed_height"
-        reward = "gb_cr_bi"
-        result = generic_env_test(env_name, task, reward, potential=True)
-        self.assertTrue(result)
-        warnings.warn("the implementation of potential formulation is not garanteed")
-
-    def test_gb_progress(self):
-        task = "fixed_height"
-        reward = "gb_pcr_bi"
-        result = generic_env_test(env_name, task, reward)
-        self.assertTrue(result)
-
     def test_gb_boolsafety(self):
         task = "fixed_height"
-        reward = "gb_bcr_bi"
+        reward = "gb_bpr_bi"
         result = generic_env_test(env_name, task, reward)
         self.assertTrue(result)
 
@@ -79,9 +49,14 @@ class TestCartPoleObstacle(TestCase):
     def test_binaryprogress_reward(self):
         task = "fixed_height"
         reward = "gb_bpr_ci"
-        for _ in range(10):
-            result = generic_env_test(env_name, task, reward)
-            self.assertTrue(result)
+        result = generic_env_test(env_name, task, reward)
+        self.assertTrue(result)
+
+    def test_dejan_reward(self):
+        task = "fixed_height"
+        reward = "gb_bpdr_ci"
+        result = generic_env_test(env_name, task, reward)
+        self.assertTrue(result)
 
 
 class TestTrainingLoop(TestCase):

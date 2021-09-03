@@ -9,14 +9,14 @@ def _get_cpo_default_monitoring_variables():
     return ['time',
             'x', 'x_limit', 'x_target', 'x_target_tol',
             'theta', 'theta_limit', 'theta_target', 'theta_target_tol',
-            'collision', 'dist_target_x', 'dist_target_theta', 'is_feasible']
+            'collision', 'dist_target_x', 'dist_target_theta']
 
 
 def _get_cpo_default_monitoring_types():
     return ['int',
             'float', 'float', 'float', 'float',
             'float', 'float', 'float', 'float',
-            'float', 'float', 'float', 'float']
+            'float', 'float', 'float']
 
 
 def _get_cpo_default_monitoring_procedure(state, done, info):
