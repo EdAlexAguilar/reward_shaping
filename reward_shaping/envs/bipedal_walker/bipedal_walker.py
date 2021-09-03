@@ -448,7 +448,6 @@ class BipedalWalker(gym.Env, EzPickle):
             self.world.RayCast(self.lidar[i], self.lidar[i].p1, self.lidar[i].p2)
 
         state = {
-            "hull_x": pos[0] / target_x,
             "hull_angle": self.hull.angle,
             "hull_angle_speed": 2.0 * self.hull.angularVelocity / FPS,
             "horizontal_speed": 0.3 * vel.x * (VIEWPORT_W / SCALE) / FPS,

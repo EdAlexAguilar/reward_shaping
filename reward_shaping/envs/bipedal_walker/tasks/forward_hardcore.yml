@@ -1,6 +1,6 @@
 task: "forward_hardcore"
 # episode definition
-max_episode_steps: 1600
+max_episode_steps: 500
 terminate_on_collision: True
 hardcore: True
 # simulation parameters

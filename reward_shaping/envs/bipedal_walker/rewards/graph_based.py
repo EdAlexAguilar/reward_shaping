@@ -174,7 +174,7 @@ class BWChainGraph(GraphRewardConfig):
                 'speed_x_target': self._env_params['speed_x_target']}
 
         # safety rules
-        nodes["S_fall"] = (fns.get_subtask_reward["binary_falldown"], fns.get_subtask_reward["continuous_falldown"])
+        nodes["S_fall"] = (fns.get_subtask_reward("binary_falldown"), fns.get_subtask_reward("continuous_falldown"))
 
         # define target rule: speed_x >= speed__xtarget
         progress_fn, _ = get_normalized_reward(fns.SpeedTargetReward(),  # this is already normalized in +-1

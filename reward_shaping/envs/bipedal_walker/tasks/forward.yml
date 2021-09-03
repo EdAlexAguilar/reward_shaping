@@ -1,6 +1,6 @@
 task: "forward"
 # episode definition
-max_episode_steps: 600
+max_episode_steps: 500
 terminate_on_collision: True
 hardcore: False
 # simulation parameters

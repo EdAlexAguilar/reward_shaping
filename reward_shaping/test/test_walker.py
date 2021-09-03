@@ -19,12 +19,6 @@ class TestBipedalWalker(TestCase):
         result = generic_env_test(env_name, task, reward)
         self.assertTrue(result)
 
-    def test_gb_cr_bi(self):
-        task = "forward"
-        reward = "gb_bcr_bi"
-        result = generic_env_test(env_name, task, reward)
-        self.assertTrue(result)
-
     def test_weighted(self):
         task = "forward"
         reward = "weighted"
@@ -40,6 +34,12 @@ class TestBipedalWalker(TestCase):
     def test_binary_progress(self):
         task = "forward"
         reward = "gb_bpr_ci"
+        result = generic_env_test(env_name, task, reward)
+        self.assertTrue(result)
+
+    def test_binary_progress_and_indicator(self):
+        task = "forward"
+        reward = "gb_bpr_bi"
         result = generic_env_test(env_name, task, reward)
         self.assertTrue(result)
 

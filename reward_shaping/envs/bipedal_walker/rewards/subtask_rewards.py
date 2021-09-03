@@ -51,34 +51,6 @@ class SpeedTargetReward(RewardFunction):
         return next_state['horizontal_speed'] - info['speed_x_target']
 
 
-class ReachTargetReward(RewardFunction):
-    """
-    spec := F x >= x_target, score := x - x_target
-    x_position in state[24], already normalized in 0..1
-    """
-    def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        assert 'hull_x' in next_state and 'norm_target_x' in info
-        x = next_state['hull_x']
-        return x - info['norm_target_x']
-
-
-class ProgressToTargetReward(RewardFunction):
-    def __init__(self, progress_coeff=1.0):
-        self._progress_coeff = progress_coeff
-
-    def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        if next_state is not None:
-            assert 'hull_x' in state and 'x' in next_state and 'norm_target_x' in info
-            x, next_x = state['hull_x'], next_state['hull_x']
-            dist_pre = abs(x - info['norm_target_x'])
-            dist_now = abs(next_x - info['norm_target_x'])
-            tau = 1/50  # 1/fps
-            return self._progress_coeff * (dist_pre - dist_now) / tau
-        else:
-            # it should never happen but for robustness
-            return 0.0
-
-
 class ContinuousHullAngleReward(RewardFunction):
     """
     always(abs(phi) <= angle_hull_limit)
@@ -116,4 +88,4 @@ class ContinuousHullAngleVelocityReward(RewardFunction):
 
 
 register_subtask_reward("binary_falldown", BinaryFalldownReward(falldown_penalty=-1.0, no_falldown_bonus=0.0))
-register_subtask_reward("continuous_falldown", NormalizedReward(ContinuousFalldownReward(), min_r=0.0, max_r=0.5))
+register_subtask_reward("continuous_falldown", NormalizedReward(ContinuousFalldownReward(), min_reward=0.0, max_reward=0.5))
