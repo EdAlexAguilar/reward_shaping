@@ -86,15 +86,14 @@ class LunarLander(gym.Env, EzPickle):
 
     continuous = False
 
-    def __init__(self, task='land', FPS=50, x_low_limit=0.0, x_high_limit=20.0, initial_x_offset=2.0, fuel_usage=0.005,
+    def __init__(self, task='land', FPS=50, initial_x_offset=2.0, fuel_usage=0.005,
                  x_target=0.0, y_target=0.0, halfwidth_landing_area=1.0,
-                 theta_limit=1, theta_dot_limit=0.5, max_episode_steps=300,
+                 angle_limit=1, angle_speed_limit=0.5, max_episode_steps=300,
                  obstacle_lowleft_x=10.0, obstacle_lowleft_y=7.0, obstacle_width=2.0, obstacle_height=0.5,
                  eval=False, seed=0):
         EzPickle.__init__(self)
         # env params
         self.task = task
-        self.x_low_limit, self.x_high_limit = x_low_limit, x_high_limit
         self.initial_x_offset = initial_x_offset
         self.x_target, self.y_target = x_target, y_target
         self.halfwidth_landing_area = halfwidth_landing_area
@@ -115,8 +114,8 @@ class LunarLander(gym.Env, EzPickle):
         self.lander = None
         self.particles = []
         self.prev_reward = None
-        self.theta_limit = theta_limit
-        self.theta_dot_limit = theta_dot_limit
+        self.angle_limit = angle_limit
+        self.angle_speed_limit = angle_speed_limit
         # useful range is -1 .. +1, but spikes can be higher
         self.observation_space = spaces.Box(-np.inf, np.inf, shape=(14,), dtype=np.float32)
         self.observation_space = gym.spaces.Dict(dict(
@@ -418,13 +417,13 @@ class LunarLander(gym.Env, EzPickle):
             done = True
 
         info = {"time": self.step_count,
+                "max_episode_len": self.max_episode_steps,
                 "FPS": self.FPS,
-                "theta_limit": self.theta_limit,
-                "theta_dot_limit": self.theta_dot_limit,
+                "angle_limit": self.angle_limit,
+                "angle_speed_limit": self.angle_speed_limit,
+                "x_limit": 1.0,
                 "x_target": self.x_target,
                 "y_target": self.y_target,
-                "x_low_limit": self.x_low_limit,
-                "x_high_limit": self.x_high_limit,
                 "obstacle_vertices": self.obstacle_vertices,
                 "fuel": self.fuel,
                 "half_width": VIEWPORT_W / SCALE / 2,

@@ -1,17 +1,15 @@
 task: 'land'
 # episode def
-x_low_limit: 0.0  # world is delimited in [0, 20]
-x_high_limit: 20.0
 fuel_usage: 0.005  # Every non-zero action depletes this percentage (values in [0,1])
 FPS: 50   # do not change this, it will alter the simulated physics
 max_episode_steps: 300
 # target
 x_target: 0.0  # fixed from environment, helipad is always at (0,0) # Do not change
 y_target: 0.0
-halfwidth_landing_area: 1.0 # width of the landing area is +- this value
+halfwidth_landing_area: 0.15 # width of the landing area is +- this value
 # comfort
-theta_limit: 1.0471975511965976 # pi/3
-theta_dot_limit: 0.5 # arbitrary
+angle_limit: 1.0471975511965976 # pi/3
+angle_speed_limit: 0.5 # arbitrary
 # starting conditions
 obstacle_lowleft_x: 9.0  # represents x-coord lower-left corner
 obstacle_lowleft_y: 7.0  # represents y-coord lower-left corner

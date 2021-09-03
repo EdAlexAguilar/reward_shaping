@@ -29,14 +29,14 @@ register_reward('weighted', reward=CPOWeightedBaselineReward)
 register_reward('sparse', reward=CPOSparseReward)
 register_reward('gb_chain', reward=CPOChainGraph)
 # Graph-based with binary safety score, progress target score, continuous sat indicators
-register_reward('gb_bpr_ci', CPOGraphBinarySafetyProgressTargetContinuousIndicator)
+register_reward('gb_bpr_ci', reward=CPOGraphBinarySafetyProgressTargetContinuousIndicator)
 register_reward('gb_bpr_bi', reward=CPOGraphWithBinarySafetyScoreBinaryIndicator)
-register_reward('gb_bpdr_ci', CPOGraphBinarySafetyProgressDistanceTargetContinuousIndicator)
+register_reward('gb_bpdr_ci', reward=CPOGraphBinarySafetyProgressDistanceTargetContinuousIndicator)
 
 # Continuous Safety Reward (not working well)
-register_reward('gb_cpr_ci', CPOGraphContinuousSafetyProgressTargetContinuousIndicator)
-register_reward('gb_cpdr_ci', CPOGraphContinuousSafetyProgressDistanceTargetContinuousIndicator)  # from Dejan meeting
-register_reward('gb_cpmr_ci', CPOGraphContinuousSafetyProgressMaxTargetContinuousIndicator)  # target: max(bsat,progr)
+register_reward('gb_cpr_ci', reward=CPOGraphContinuousSafetyProgressTargetContinuousIndicator)
+register_reward('gb_cpdr_ci', reward=CPOGraphContinuousSafetyProgressDistanceTargetContinuousIndicator)  # from Dejan meeting
+register_reward('gb_cpmr_ci', reward=CPOGraphContinuousSafetyProgressMaxTargetContinuousIndicator)  # target: max(bsat,progr)
 # Graph-based with binary score only for safety nodes (THIS IS BEFORE THE UNIFIED APPROACH PROGRESS-BASED)
 
 register_reward('default', reward=DefaultReward)

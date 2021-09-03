@@ -1,6 +1,8 @@
 from reward_shaping.core.helper_fns import DefaultReward
-from reward_shaping.envs.lunar_lander.rewards.graph_based import LLGraphWithBinarySafetyBinaryIndicator, LLChainGraph
-from reward_shaping.envs.lunar_lander.rewards.stl_based import STLReward
+from reward_shaping.envs.lunar_lander.rewards.baselines import LLEvalConfig, LLWeightedBaselineReward
+from reward_shaping.envs.lunar_lander.rewards.graph_based import LLGraphWithBinarySafetyBinaryIndicator, LLChainGraph, \
+    LLGraphWithBinarySafetyContinuousIndicator, LLGraphWithBinarySafetyProgressTimesDistanceTargetContinuousIndicator
+from reward_shaping.envs.lunar_lander.rewards.stl_based import LLSTLReward
 
 _registry = {}
 
@@ -20,7 +22,11 @@ def register_reward(name: str, reward):
 
 # Baselines
 register_reward('default', reward=DefaultReward)
-register_reward('stl', reward=STLReward)
-# Graph-based
-register_reward('gb_bcr_bi', reward=LLGraphWithBinarySafetyBinaryIndicator)
+register_reward('stl', reward=LLSTLReward)
+register_reward('eval', reward=LLEvalConfig)
 register_reward('gb_chain', reward=LLChainGraph)
+register_reward('weighted', reward=LLWeightedBaselineReward)
+# Graph-based
+register_reward('gb_bpr_bi', reward=LLGraphWithBinarySafetyBinaryIndicator)
+register_reward('gb_bpr_ci', reward=LLGraphWithBinarySafetyContinuousIndicator)
+register_reward('gb_bpdr_ci', reward=LLGraphWithBinarySafetyProgressTimesDistanceTargetContinuousIndicator)
