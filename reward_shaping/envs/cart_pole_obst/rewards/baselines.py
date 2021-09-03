@@ -124,6 +124,10 @@ class CPOEvalConfig(EvalConfig):
         return monitored_state
 
     def eval_episode(self, episode) -> float:
+        # discard any eventual prefix
+        i_init = np.nonzero(episode['time'] == np.min(episode['time']))[-1][-1]
+        episode = {k: l[i_init:] for k, l in episode.items()}
+        #
         safety_spec = "always((abs(theta) <= theta_limit) and (abs(x) <= x_limit) and (collision <= 0.0))"
         safety_rho = monitor_episode(stl_spec=safety_spec,
                                      vars=self.monitoring_variables, types=self.monitoring_types,

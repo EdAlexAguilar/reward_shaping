@@ -44,8 +44,8 @@ class CollectionWrapper(gym.Wrapper):
         self._episode = {var: [] for var in self._variables}
 
     def reset(self, **kwargs):
-        self._episode = {var: [] for var in self._stl_conf.monitoring_variables}
         state = self.env.reset(**kwargs)
+        self._episode = {var: [] for var in self._stl_conf.monitoring_variables}
         return state
 
     def step(self, action):

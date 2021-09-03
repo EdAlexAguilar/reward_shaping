@@ -45,6 +45,9 @@ class LLEvalConfig(EvalConfig):
         return monitored_state
 
     def eval_episode(self, episode) -> float:
+        # discard any eventual prefix
+        i_init = np.nonzero(episode['time'] == np.min(episode['time']))[-1][-1]
+        episode = {k: l[i_init:] for k, l in episode.items()}
         # safety
         safety_spec = "always((fuel >= 0) and (collision <= 0.0) and (abs(x) <= x_limit))"
         safety_rho = monitor_episode(stl_spec=safety_spec, vars=self.monitoring_variables,
