@@ -1,6 +1,9 @@
+from typing import List
+
 import numpy as np
 
-from reward_shaping.core.configs import RewardConfig
+from reward_shaping.core.configs import RewardConfig, EvalConfig
+from reward_shaping.core.helper_fns import monitor_episode
 from reward_shaping.core.reward import RewardFunction, WeightedReward
 from reward_shaping.core.utils import get_normalized_reward
 import reward_shaping.envs.cart_pole_obst.rewards.subtask_rewards as fns
@@ -87,3 +90,68 @@ class CPOWeightedBaselineReward(WeightedReward):
         self._safety_rules = [collision_fn, falldown_fn, outside_fn]
         self._target_rules = [progress_fn]
         self._comfort_rules = [balance_fn]
+
+
+class CPOEvalConfig(EvalConfig):
+    """
+    Eval(phi1,w) = sign(rho(phi1, w)) safety
+    Eval(phi2,w) = 0.5*sign(rho(phi2, w)) reach target
+
+    phi3 = G phi' Eval(phi3, w) = 0.25*(\Sum_i sign(rho(phi',w,i)))/n comfort
+    Eval(phi2', w) = 0.5*(\Sum_i sign(rho(phi',w,i)))/n recurrence target
+
+    Eval(Phi, w) = Eval(phi1, w) + Eval(phi2, w) + Eval(phi3, w)
+    """
+    def __init__(self, **kwargs):
+        super(CPOEvalConfig, self).__init__(**kwargs)
+        self._max_episode_len = 0
+
+    @property
+    def monitoring_variables(self) -> List[str]:
+        return ['time',
+                'x', 'x_limit', 'x_target', 'x_target_tol',
+                'theta', 'theta_limit', 'theta_target', 'theta_target_tol',
+                'collision', 'dist_target_x', 'dist_target_theta']
+
+    @property
+    def monitoring_types(self) -> List[str]:
+        return ['int',
+                'float', 'float', 'float', 'float',
+                'float', 'float', 'float', 'float',
+                'float', 'float', 'float']
+
+    def get_monitored_state(self, state, done, info):
+        monitored_state = {
+            'time': info['time'],
+            'x': state['x'],
+            'x_limit': info['x_limit'],
+            'x_target': info['x_target'],
+            'x_target_tol': info['x_target_tol'],
+            'theta': state['theta'],
+            'theta_limit': info['theta_limit'],
+            'theta_target': info['theta_target'],
+            'theta_target_tol': info['theta_target_tol'],
+            'collision': 1.0 if info['collision'] else 0.0,
+            'dist_target_x': abs(state['x'] - info['x_target']),
+            'dist_target_theta': abs(state['theta'] - info['theta_target']),
+        }
+        self._max_episode_len = info['max_episode_len']
+        return monitored_state
+
+    def eval_episode(self, episode) -> float:
+        safety_spec = "always((abs(theta) <= theta_limit) and (abs(x) <= x_limit) and (collision <= 0.0))"
+        safety_rho = monitor_episode(stl_spec=safety_spec,
+                                     vars=self.monitoring_variables, types=self.monitoring_types,
+                                     episode=episode)[0][1]
+        target_spec = "eventually(always(dist_target_x <= x_target_tol))"
+        target_rho = monitor_episode(stl_spec=target_spec,
+                                     vars=self.monitoring_variables, types=self.monitoring_types,
+                                     episode=episode)[0][1]
+        comfort_spec = "dist_target_theta <= theta_target_tol"
+        comfort_trace = monitor_episode(stl_spec=comfort_spec,
+                                        vars=self.monitoring_variables, types=self.monitoring_types,
+                                        episode=episode)
+        comfort_trace = comfort_trace + [[-1, -1]  for _ in  range((self._max_episode_len - len(comfort_trace)))]
+        comfort_mean = np.mean([float(rob >= 0) for t, rob in comfort_trace])
+        tot_score = float(safety_rho >= 0) + 0.5 * float(target_rho >= 0) + 0.25 * comfort_mean
+        return tot_score
