@@ -1,7 +1,8 @@
 from reward_shaping.core.helper_fns import DefaultReward
 from reward_shaping.envs.bipedal_walker.rewards.baselines import BWWeightedBaselineReward, BWEvalConfig
 from reward_shaping.envs.bipedal_walker.rewards.graph_based import BWChainGraph, \
-    BWGraphWithContinuousScoreBinaryIndicator, BWGraphWithBinarySafetyProgressTargetContinuousIndicator
+    BWGraphWithContinuousScoreBinaryIndicator, BWGraphWithBinarySafetyProgressTargetContinuousIndicator, \
+    BWGraphWithBinarySafetyProgressTargetContinuousIndicatorNoComfort
 from reward_shaping.envs.bipedal_walker.rewards.stl_based import BWSTLReward
 
 _registry = {}
@@ -29,4 +30,6 @@ register_reward('gb_chain', reward=BWChainGraph)
 # Graph-based
 register_reward('gb_bpr_ci', reward=BWGraphWithBinarySafetyProgressTargetContinuousIndicator)
 register_reward('gb_bpr_bi', reward=BWGraphWithContinuousScoreBinaryIndicator)
+register_reward('gb_bpr_ci_noc', reward=BWGraphWithBinarySafetyProgressTargetContinuousIndicatorNoComfort)
+
 

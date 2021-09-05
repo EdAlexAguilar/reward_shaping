@@ -156,6 +156,50 @@ class BWGraphWithBinarySafetyProgressTargetContinuousIndicator(GraphRewardConfig
         return topology
 
 
+class BWGraphWithBinarySafetyProgressTargetContinuousIndicatorNoComfort(GraphRewardConfig):
+    """
+    As bpr_ci but without any comfort node. In order to perform an ablation study on the effect of hierarchy
+    """
+
+    def __init__(self, env_params):
+        self._env_params = env_params
+
+    @property
+    def nodes(self):
+        nodes = {}
+        # prepare env info
+        info = {'dist_hull_limit': self._env_params['dist_hull_limit'],
+                'angle_hull_limit': self._env_params['angle_hull_limit'],
+                'speed_y_limit': self._env_params['speed_y_limit'],
+                'angle_vel_limit': self._env_params['angle_vel_limit'],
+                'speed_x_target': self._env_params['speed_x_target'],
+                'norm_target_x': 1.0, 'collision': False}
+
+        # safety rules
+        binary_fall_fun = fns.get_subtask_reward("binary_falldown")
+        cont_fall_fun = fns.get_subtask_reward("continuous_falldown")
+        nodes["S_fall"] = (binary_fall_fun, cont_fall_fun)
+
+        # define target rule: speed_x >= speed__xtarget
+        progress_fn, _ = get_normalized_reward(fns.SpeedTargetReward(),  # this is already normalized in +-1
+                                               min_r_state={'horizontal_speed': info['speed_x_target']},
+                                               max_r_state={'horizontal_speed': 1.0},
+                                               info=info)
+        nodes["T_move"] = (progress_fn, progress_fn)
+
+        return nodes
+
+    @property
+    def topology(self):
+        """
+        Safety -- Target
+        """
+        topology = {
+            'S_fall': ['T_move'],
+        }
+        return topology
+
+
 class BWChainGraph(GraphRewardConfig):
     """
     graph-based with 1 node for each level of the hierarchy

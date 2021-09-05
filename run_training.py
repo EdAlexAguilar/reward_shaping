@@ -5,7 +5,7 @@ from reward_shaping.training.train import train
 
 def main(args):
     train_params = {'steps': args.steps,
-                    'video_every': int(1e5),
+                    'video_every': int(1e10),
                     'n_recorded_episodes': 20,
                     'eval_every': min(10000, int(args.steps / 10)),
                     'n_eval_episodes': 10,
