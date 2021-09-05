@@ -82,6 +82,7 @@ class BWEvalConfig(EvalConfig):
             'time': info['time'],
             'collision': info['collision'],  # already 0 or 1
             'vx': state['horizontal_speed'],
+            'vx_target': state['speed_x_target'],
             'phi': state['hull_angle'],
             'phi_limit': info['angle_hull_limit'],
             'vy': state['vertical_speed'],
@@ -101,7 +102,7 @@ class BWEvalConfig(EvalConfig):
         safety_rho = monitor_episode(stl_spec=safety_spec,
                                      vars=self.monitoring_variables, types=self.monitoring_types,
                                      episode=episode)[0][1]
-        recurrence_spec = "vx>=0.0"
+        recurrence_spec = "vx>=vx_target"
         recurrence_trace = monitor_episode(stl_spec=recurrence_spec,
                                            vars=self.monitoring_variables, types=self.monitoring_types,
                                            episode=episode)
