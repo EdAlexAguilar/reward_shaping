@@ -49,6 +49,12 @@ class TestBipedalWalker(TestCase):
         result = generic_env_test(env_name, task, reward)
         self.assertTrue(result)
 
+    def test_nocomfort(self):
+        task = "forward"
+        reward = "gb_bpr_ci_noc"
+        result = generic_env_test(env_name, task, reward)
+        self.assertTrue(result)
+
 
 class TestTrainingLoop(TestCase):
 
