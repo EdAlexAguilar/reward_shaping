@@ -82,7 +82,7 @@ class BWEvalConfig(EvalConfig):
             'time': info['time'],
             'collision': info['collision'],  # already 0 or 1
             'vx': state['horizontal_speed'],
-            'vx_target': state['speed_x_target'],
+            'vx_target': info['speed_x_target'],
             'phi': state['hull_angle'],
             'phi_limit': info['angle_hull_limit'],
             'vy': state['vertical_speed'],
