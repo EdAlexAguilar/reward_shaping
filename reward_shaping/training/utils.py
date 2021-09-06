@@ -42,6 +42,10 @@ def load_env_params(env, task, **kwargs):
 def load_eval_params(env, task):
     if env == "cart_pole_obst" and task == "random_height":
         params = {"eval": True, "prob_sampling_feasible": 0.5}
+    elif env == "cart_pole_obst" and task == "fixed_height":
+        params = {"eval": True}
+    elif env == "lunar_lander":
+        params = {"eval": True, "max_episode_steps": 500}
     else:
         params = {"eval": True}
     return params

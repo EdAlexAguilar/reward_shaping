@@ -17,5 +17,5 @@ fi
 
 docker run --rm -it \
 	       -u $(id -u):$(id -g) -v $(pwd):/src \
-	       --gpus $gpus $image \
+	       $image \
 	       /bin/bash entrypoint.sh $env $task $algo $expdir $reward
