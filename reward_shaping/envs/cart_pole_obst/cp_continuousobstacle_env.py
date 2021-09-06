@@ -216,6 +216,7 @@ class CartPoleContObsEnv(gym.Env):
         theta = theta + self.tau * theta_dot
         theta_dot = theta_dot + self.tau * thetaacc
 
+        overcome = False if self.randomize_side else not self.obstacle.on_left_side(x)  #works only if starts from right
         collision = self.obstacle.intersect(x, theta)
         outside = abs(x) > self.x_threshold
         falldown = abs(theta) > self.theta_threshold_radians
@@ -249,7 +250,7 @@ class CartPoleContObsEnv(gym.Env):
                 'theta_target': self.theta_target, 'theta_target_tol': self.theta_target_tol,
                 'pole_length': self.pole_length, 'axle_y': self.axle_y,
                 'is_feasible': self.is_feasible, 'feasible_height': self.feasible_height,
-                'collision': collision, 'outside': outside, 'falldown': falldown,
+                'collision': collision, 'overcome': overcome, 'outside': outside, 'falldown': falldown,
                 'default_reward': reward}
         return state, reward, self.done, info
 

@@ -45,7 +45,7 @@ class CollectionWrapper(gym.Wrapper):
 
     def reset(self, **kwargs):
         state = self.env.reset(**kwargs)
-        self._episode = {var: [] for var in self._stl_conf.monitoring_variables}
+        self._episode = {var: [] for var in self._variables}
         return state
 
     def step(self, action):
@@ -73,7 +73,7 @@ class STLRewardWrapper(CollectionWrapper):
     def reset(self, **kwargs):
         self._reward = 0.0
         self._return = 0.0
-        state = self.env.reset(**kwargs)
+        state = super().reset(**kwargs)
         return state
 
     def _compute_episode_robustness(self):
@@ -106,7 +106,7 @@ class EvaluationRewardWrapper(CollectionWrapper):
     def reset(self, **kwargs):
         self._reward = 0.0
         self._return = 0.0
-        state = self.env.reset(**kwargs)
+        state = super().reset(**kwargs)
         return state
 
     def step(self, action):
