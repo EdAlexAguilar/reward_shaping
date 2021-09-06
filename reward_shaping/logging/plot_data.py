@@ -10,13 +10,17 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 PALETTE = ['#377eb8', '#4daf4a', '#984ea3', '#e41a1c', '#ff7f00', '#a65628', '#888888', '#fdbf6f']
-REWARDS = {'stl': 'STL', 'weighted': 'Weighted',
-           'gb_chain': 'GB-Chain', 'gb_bcr_bi': 'GBH-DistTarget-BinarySat', 'gb_pcr_bi': 'GBH-ProgressTarget-BinarySat',
-           'gb_bpr_ci': 'GBH-ProgressTarget-ContinuousSat',
-           'continuous': 'Continuous'}
+REWARDS = {
+           'sparse': 'Default',
+           'stl': 'STL-Sparse',
+           'weighted': 'STL-WeightedSum',
+           'gb_chain': 'STL-Pessimistic',
+           'gb_bpr_bi': 'STL-Hierarchical-B',
+           'gb_bpr_ci': 'STL-Hierarchical-C',
+           'gb_bpdr_ci': 'STL-Hierarchical-DC'}
 PALETTE_REWARDS = {reward: v for reward, v in zip(REWARDS.keys(), PALETTE)}
 
-PALETTE_HLINES = {-1: 'red', 0: 'green'}
+PALETTE_HLINES = {1.0: 'red', 1.5: 'green', 1.75: 'blue'}
 
 STYLE = {'fill_alpha': 0.2, 'hline_alpha': 0.5, 'hline_style': 'dashed'}
 
@@ -73,13 +77,17 @@ def plot_secondaries(xlabel, ylabel, hlines, minx, maxx):
                    color=PALETTE_HLINES[value], alpha=STYLE['hline_alpha'], linestyles=STYLE['hline_style'])
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    plt.legend()
+    plt.legend(loc="lower right")
 
 
 def main(args):
     all_data = load_data(args.rewards, args.path, args.regex, args.tag)
     minx, maxx = np.Inf, 0
-    for reward, data in all_data.items():
+    for reward in args.rewards:
+        if not reward in all_data.keys():
+            warnings.warn(f"skipped: not able to find reward {reward} from the logs")
+            continue
+        data = all_data[reward]
         if len(data['x']) == 0:
             continue
         minx = min(minx, min(data['x']))
@@ -103,7 +111,7 @@ if __name__ == '__main__':
     parser.add_argument("--binning", type=int, default=15000, help="binning to aggregate data")
     parser.add_argument("--xlabel", type=str, default='Steps', help="label x axis")
     parser.add_argument("--ylabel", type=str, default='Y', help="label y axis")
-    parser.add_argument("--hlines", type=float, nargs='*', default=[0, -1], help="horizontal lines in plot, eg. y=0")
+    parser.add_argument("--hlines", type=float, nargs='*', default=[1.0, 1.5, 1.75], help="horizontal lines in plot, eg. y=0")
     parser.add_argument("--rewards", type=str, nargs='*', default=REWARDS.keys(), choices=REWARDS.keys(),
                         help="rewards to be plotted")
     parser.add_argument("-save", action='store_true')
