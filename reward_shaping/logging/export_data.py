@@ -16,7 +16,7 @@ def process_logdir(path: pathlib.Path):
     return f"{expdir}_{logdir}"
 
 
-def to_csv(dpath: pathlib.Path, opath: pathlib.Path):
+def to_csv(dpath: pathlib.Path, opath: pathlib.Path, tag_filter):
     print(f"Looking for logs in {dpath.absolute()}")
     found = False
     for path in dpath.rglob("**/events*"):
@@ -27,7 +27,7 @@ def to_csv(dpath: pathlib.Path, opath: pathlib.Path):
         out = {}
 
         for tag in tags:
-            if not 'eval' in tag:
+            if not tag_filter in tag:
                 # we are only interested on eval metrics
                 continue
             tag_values = []
@@ -64,7 +64,7 @@ if __name__ == '__main__':
     inpath = args.path
     outpath = args.outpath if args.outpath is not None else args.path / "exports"
 
-    something_written = to_csv(inpath, outpath)
+    something_written = to_csv(inpath, outpath, args.tag)
     if something_written:
         print(f"\n\nLogs exported in {outpath.absolute()}")
     else:
