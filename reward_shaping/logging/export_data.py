@@ -17,8 +17,8 @@ def process_logdir(path: pathlib.Path):
 
 
 def to_csv(dpath: pathlib.Path, opath: pathlib.Path):
-    print(f"Looking for logs in {dpath.absolute}")
-
+    print(f"Looking for logs in {dpath.absolute()}")
+    found = False
     for path in dpath.rglob("**/events*"):
         print(f"Log: {path}", end="")
         ea = EventAccumulator(str(path)).Reload()
@@ -43,22 +43,29 @@ def to_csv(dpath: pathlib.Path, opath: pathlib.Path):
                                     index=['value', 'wall_time'])
 
         if len(tags) > 0:
+            opath.mkdir(parents=True, exist_ok=True)
             df = pd.concat(out.values(), keys=out.keys())
             outfile = opath / f"{process_logdir(path)}.csv"
             df.to_csv(outfile)
             print("- Done")
+            found = True
         else:
-            print('- Not scalers to write')
+            print('- Not scalars to write')
+    return found
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--path", type=pathlib.Path, required=True, help="experiment dir where look for logs")
+    parser.add_argument("--outpath", type=pathlib.Path, default=None, help="where to write the exports")
+    parser.add_argument("--tag", type=str, default='eval', help="filter the metrics with this substring")
     args = parser.parse_args()
 
     inpath = args.path
-    outpath = pathlib.Path("exports")
-    outpath.mkdir(parents=True, exist_ok=True)
+    outpath = args.outpath if args.outpath is not None else args.path / "exports"
 
-    to_csv(inpath, outpath)
-    print(f"\n\nLogs exported in {outpath.absolute()}")
+    something_written = to_csv(inpath, outpath)
+    if something_written:
+        print(f"\n\nLogs exported in {outpath.absolute()}")
+    else:
+        print(f"\n\nNo logs found.")
