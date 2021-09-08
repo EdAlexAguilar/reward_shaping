@@ -1,7 +1,7 @@
 # task
 task: fixed_height
 # episode termination
-max_steps: 200
+max_steps: 400
 terminate_on_collision: True
 terminate_on_battery: False
 x_limit: 2.5    # always x in [-x_limit,+x_limit]
