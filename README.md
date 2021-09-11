@@ -11,7 +11,7 @@ To train on cartpole (for all the command line options, see `--help`):
 
 ```
 python run_training.py --env cart_pole_obst --task fixed_height \ 
-                       --reward gb_bcr_bi --steps 2000000 --expdir my_exp
+                       --reward gb_cr_bi --steps 2000000 --expdir my_exp
 ```
 
 This command will start the training for 2M steps using the reward `gb_bcr_bi` (graph-based with binary indicators).
