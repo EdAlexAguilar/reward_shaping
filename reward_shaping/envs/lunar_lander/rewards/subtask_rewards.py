@@ -134,32 +134,6 @@ class MinimizeCraftAngle(RewardFunction):
         return angle_limit - abs(angle)
 
 
-class FuelReward(RewardFunction):
-    """
-     Safety Property
-     fuel_usage = always(fuel >= 0)
-    """
-
-    def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        return next_state['fuel']
-
-
-class BinaryFuelReward(RewardFunction):
-    """
-     Safety Property
-     fuel_usage = always(fuel >= 0)
-    """
-
-    def __init__(self, still_fuel_bonus=0.0, no_fuel_penalty=0.0, **kwargs):
-        super().__init__(**kwargs)
-        self._still_fuel_bonus = still_fuel_bonus
-        self._no_fuel_penalty = no_fuel_penalty
-
-    def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        fuel = next_state['fuel']
-        return self._still_fuel_bonus if fuel > 0.0 else self._no_fuel_penalty
-
-
 class CollisionReward(RewardFunction):
     def __init__(self, collision_penalty=0.0, no_collision_bonus=0.0):
         super().__init__()
@@ -216,10 +190,6 @@ class MinimizeAngleVelocity(RewardFunction):
         angle_speed_limit = info['angle_speed_limit']
         return angle_speed_limit - abs(angle_speed)
 
-
-register_subtask_reward("binary_fuel", BinaryFuelReward(no_fuel_penalty=-1.0, still_fuel_bonus=0.0))
-register_subtask_reward("continuous_fuel", NormalizedReward(FuelReward(), min_reward=0.0, max_reward=1.0))
-register_subtask_reward("fuel_sat", ThresholdIndicator(FuelReward(), include_zero=False))
 
 register_subtask_reward("binary_collision", CollisionReward(no_collision_bonus=0.0, collision_penalty=-1.0))
 register_subtask_reward("continuous_collision", NormalizedReward(ContinuousCollisionReward(),

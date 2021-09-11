@@ -49,7 +49,7 @@ class LLEvalConfig(EvalConfig):
         i_init = np.nonzero(episode['time'] == np.min(episode['time']))[-1][-1]
         episode = {k: l[i_init:] for k, l in episode.items()}
         # safety
-        safety_spec = "always((fuel >= 0) and (collision <= 0.0) and (abs(x) <= x_limit))"
+        safety_spec = "always((collision <= 0.0) and (abs(x) <= x_limit))"
         safety_rho = monitor_episode(stl_spec=safety_spec, vars=self.monitoring_variables,
                                      types=self.monitoring_types, episode=episode)[0][1]
         # persistence
@@ -89,7 +89,6 @@ class LLWeightedBaselineReward(WeightedReward):
                 }
 
         # safety rules (no need returned indicators)
-        binary_fuel = fns.get_subtask_reward("binary_fuel")
         binary_collision = fns.get_subtask_reward("binary_collision")
         binary_exit = fns.get_subtask_reward("binary_exit")
 
@@ -108,6 +107,6 @@ class LLWeightedBaselineReward(WeightedReward):
                                                   max_r_state={'angle_speed': 0.0},
                                                   info=info)
         # comfort rules
-        self._safety_rules = [binary_fuel, binary_collision, binary_exit]
+        self._safety_rules = [binary_collision, binary_exit]
         self._target_rules = [progress_fn]
         self._comfort_rules = [angle_fn, angle_speed_fn]

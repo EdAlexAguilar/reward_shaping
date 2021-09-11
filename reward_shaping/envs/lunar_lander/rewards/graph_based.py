@@ -44,10 +44,6 @@ class LLGraphWithBinarySafetyBinaryIndicator(GraphRewardConfig):
                 }
 
         # SAFETY RULES
-        binary_fuel = fns.get_subtask_reward("binary_fuel")
-        fuel_sat = fns.get_subtask_reward("fuel_sat")
-        nodes["S_fuel"] = (binary_fuel, fuel_sat)
-
         binary_collision = fns.get_subtask_reward("binary_collision")
         collision_sat = fns.get_subtask_reward("collision_sat")
         nodes["S_coll"] = (binary_collision, collision_sat)
@@ -82,12 +78,11 @@ class LLGraphWithBinarySafetyBinaryIndicator(GraphRewardConfig):
         """
                                 / Comfort: angle
         S_coll  | __ Target  --|
-        S_fuel  |              \ Comfort: Ang speed
+                |              \ Comfort: Ang speed
         S_exit  /
         """
         topology = {
             'S_coll': ['T_origin'],
-            'S_fuel': ['T_origin'],
             'S_exit': ['T_origin'],
             'T_origin': ['C_angle', 'C_angle_speed']
         }
@@ -116,10 +111,6 @@ class LLGraphWithBinarySafetyContinuousIndicator(GraphRewardConfig):
                 }
 
         # SAFETY RULES
-        binary_fuel = fns.get_subtask_reward("binary_fuel")
-        continuous_fuel = fns.get_subtask_reward("continuous_fuel")
-        nodes["S_fuel"] = (binary_fuel, continuous_fuel)
-
         binary_collision = fns.get_subtask_reward("binary_collision")
         continuous_collision = fns.get_subtask_reward("continuous_collision")
         nodes["S_coll"] = (binary_collision, continuous_collision)
@@ -157,12 +148,11 @@ class LLGraphWithBinarySafetyContinuousIndicator(GraphRewardConfig):
         """
                                 / Comfort: angle
         S_coll  | __ Target  --|
-        S_fuel  |              \ Comfort: Ang speed
+                |              \ Comfort: Ang speed
         S_exit  /
         """
         topology = {
             'S_coll': ['T_origin'],
-            'S_fuel': ['T_origin'],
             'S_exit': ['T_origin'],
             'T_origin': ['C_angle', 'C_angle_speed']
         }
@@ -191,10 +181,6 @@ class LLGraphWithBinarySafetyProgressTimesDistanceTargetContinuousIndicator(Grap
                 }
 
         # SAFETY RULES
-        binary_fuel = fns.get_subtask_reward("binary_fuel")
-        continuous_fuel = fns.get_subtask_reward("continuous_fuel")
-        nodes["S_fuel"] = (binary_fuel, continuous_fuel)
-
         binary_collision = fns.get_subtask_reward("binary_collision")
         continuous_collision = fns.get_subtask_reward("continuous_collision")
         nodes["S_coll"] = (binary_collision, continuous_collision)
@@ -229,12 +215,11 @@ class LLGraphWithBinarySafetyProgressTimesDistanceTargetContinuousIndicator(Grap
         """
                                 / Comfort: angle
         S_coll  | __ Target  --|
-        S_fuel  |              \ Comfort: Ang speed
+                |              \ Comfort: Ang speed
         S_exit  /
         """
         topology = {
             'S_coll': ['T_origin'],
-            'S_fuel': ['T_origin'],
             'S_exit': ['T_origin'],
             'T_origin': ['C_angle', 'C_angle_speed']
         }
@@ -262,17 +247,14 @@ class LLChainGraph(GraphRewardConfig):
                 }
 
         # SAFETY RULES
-        binary_fuel = fns.get_subtask_reward("binary_fuel")
-        fuel_sat = fns.get_subtask_reward("fuel_sat")
-
         binary_collision = fns.get_subtask_reward("binary_collision")
         collision_sat = fns.get_subtask_reward("collision_sat")
 
         binary_exit = fns.get_subtask_reward("binary_exit")
         exit_sat = fns.get_subtask_reward("exit_sat")
 
-        safety_funs = [binary_fuel, binary_collision, binary_exit]
-        safety_sats = [fuel_sat, collision_sat, exit_sat]
+        safety_funs = [binary_collision, binary_exit]
+        safety_sats = [collision_sat, exit_sat]
         nodes["S_all"] = (MinAggregatorReward(safety_funs), ProdAggregatorReward(safety_sats))
 
         # TARGET RULES
