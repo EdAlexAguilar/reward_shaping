@@ -31,5 +31,3 @@ register_reward('gb_chain', reward=BWChainGraph)
 register_reward('gb_bpr_ci', reward=BWGraphWithBinarySafetyProgressTargetContinuousIndicator)
 register_reward('gb_bpr_bi', reward=BWGraphWithContinuousScoreBinaryIndicator)
 register_reward('gb_bpr_ci_noc', reward=BWGraphWithBinarySafetyProgressTargetContinuousIndicatorNoComfort)
-
-

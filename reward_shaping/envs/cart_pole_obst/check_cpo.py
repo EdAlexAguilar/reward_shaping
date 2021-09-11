@@ -1,7 +1,3 @@
-import pathlib
-
-import matplotlib.pyplot as plt
-import yaml
 from stable_baselines3.common.env_checker import check_env
 
 from reward_shaping.training.utils import make_env, make_reward_wrap

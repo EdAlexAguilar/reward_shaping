@@ -1,14 +1,12 @@
-import sys
 import math
 
-import numpy as np
 import Box2D
-from Box2D.b2 import (edgeShape, circleShape, fixtureDef, polygonShape, revoluteJointDef, contactListener)
-
 import gym
+import numpy as np
+from Box2D.b2 import (edgeShape, circleShape, fixtureDef, polygonShape, revoluteJointDef, contactListener)
 from gym import spaces
 from gym.spaces import Box
-from gym.utils import colorize, seeding, EzPickle
+from gym.utils import seeding, EzPickle
 
 # This is simple 4-joints walker robot environment.
 #
@@ -37,7 +35,6 @@ from gym.utils import colorize, seeding, EzPickle
 # To solve hardcore version you need 300 points in 2000 time steps.
 #
 # Created by Oleg Klimov. Licensed on the same terms as the rest of OpenAI Gym.
-from reward_shaping.training.utils import make_env, make_reward_wrap
 
 FPS = 50
 SCALE = 30.0  # affects how fast-paced the game is, forces should be adjusted as well

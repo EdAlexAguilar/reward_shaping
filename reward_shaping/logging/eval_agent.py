@@ -2,19 +2,15 @@ import argparse
 import json
 import pathlib
 import time
-from typing import List, Dict
+from shutil import copyfile
 
 import numpy as np
 import yaml
-import json
-
-from gym.wrappers import Monitor
 from gym.wrappers.monitoring.video_recorder import VideoRecorder
 from stable_baselines3 import SAC
 
 from reward_shaping.core.helper_fns import monitor_episode
 from reward_shaping.training.utils import make_env
-from shutil import copyfile
 
 
 def make_log_dirs(args):
@@ -65,7 +61,7 @@ def evaluate_model(env_name, model, env, reward_name, n_episodes=None, n_steps=N
     episode = []
     all_results = []
     all_node_status = []
-    recorder = VideoRecorder(env, base_path=str(logdir/f'episodes/episode_{episodes + 1}')) if record else None
+    recorder = VideoRecorder(env, base_path=str(logdir / f'episodes/episode_{episodes + 1}')) if record else None
     obs = env.reset()
     while True:
         action, _states = model.predict(obs, deterministic=True)

@@ -1,8 +1,7 @@
 from typing import Dict, List, Tuple
 
-import numpy as np
-
 import networkx as nx
+import numpy as np
 
 from reward_shaping.core.reward import RewardFunction
 
@@ -43,9 +42,9 @@ class GraphBasedReward(RewardFunction):
         for node in self._topologic_sorting:
             preds = list(self._graph.predecessors(node))
             ancestors[node] = nx.dag.ancestors(self._graph, node)
-            layers[node] = 0 if len(preds)==0 else max([layers[pred] for pred in preds]) + 1
-        nx.set_node_attributes(self._graph, layers, "layer")   # used for rendering as multi-layer graph
-        nx.set_node_attributes(self._graph, ancestors, "ancestors")    # used for computing reward
+            layers[node] = 0 if len(preds) == 0 else max([layers[pred] for pred in preds]) + 1
+        nx.set_node_attributes(self._graph, layers, "layer")  # used for rendering as multi-layer graph
+        nx.set_node_attributes(self._graph, ancestors, "ancestors")  # used for computing reward
         self._compiled = True
 
     def _evaluate_node(self, node: str, state, action, next_state, info):
@@ -92,5 +91,3 @@ class GraphBasedReward(RewardFunction):
         self._evaluate_graph(state=state, action=action, next_state=next_state, info=info)
         reward = self._compute_rewards()
         return reward
-
-

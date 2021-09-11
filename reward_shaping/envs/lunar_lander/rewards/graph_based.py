@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
-import reward_shaping.envs.lunar_lander.rewards.subtask_rewards as fns
-import numpy as np
 
-from reward_shaping.core.helper_fns import ThresholdIndicator, NormalizedReward, MinAggregatorReward, \
+import reward_shaping.envs.lunar_lander.rewards.subtask_rewards as fns
+from reward_shaping.core.helper_fns import MinAggregatorReward, \
     ProdAggregatorReward
 from reward_shaping.core.utils import get_normalized_reward
 
@@ -168,7 +167,6 @@ class LLGraphWithBinarySafetyContinuousIndicator(GraphRewardConfig):
             'T_origin': ['C_angle', 'C_angle_speed']
         }
         return topology
-
 
 
 class LLGraphWithBinarySafetyProgressTimesDistanceTargetContinuousIndicator(GraphRewardConfig):

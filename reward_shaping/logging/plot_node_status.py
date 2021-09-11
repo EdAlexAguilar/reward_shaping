@@ -1,9 +1,8 @@
 import argparse
 import json
 import pathlib
-from typing import Dict, List, Tuple
+from typing import Dict, Tuple
 
-import numpy as np
 import matplotlib.pyplot as plt
 
 NODE_LABELS = {}

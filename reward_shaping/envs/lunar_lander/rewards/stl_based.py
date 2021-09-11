@@ -6,10 +6,10 @@ from reward_shaping.core.configs import STLRewardConfig
 
 
 class LLSTLReward(STLRewardConfig):
-    _fuel_usage = "always(fuel >= 0)"   # Safety 2 : fuel must be always be positive
+    _fuel_usage = "always(fuel >= 0)"  # Safety 2 : fuel must be always be positive
     _no_collision = "always(collision <= 0.0)"  # Safety 3: no collision with obstacle
-    _no_outside = "always(abs(x) <= x_limit)"   # Safety 4: craft always within the x limits
-    _reach_origin = "eventually(always(dist_target <= halfwidth_landing_area))"     # Target: reach origin
+    _no_outside = "always(abs(x) <= x_limit)"  # Safety 4: craft always within the x limits
+    _reach_origin = "eventually(always(dist_target <= halfwidth_landing_area))"  # Target: reach origin
 
     @property
     def spec(self) -> str:
@@ -33,7 +33,7 @@ class LLSTLReward(STLRewardConfig):
             'time': info['time'],
             'x': state['x'],  # already normalized in +-1
             'x_limit': info['x_limit'],
-            'fuel': state['fuel'],   # in [0,1]
+            'fuel': state['fuel'],  # in [0,1]
             'collision': state['collision'],
             'dist_target': np.linalg.norm([state['x'], state['y']]),
             'halfwidth_landing_area': info['halfwidth_landing_area']

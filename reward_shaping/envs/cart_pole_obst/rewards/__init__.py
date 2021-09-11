@@ -35,8 +35,10 @@ register_reward('gb_bpdr_ci', reward=CPOGraphBinarySafetyProgressDistanceTargetC
 
 # Continuous Safety Reward (not working well)
 register_reward('gb_cpr_ci', reward=CPOGraphContinuousSafetyProgressTargetContinuousIndicator)
-register_reward('gb_cpdr_ci', reward=CPOGraphContinuousSafetyProgressDistanceTargetContinuousIndicator)  # from Dejan meeting
-register_reward('gb_cpmr_ci', reward=CPOGraphContinuousSafetyProgressMaxTargetContinuousIndicator)  # target: max(bsat,progr)
+register_reward('gb_cpdr_ci',
+                reward=CPOGraphContinuousSafetyProgressDistanceTargetContinuousIndicator)  # from Dejan meeting
+register_reward('gb_cpmr_ci',
+                reward=CPOGraphContinuousSafetyProgressMaxTargetContinuousIndicator)  # target: max(bsat,progr)
 # Graph-based with binary score only for safety nodes (THIS IS BEFORE THE UNIFIED APPROACH PROGRESS-BASED)
 
 register_reward('default', reward=DefaultReward)

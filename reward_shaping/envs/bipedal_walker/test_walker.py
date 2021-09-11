@@ -1,6 +1,6 @@
 from stable_baselines3.common.env_checker import check_env
 
-from reward_shaping.training.utils import make_env, make_reward_wrap
+from reward_shaping.training.utils import make_env
 
 
 def main(reward):
@@ -33,5 +33,6 @@ def main(reward):
         print(err)
     print(f"Check env: {result}")
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     main("gb_bpr_ci")

@@ -1,4 +1,5 @@
 from typing import Any
+
 import gym
 
 from reward_shaping.core.configs import STLRewardConfig, EvalConfig

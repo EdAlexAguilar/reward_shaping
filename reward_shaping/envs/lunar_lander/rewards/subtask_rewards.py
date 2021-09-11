@@ -1,6 +1,7 @@
+import numpy as np
+
 from reward_shaping.core.helper_fns import ThresholdIndicator, NormalizedReward
 from reward_shaping.core.reward import RewardFunction
-import numpy as np
 
 _registry = {}
 
@@ -62,7 +63,7 @@ class ProgressTimesDistanceToTargetReward(RewardFunction):
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
         assert 'x' in next_state and 'y' in next_state
         assert 'x_target' in info and 'y_target' in info
-        assert'halfwidth_landing_area' in info and 'FPS' in info
+        assert 'halfwidth_landing_area' in info and 'FPS' in info
         if next_state is not None:
             # note: the normalization factor 1.5 is to have distance in [0,1]
             dist_pre = np.linalg.norm([state['x'], state['y']]) / 1.5

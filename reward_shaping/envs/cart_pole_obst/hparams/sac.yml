@@ -10,4 +10,4 @@ target_update_interval: 1
 gradient_steps: 1
 target_entropy: 'auto'
 action_noise: null
-policy_kwargs: {}
+policy_kwargs: { }

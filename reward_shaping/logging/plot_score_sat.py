@@ -1,7 +1,8 @@
+import numpy as np
+
+from reward_shaping.core.configs import BuildGraphReward
 from reward_shaping.envs.cart_pole_obst.cp_continuousobstacle_env import Obstacle
 from reward_shaping.training.utils import load_env_params, get_reward_conf
-from reward_shaping.core.configs import BuildGraphReward
-import numpy as np
 
 xs = np.linspace(-3.0, 3.0)
 thetas = np.linspace(-np.pi / 2 - 0.1, np.pi / 2 + 0.1)
@@ -37,6 +38,7 @@ def get_gb_reward(reward):
     reward_fn = BuildGraphReward.from_conf(graph_config=reward_conf)
     return reward_fn
 
+
 def plot_safety_nodes(reward_fn):
     # S coll: loop over dist to obstacle
     node = "S_coll"
@@ -56,10 +58,10 @@ def plot_safety_nodes(reward_fn):
             next_state['x'] = x
             next_state['theta'] = theta
             next_state['collision'] = 1.0 if info['collision'] else 0.0
-            _ = reward_fn(state, None, next_state, info)    # force graph evaluation
+            _ = reward_fn(state, None, next_state, info)  # force graph evaluation
             # update structs
             obst_dist = obstacle.get_pole_dist(x, theta)
-            id = np.clip(obst_dist // discretization, 0, n_bins-1)
+            id = np.clip(obst_dist // discretization, 0, n_bins - 1)
             obst_dist_reward_bins[int(id)] += nodes[node]['reward']
             obst_dist_sat_bins[int(id)] += nodes[node]['sat']
             obst_dist_k_bins[int(id)] += 1

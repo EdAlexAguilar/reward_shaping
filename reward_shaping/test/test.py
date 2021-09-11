@@ -1,5 +1,3 @@
-import argparse
-
 import numpy as np
 from stable_baselines3.common.env_checker import check_env
 
@@ -58,10 +56,10 @@ def plot_cpole_reward(reward):
     xs = np.linspace(-env_params['x_limit'] - 0.5, env_params['x_limit'] + 0.5)
     thetas = np.linspace(-np.deg2rad(env_params['theta_limit']) - 0.1, np.deg2rad(env_params['theta_limit']) + 0.1)
     axle_y = 1.0 + 0.25 / 4
-    polelen=1.0
+    polelen = 1.0
     dist_to_ground = 0.95
-    obstacle = Obstacle(axle_y, polelen, 0.5, axle_y+dist_to_ground, 0.2, 0.1)
-    x_vel, theta_vel, battery = 0.0, 0.0, 1.0     # ignore them, not used in reward
+    obstacle = Obstacle(axle_y, polelen, 0.5, axle_y + dist_to_ground, 0.2, 0.1)
+    x_vel, theta_vel, battery = 0.0, 0.0, 1.0  # ignore them, not used in reward
 
     reward_landscape = np.zeros((len(xs), len(thetas)))
     for i in range(len(xs)):
@@ -71,7 +69,7 @@ def plot_cpole_reward(reward):
             outside = x > env_params['x_limit']
             falldown = theta > np.deg2rad(env_params['theta_limit'])
             state = {
-                "x":x, "x_vel": x_vel, "theta": theta, "theta_vel": theta_vel, "battery": battery,
+                "x": x, "x_vel": x_vel, "theta": theta, "theta_vel": theta_vel, "battery": battery,
                 "obstacle_left": obstacle.left_x, "obstacle_right": obstacle.right_x,
                 "obstacle_bottom": obstacle.bottom_y, "obstacle_top": obstacle.top_y,
                 "collision": 1.0 if collision else 0.0
@@ -114,10 +112,10 @@ def plot_cpole_progreward(reward, constant_progress=0.001):
     xs = np.linspace(-env_params['x_limit'] - 0.5, env_params['x_limit'] + 0.5)
     thetas = np.linspace(-np.deg2rad(env_params['theta_limit']) - 0.1, np.deg2rad(env_params['theta_limit']) + 0.1)
     axle_y = 1.0 + 0.25 / 4
-    polelen=1.0
+    polelen = 1.0
     dist_to_ground = 0.95
-    obstacle = Obstacle(axle_y, polelen, 0.5, axle_y+dist_to_ground, 0.2, 0.1)
-    x_vel, theta_vel, battery = 0.0, 0.0, 1.0     # ignore them, not used in reward
+    obstacle = Obstacle(axle_y, polelen, 0.5, axle_y + dist_to_ground, 0.2, 0.1)
+    x_vel, theta_vel, battery = 0.0, 0.0, 1.0  # ignore them, not used in reward
 
     reward_landscape = np.zeros((len(xs), len(thetas)))
     for i in range(len(xs)):
@@ -127,7 +125,7 @@ def plot_cpole_progreward(reward, constant_progress=0.001):
             outside = x > env_params['x_limit']
             falldown = theta > np.deg2rad(env_params['theta_limit'])
             state = {
-                "x":x, "x_vel": x_vel, "theta": theta, "theta_vel": theta_vel, "battery": battery,
+                "x": x, "x_vel": x_vel, "theta": theta, "theta_vel": theta_vel, "battery": battery,
                 "obstacle_left": obstacle.left_x, "obstacle_right": obstacle.right_x,
                 "obstacle_bottom": obstacle.bottom_y, "obstacle_top": obstacle.top_y,
                 "collision": 1.0 if collision else 0.0

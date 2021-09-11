@@ -1,5 +1,4 @@
 import time
-import warnings
 from unittest import TestCase
 
 from reward_shaping.test.test import generic_env_test, generic_training, plot_cpole_reward, plot_cpole_progreward
@@ -8,7 +7,6 @@ env_name = "cart_pole_obst"
 
 
 class TestCartPoleObstacle(TestCase):
-
 
     def test_fixedheight_sparse(self):
         task = "fixed_height"
@@ -91,13 +89,12 @@ class PlotRewardLandscape(TestCase):
                    'gb_cr_ci', 'gb_cr_bi', 'gb_bcr_bi']
         rewards = ['gb_cpdr_ci', 'gb_cpr_ci']
         rows, cols, i = 1, 2, 1
-        plt.figure(figsize=(10,4))
+        plt.figure(figsize=(10, 4))
         for reward in rewards:
             plt.subplot(rows, cols, i)
             plot_cpole_reward(reward)
             i += 1
         plt.savefig(f"cp_rewards_{time.time()}.pdf")
-
 
     def test_plot_prog(self):
         import matplotlib.pyplot as plt

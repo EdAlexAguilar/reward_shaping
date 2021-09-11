@@ -1,8 +1,8 @@
-from typing import List, Dict, Any
+from typing import Dict, Any
+
 import numpy as np
 
 from reward_shaping.core.configs import STLRewardConfig
-from reward_shaping.core.wrappers import STLRewardWrapper
 
 
 def _get_cpo_default_monitoring_variables():

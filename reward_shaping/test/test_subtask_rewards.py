@@ -1,10 +1,9 @@
 from unittest import TestCase
 
 import matplotlib.pyplot as plt
-
-from reward_shaping.core.utils import get_normalized_reward
 import numpy as np
 
+from reward_shaping.core.utils import get_normalized_reward
 from reward_shaping.envs.cart_pole_obst.cp_continuousobstacle_env import Obstacle
 
 
@@ -178,7 +177,8 @@ class TestSubtaskRewards(TestCase):
         info = self._get_default_info("cart_pole_obst")
         balance_fun = fns.BalanceReward()
         norm_balance_fun, _ = get_normalized_reward(fns.BalanceReward(),
-                                                    min_r_state={'theta': info['theta_target'] - info['theta_target_tol']},
+                                                    min_r_state={
+                                                        'theta': info['theta_target'] - info['theta_target_tol']},
                                                     max_r_state={'theta': info['theta_target']},
                                                     info=info)
         thetas = np.linspace(-np.pi / 2 - 0.1, np.pi / 2 + 0.1, 100)

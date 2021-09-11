@@ -16,7 +16,8 @@ def make_log_dirs(args):
     else:
         basedir = f"logs/{args.env}"
     logdir_template = "{}/{}_{}_Seed{}_{}_{}"
-    logdir = pathlib.Path(logdir_template.format(basedir, args.task, args.reward, args.seed, args.algo, int(time.time())))
+    logdir = pathlib.Path(
+        logdir_template.format(basedir, args.task, args.reward, args.seed, args.algo, int(time.time())))
     checkpointdir = logdir / "checkpoint"
     logdir.mkdir(parents=True, exist_ok=True)
     checkpointdir.mkdir(parents=True, exist_ok=True)

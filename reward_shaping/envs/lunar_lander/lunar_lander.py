@@ -25,15 +25,13 @@ python examples/agents/keyboard_agent.py LunarLander-v2
 Created by Oleg Klimov. Licensed on the same terms as the rest of OpenAI Gym.
 """
 
-import sys, math
+import math
 from typing import Dict
 
-import numpy as np
-
 import Box2D
-from Box2D.b2 import (edgeShape, circleShape, fixtureDef, polygonShape, revoluteJointDef, contactListener)
-
 import gym
+import numpy as np
+from Box2D.b2 import (edgeShape, circleShape, fixtureDef, polygonShape, revoluteJointDef, contactListener)
 from gym import spaces
 from gym.spaces import Box
 from gym.utils import seeding, EzPickle

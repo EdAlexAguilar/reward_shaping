@@ -1,8 +1,8 @@
 from unittest import TestCase
 
 from reward_shaping.core.configs import BuildGraphReward
-from reward_shaping.core.wrappers import RewardWrapper
 from reward_shaping.core.graph_based import GraphBasedReward
+from reward_shaping.core.wrappers import RewardWrapper
 from reward_shaping.training.utils import make_base_env, load_env_params
 
 
@@ -17,7 +17,7 @@ class TestGraphBasedRewards(TestCase):
             ret += reward
             if render:
                 env.render()
-            #print(reward)
+            # print(reward)
             self.assertTrue(reward == const_rew or const_rew is None)
         print(ret)
 

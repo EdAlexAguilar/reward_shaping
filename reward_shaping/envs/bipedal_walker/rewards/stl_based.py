@@ -9,7 +9,6 @@ class BWSTLReward(STLRewardConfig):
     _no_collision = "always(collision<=0)"
     _continuous_progress = "always(eventually[0:5](vx>=0.0))"
 
-
     @property
     def spec(self) -> str:
         # Safety
@@ -48,5 +47,3 @@ class BWSTLReward(STLRewardConfig):
                 'angle_vel_limit']
         }
         return monitored_state
-
-

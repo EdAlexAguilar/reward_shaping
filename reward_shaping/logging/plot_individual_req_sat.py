@@ -3,8 +3,8 @@ import json
 import pathlib
 from typing import Dict, List
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 REQ_LABELS = {'no_collision': 'AvoidCollision',
               'no_falldown': 'AvoidFalldown',

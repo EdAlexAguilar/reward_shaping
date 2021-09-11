@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
+
 import reward_shaping.envs.bipedal_walker.rewards.subtask_rewards as fns
-import numpy as np
 from reward_shaping.core.helper_fns import ThresholdIndicator, MinAggregatorReward, \
-    ProdAggregatorReward, NormalizedReward
+    ProdAggregatorReward
 from reward_shaping.core.utils import get_normalized_reward
 
 

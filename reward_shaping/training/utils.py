@@ -1,9 +1,8 @@
+import os
 import pathlib
 
 import matplotlib.pyplot as plt
 import yaml
-import os
-
 from gym.wrappers import FlattenObservation
 
 from reward_shaping.core.helper_fns import PotentialReward

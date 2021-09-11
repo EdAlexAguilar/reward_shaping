@@ -1,9 +1,9 @@
+import numpy as np
+
 import reward_shaping.envs.cart_pole_obst.rewards.subtask_rewards as fns
 from reward_shaping.core.configs import GraphRewardConfig
 from reward_shaping.core.helper_fns import ThresholdIndicator, MinAggregatorReward, \
-    ProdAggregatorReward, NormalizedReward
-import numpy as np
-
+    ProdAggregatorReward
 from reward_shaping.core.utils import get_normalized_reward
 
 PROGCOEFF = 1.0

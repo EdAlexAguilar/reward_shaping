@@ -1,10 +1,8 @@
 import argparse
-import os
 import pathlib
 
 import numpy as np
 import pandas as pd
-
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
 
 

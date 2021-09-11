@@ -1,7 +1,6 @@
 from reward_shaping.core.helper_fns import NormalizedReward
 from reward_shaping.core.reward import RewardFunction
 
-
 _registry = {}
 
 
@@ -18,7 +17,6 @@ def register_subtask_reward(name: str, reward):
         _registry[name] = reward
 
 
-
 class ContinuousFalldownReward(RewardFunction):
     """
     always(dist_to_ground >= dist_hull_limit)
@@ -27,7 +25,8 @@ class ContinuousFalldownReward(RewardFunction):
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
         assert 'lidar' in next_state and 'dist_hull_limit' in info and 'collision' in info
-        lidar = min(next_state['lidar']) if not info['collision'] else 0.0  # if no collision, approx dist to ground wt lidars
+        lidar = min(next_state['lidar']) if not info[
+            'collision'] else 0.0  # if no collision, approx dist to ground wt lidars
         return lidar - info['dist_hull_limit']
 
 
@@ -86,6 +85,6 @@ class ContinuousHullAngleVelocityReward(RewardFunction):
         return info['angle_vel_limit'] - abs(phi_dot)
 
 
-
 register_subtask_reward("binary_falldown", BinaryFalldownReward(falldown_penalty=-1.0, no_falldown_bonus=0.0))
-register_subtask_reward("continuous_falldown", NormalizedReward(ContinuousFalldownReward(), min_reward=0.0, max_reward=0.5))
+register_subtask_reward("continuous_falldown",
+                        NormalizedReward(ContinuousFalldownReward(), min_reward=0.0, max_reward=0.5))

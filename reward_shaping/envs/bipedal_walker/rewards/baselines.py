@@ -1,13 +1,12 @@
-from typing import List, Dict, Any
+from typing import Dict, Any
 
 import numpy as np
 
+import reward_shaping.envs.bipedal_walker.rewards.subtask_rewards as fns
 from reward_shaping.core.configs import EvalConfig
 from reward_shaping.core.helper_fns import monitor_episode
 from reward_shaping.core.reward import WeightedReward
-
 from reward_shaping.core.utils import get_normalized_reward
-import reward_shaping.envs.bipedal_walker.rewards.subtask_rewards as fns
 
 
 class BWWeightedBaselineReward(WeightedReward):
@@ -64,6 +63,7 @@ class BWEvalConfig(EvalConfig):
 
         Eval(Phi, w) = Eval(phi1, w) + Eval(phi2, w) + Eval(phi3, w)
         """
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._max_episode_len = 0
@@ -106,14 +106,14 @@ class BWEvalConfig(EvalConfig):
         recurrence_trace = monitor_episode(stl_spec=recurrence_spec,
                                            vars=self.monitoring_variables, types=self.monitoring_types,
                                            episode=episode)
-        recurrence_trace = recurrence_trace + [[-1, -1]  for _ in  range((self._max_episode_len - len(recurrence_trace)))]
+        recurrence_trace = recurrence_trace + [[-1, -1] for _ in range((self._max_episode_len - len(recurrence_trace)))]
         recurrence_mean = np.mean([float(rob >= 0) for t, rob in recurrence_trace])
 
         comfort_spec = "(abs(phi) <= phi_limit) and (abs(vy) <= vy_limit) and (abs(phidot) <= phidot_limit)"
         comfort_trace = monitor_episode(stl_spec=comfort_spec,
                                         vars=self.monitoring_variables, types=self.monitoring_types,
                                         episode=episode)
-        comfort_trace = comfort_trace + [[-1, -1]  for _ in  range((self._max_episode_len - len(comfort_trace)))]
+        comfort_trace = comfort_trace + [[-1, -1] for _ in range((self._max_episode_len - len(comfort_trace)))]
         comfort_mean = np.mean([float(rob >= 0) for t, rob in comfort_trace])
         tot_score = float(safety_rho >= 0) + 0.5 * recurrence_mean + 0.25 * comfort_mean
         return tot_score

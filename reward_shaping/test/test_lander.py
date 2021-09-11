@@ -4,6 +4,7 @@ from reward_shaping.test.test import generic_env_test
 
 env_name = "lunar_lander"
 
+
 class TestLunarLanderObstacle(TestCase):
 
     def test_landing_default(self):

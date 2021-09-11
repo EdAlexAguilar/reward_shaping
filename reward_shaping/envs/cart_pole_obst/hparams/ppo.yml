@@ -11,4 +11,4 @@ max_grad_norm: 0.5
 use_sde: False
 sde_sample_freq: -1
 target_kl: null
-policy_kwargs: {}
+policy_kwargs: { }

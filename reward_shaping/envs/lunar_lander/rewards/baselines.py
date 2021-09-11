@@ -1,11 +1,11 @@
-from typing import List, Dict, Any
+from typing import Dict, Any
 
 import numpy as np
 
+import reward_shaping.envs.lunar_lander.rewards.subtask_rewards as fns
 from reward_shaping.core.configs import EvalConfig
 from reward_shaping.core.helper_fns import monitor_episode
 from reward_shaping.core.reward import WeightedReward
-import reward_shaping.envs.lunar_lander.rewards.subtask_rewards as fns
 from reward_shaping.core.utils import get_normalized_reward
 
 

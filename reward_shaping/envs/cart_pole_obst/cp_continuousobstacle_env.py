@@ -2,21 +2,16 @@
 Classic cart-pole system implemented by Rich Sutton et al.
 Copied from http://incompleteideas.net/sutton/book/code/pole.c
 permalink: https://perma.cc/C9ZM-652R
-
-Modification of OpenAI CartPole environment
--EA Aguilar
-
 """
 
 import math
-from typing import Tuple, Dict, Any
 
 import gym
-import pyglet
-from gym import spaces, logger
-from gym.spaces import Box, Discrete
-from gym.utils import seeding
 import numpy as np
+import pyglet
+from gym import spaces
+from gym.spaces import Box
+from gym.utils import seeding
 
 
 class DrawText:
@@ -54,7 +49,7 @@ class Obstacle:
         center_y = self.bottom_y + (self.top_y - self.bottom_y) / 2.0
         pole_x = x + np.sin(theta) * self.polelen
         pole_y = self.axle_y + np.cos(theta) * self.polelen
-        return np.linalg.norm([center_x-pole_x, center_y-pole_y])
+        return np.linalg.norm([center_x - pole_x, center_y - pole_y])
 
 
 class CartPoleContObsEnv(gym.Env):
@@ -129,8 +124,8 @@ class CartPoleContObsEnv(gym.Env):
         # Obstacle spec
         self.obstacle_min_width = obstacle_min_w
         self.obstacle_max_width = obstacle_max_w
-        self.obstacle_min_height = obstacle_min_h   # this is distance to ground
-        self.obstacle_max_height = obstacle_max_h   # this is distance to groun
+        self.obstacle_min_height = obstacle_min_h  # this is distance to ground
+        self.obstacle_max_height = obstacle_max_h  # this is distance to groun
         self.obstacle_height = 0.1  # this is the obstacle height (top_y-bottom_y)
 
         # Initial condition
@@ -180,7 +175,7 @@ class CartPoleContObsEnv(gym.Env):
                               shape=(1,)),
             obstacle_right=Box(low=-self.x_threshold * 2 + self.obstacle_max_width, high=self.x_threshold * 2,
                                shape=(1,)),
-            obstacle_bottom=Box(low=0.0, high=10.0, shape=(1,)),    #min, max are simple overapprox of the domain
+            obstacle_bottom=Box(low=0.0, high=10.0, shape=(1,)),  # min, max are simple overapprox of the domain
             obstacle_top=Box(low=0.0, high=10.0, shape=(1,)),
             collision=Box(low=0.0, high=1.0, shape=(1,)),
         ))
@@ -216,7 +211,8 @@ class CartPoleContObsEnv(gym.Env):
         theta = theta + self.tau * theta_dot
         theta_dot = theta_dot + self.tau * thetaacc
 
-        overcome = False if self.randomize_side else not self.obstacle.on_left_side(x)  #works only if starts from right
+        overcome = False if self.randomize_side else not self.obstacle.on_left_side(
+            x)  # works only if starts from right
         collision = self.obstacle.intersect(x, theta)
         outside = abs(x) > self.x_threshold
         falldown = abs(theta) > self.theta_threshold_radians
@@ -432,7 +428,6 @@ class CartPoleContObsEnv(gym.Env):
         pole = self._pole_geom
         l, r, t, b = -polewidth / 2, polewidth / 2, polelen - polewidth / 2, -polewidth / 2
         pole.v = [(l, b), (l, t), (r, t), (r, b)]
-
 
         cartx = self.state['x'] * scale + screen_width / 2.0  # MIDDLE OF CART
         self.carttrans.set_translation(cartx, carty)

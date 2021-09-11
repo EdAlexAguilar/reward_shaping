@@ -11,6 +11,7 @@ class DefaultReward(RewardFunction):
     this is a dummy reward for using the default reward of an environment,
     it assumes the default reward computed by the original implementation is passed in the info
     """
+
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
         assert 'default_reward' in info
         return info['default_reward']

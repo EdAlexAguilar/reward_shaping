@@ -2,11 +2,11 @@ from typing import List
 
 import numpy as np
 
-from reward_shaping.core.configs import RewardConfig, EvalConfig
+import reward_shaping.envs.cart_pole_obst.rewards.subtask_rewards as fns
+from reward_shaping.core.configs import EvalConfig
 from reward_shaping.core.helper_fns import monitor_episode
 from reward_shaping.core.reward import RewardFunction, WeightedReward
 from reward_shaping.core.utils import get_normalized_reward
-import reward_shaping.envs.cart_pole_obst.rewards.subtask_rewards as fns
 
 
 class CPOContinuousReward(RewardFunction):
