@@ -1,7 +1,7 @@
 import time
 from unittest import TestCase
 
-from reward_shaping.test.test import generic_env_test, generic_training, plot_cpole_reward, plot_cpole_progreward
+from reward_shaping.test.test import generic_env_test, generic_training
 
 env_name = "cart_pole_obst"
 
@@ -54,7 +54,7 @@ class TestTrainingLoop(TestCase):
         generic_training(env_name, 'fixed_height', 'stl')
 
     def test_train_chain(self):
-        generic_training(env_name, 'fixed_height', 'chain')
+        generic_training(env_name, 'fixed_height', 'gb_chain')
 
     def test_train_weighted(self):
         generic_training(env_name, 'fixed_height', 'weighted')
