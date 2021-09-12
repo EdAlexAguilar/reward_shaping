@@ -3,7 +3,8 @@ from unittest import TestCase
 from reward_shaping.test.test import generic_env_test, generic_training
 
 env_name = "bipedal_walker"
-task="forward"
+task = "forward"
+
 
 class TestBipedalWalker(TestCase):
 
@@ -45,11 +46,17 @@ class TestBipedalWalker(TestCase):
 
 class TestTrainingLoop(TestCase):
 
-    def test_train_default(self):
-        generic_training(env_name, 'forward', 'default')
+    def test_train_sparse(self):
+        generic_training(env_name, task, 'default')
 
     def test_train_stl(self):
-        generic_training(env_name, 'forward', 'stl')
+        generic_training(env_name, task, 'stl')
 
-    def test_train_gbased_binary_ind(self):
-        generic_training(env_name, 'forward', 'gb_cr_bi')
+    def test_train_chain(self):
+        generic_training(env_name, task, 'gb_chain')
+
+    def test_train_weighted(self):
+        generic_training(env_name, task, 'weighted')
+
+    def test_train_hierarchical(self):
+        generic_training(env_name, task, 'gb_bpr_ci')

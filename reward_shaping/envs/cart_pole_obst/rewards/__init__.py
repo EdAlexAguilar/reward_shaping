@@ -24,7 +24,7 @@ def register_reward(name: str, reward):
 # Baselines
 register_reward('stl', reward=CPOSTLReward)
 register_reward('weighted', reward=CPOWeightedBaselineReward)
-register_reward('sparse', reward=CPOSparseReward)   # this is an adaptation of the default reward
+register_reward('default', reward=CPOSparseReward)
 register_reward('gb_chain', reward=CPOChainGraph)
 # Hierarchical
 register_reward('gb_bpdr_ci', reward=CPOGraphBinarySafetyProgressDistanceTargetContinuousIndicator)

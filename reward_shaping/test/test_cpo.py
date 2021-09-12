@@ -10,7 +10,7 @@ class TestCartPoleObstacle(TestCase):
 
     def test_fixedheight_sparse(self):
         task = "fixed_height"
-        reward = "sparse"
+        reward = "default"
         result = generic_env_test(env_name, task, reward)
         self.assertTrue(result)
 
@@ -48,7 +48,7 @@ class TestCartPoleObstacle(TestCase):
 class TestTrainingLoop(TestCase):
 
     def test_train_sparse(self):
-        generic_training(env_name, 'fixed_height', 'sparse')
+        generic_training(env_name, 'fixed_height', 'default')
 
     def test_train_stl(self):
         generic_training(env_name, 'fixed_height', 'stl')
