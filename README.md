@@ -5,6 +5,8 @@ To install the dependencies:
 
 ```pip install -r requirements.txt```
 
+We assume you run the code from the project directory and that it is included in the `PYTHONPATH`.
+
 ### Run training 
 
 To train on cartpole (for all the command line options, see `--help`):
