@@ -23,10 +23,9 @@ def register_reward(name: str, reward):
 # Baselines
 register_reward('default', reward=DefaultReward)
 register_reward('stl', reward=LLSTLReward)
-register_reward('eval', reward=LLEvalConfig)
 register_reward('gb_chain', reward=LLChainGraph)
 register_reward('weighted', reward=LLWeightedBaselineReward)
 # Graph-based
-register_reward('gb_bpr_bi', reward=LLGraphWithBinarySafetyBinaryIndicator)
-register_reward('gb_bpr_ci', reward=LLGraphWithBinarySafetyContinuousIndicator)
 register_reward('gb_bpdr_ci', reward=LLGraphWithBinarySafetyProgressTimesDistanceTargetContinuousIndicator)
+# Evaluation
+register_reward('eval', reward=LLEvalConfig)

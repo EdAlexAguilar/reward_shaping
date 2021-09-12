@@ -17,7 +17,7 @@ cart_max_initial_offset: 2.0
 randomize_side: False  # sample initial condition from both the sides
 obstacle_min_w: 0.2
 obstacle_max_w: 0.2
-obstacle_min_h: 0.97  # since we want to have it fixed, min==max height
+obstacle_min_h: 0.97
 obstacle_max_h: 0.99
 obstacle_min_dist: 0.5
 obstacle_max_dist: 0.75

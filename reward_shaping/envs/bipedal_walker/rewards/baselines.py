@@ -54,15 +54,6 @@ class BWWeightedBaselineReward(WeightedReward):
 
 
 class BWEvalConfig(EvalConfig):
-    """
-        Eval(phi1,w) = sign(rho(phi1, w)) safety
-        Eval(phi2,w) = 0.5*sign(rho(phi2, w)) reach target
-
-        phi3 = G phi' Eval(phi3, w) = 0.25*(\Sum_i sign(rho(phi',w,i)))/n comfort
-        Eval(phi2', w) = 0.5*(\Sum_i sign(rho(phi',w,i)))/n recurrence target
-
-        Eval(Phi, w) = Eval(phi1, w) + Eval(phi2, w) + Eval(phi3, w)
-        """
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -94,7 +85,7 @@ class BWEvalConfig(EvalConfig):
         return monitored_state
 
     def eval_episode(self, episode) -> float:
-        # discard any eventual prefix
+        # discard any eventual prefix (for robustness)
         i_init = np.nonzero(episode['time'] == np.min(episode['time']))[-1][-1]
         episode = {k: l[i_init:] for k, l in episode.items()}
         #

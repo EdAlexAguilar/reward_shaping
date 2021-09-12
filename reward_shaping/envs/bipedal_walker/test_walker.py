@@ -16,7 +16,6 @@ def main(reward):
     for i in range(10000):
         action = env.action_space.sample()
         obs, reward, done, info = env.step(action)
-        print(reward)
         tot_reward += reward
         env.render()
         if done:
