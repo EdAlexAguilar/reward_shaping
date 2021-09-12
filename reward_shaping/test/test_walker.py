@@ -3,7 +3,7 @@ from unittest import TestCase
 from reward_shaping.test.test import generic_env_test, generic_training
 
 env_name = "bipedal_walker"
-task="forward_hardcore"
+task="forward"
 
 class TestBipedalWalker(TestCase):
 
