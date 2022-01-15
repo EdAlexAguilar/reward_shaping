@@ -1,5 +1,5 @@
 from reward_shaping.envs.cart_pole_obst.rewards.baselines import CPOSparseReward, CPOContinuousReward, \
-    CPOWeightedBaselineReward, CPOEvalConfig
+    CPOWeightedBaselineReward, CPOEvalConfig, CPOSparseTargetReward
 from reward_shaping.envs.cart_pole_obst.rewards.graph_based import CPOGraphWithContinuousScoreBinaryIndicator, \
     CPOGraphWithContinuousScoreContinuousIndicator, CPOGraphWithProgressScoreBinaryIndicator, \
     CPOGraphWithBinarySafetyScoreBinaryIndicator, CPOChainGraph, CPOGraphBinarySafetyProgressTargetContinuousIndicator, \
@@ -30,3 +30,5 @@ register_reward('gb_chain', reward=CPOChainGraph)
 register_reward('gb_bpdr_ci', reward=CPOGraphBinarySafetyProgressDistanceTargetContinuousIndicator)
 # Evaluation
 register_reward('eval', reward=CPOEvalConfig)
+
+register_reward('sparse_target', reward=CPOSparseTargetReward)

@@ -5,8 +5,24 @@ import numpy as np
 import reward_shaping.envs.lunar_lander.rewards.subtask_rewards as fns
 from reward_shaping.core.configs import EvalConfig
 from reward_shaping.core.helper_fns import monitor_episode
-from reward_shaping.core.reward import WeightedReward
+from reward_shaping.core.reward import WeightedReward, RewardFunction
 from reward_shaping.core.utils import get_normalized_reward
+
+
+class LLSparseTargetReward(RewardFunction):
+    """
+    reward(s,a) := bonus, if target is reached
+    reward(s,a) := small time penalty
+    """
+
+    def __call__(self, state, action=None, next_state=None, info=None) -> float:
+        assert 'halfwidth_landing_area' in info
+        assert 'x' in next_state and 'y' in next_state
+        dist_target = np.linalg.norm([state["x"], state["y"]])
+        time_cost = 1 / info["max_steps"]
+        if dist_target <= info["halfwidth_landing_area"]:
+            return +1.0
+        return -time_cost
 
 
 class LLEvalConfig(EvalConfig):
@@ -42,6 +58,7 @@ class LLEvalConfig(EvalConfig):
             'dist_target': target_dist,
             'halfwidth_landing_area': info['halfwidth_landing_area']
         }
+        self._max_episode_len = info["max_steps"]
         return monitored_state
 
     def eval_episode(self, episode) -> float:

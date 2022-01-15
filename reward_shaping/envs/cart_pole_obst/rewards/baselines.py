@@ -47,6 +47,22 @@ class CPOSparseReward(RewardFunction):
         return 0.0
 
 
+class CPOSparseTargetReward(RewardFunction):
+    """
+    reward(s,a) := bonus, if target is reached
+    reward(s,a) := small time penalty
+    """
+
+    def __call__(self, state, action=None, next_state=None, info=None) -> float:
+        assert 'x_limit' in info and 'theta_limit' in info
+        assert 'x_target' in info and 'x_target_tol' in info
+        x, theta, collision = next_state['x'], next_state['theta'], next_state['collision']
+        time_cost = 1 / info["max_steps"]
+        if abs(x - info['x_target']) <= info['x_target_tol'] and abs(theta) <= info["theta_target_tol"]:
+            return +1.0
+        return -time_cost
+
+
 class CPOWeightedBaselineReward(WeightedReward):
     """
     reward(s,a) := w_s * sum([score in safeties]) + w_t * sum([score in targets]) + w_c * sum([score in comforts])
@@ -120,7 +136,7 @@ class CPOEvalConfig(EvalConfig):
             'dist_target_x': abs(state['x'] - info['x_target']),
             'dist_target_theta': abs(state['theta'] - info['theta_target']),
         }
-        self._max_episode_len = info['max_episode_len']
+        self._max_episode_len = info['max_steps']
         return monitored_state
 
     def eval_episode(self, episode) -> float:

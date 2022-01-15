@@ -1,5 +1,6 @@
 from reward_shaping.core.helper_fns import DefaultReward
-from reward_shaping.envs.bipedal_walker.rewards.baselines import BWWeightedBaselineReward, BWEvalConfig
+from reward_shaping.envs.bipedal_walker.rewards.baselines import BWWeightedBaselineReward, BWEvalConfig, \
+    BWSparseTargetReward
 from reward_shaping.envs.bipedal_walker.rewards.graph_based import BWChainGraph, \
     BWGraphWithBinarySafetyProgressTargetContinuousIndicator, \
     BWGraphWithBinarySafetyProgressTargetContinuousIndicatorNoComfort
@@ -31,3 +32,5 @@ register_reward('gb_bpr_ci', reward=BWGraphWithBinarySafetyProgressTargetContinu
 register_reward('gb_bpr_ci_noc', reward=BWGraphWithBinarySafetyProgressTargetContinuousIndicatorNoComfort)
 # Evaluation
 register_reward('eval', reward=BWEvalConfig)
+
+register_reward('sparse_target', reward=BWSparseTargetReward)

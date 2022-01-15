@@ -5,8 +5,23 @@ import numpy as np
 import reward_shaping.envs.bipedal_walker.rewards.subtask_rewards as fns
 from reward_shaping.core.configs import EvalConfig
 from reward_shaping.core.helper_fns import monitor_episode
-from reward_shaping.core.reward import WeightedReward
+from reward_shaping.core.reward import WeightedReward, RewardFunction
 from reward_shaping.core.utils import get_normalized_reward
+
+
+class BWSparseTargetReward(RewardFunction):
+    """
+    reward(s,a) := bonus, if target is reached
+    reward(s,a) := small time penalty
+    """
+
+    def __call__(self, state, action=None, next_state=None, info=None) -> float:
+        assert 'speed_x_target' in info
+        assert 'horizontal_speed' in next_state
+        time_cost = 1 / info["max_steps"]
+        if state['horizontal_speed'] >= info['speed_x_target']:
+            return +1.0
+        return -time_cost
 
 
 class BWWeightedBaselineReward(WeightedReward):
@@ -81,7 +96,7 @@ class BWEvalConfig(EvalConfig):
             'phidot': state['hull_angle_speed'],
             'phidot_limit': info['angle_vel_limit']
         }
-        self._max_episode_len = info['max_episode_len']
+        self._max_episode_len = info['max_steps']
         return monitored_state
 
     def eval_episode(self, episode) -> float:
