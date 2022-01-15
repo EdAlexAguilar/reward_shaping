@@ -44,7 +44,7 @@ def load_eval_params(env, task):
     elif env == "cart_pole_obst" and task == "fixed_height":
         params = {"eval": True}
     elif env == "lunar_lander":
-        params = {"eval": True, "max_episode_steps": 500}
+        params = {"eval": True, "max_steps": 500}
     else:
         params = {"eval": True}
     return params
@@ -59,6 +59,7 @@ def make_base_env(env, env_params={}):
         env = BipedalWalker(**env_params)
     elif env == "lunar_lander":
         from reward_shaping.envs import LunarLanderContinuous
+        env = LunarLanderContinuous(**env_params)
         env = LunarLanderContinuous(**env_params)
     else:
         raise NotImplementedError(f"not implemented env for {env}")

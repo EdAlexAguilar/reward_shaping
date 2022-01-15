@@ -1,7 +1,9 @@
 from reward_shaping.core.helper_fns import DefaultReward
-from reward_shaping.envs.lunar_lander.rewards.baselines import LLEvalConfig, LLWeightedBaselineReward
+from reward_shaping.envs.lunar_lander.rewards.baselines import LLEvalConfig, LLWeightedBaselineReward, \
+    LLSparseTargetReward
 from reward_shaping.envs.lunar_lander.rewards.graph_based import LLGraphWithBinarySafetyBinaryIndicator, LLChainGraph, \
     LLGraphWithBinarySafetyContinuousIndicator, LLGraphWithBinarySafetyProgressTimesDistanceTargetContinuousIndicator
+from reward_shaping.envs.lunar_lander.rewards.potential import LLHierarchicalShapingOnSparseTargetReward
 from reward_shaping.envs.lunar_lander.rewards.stl_based import LLSTLReward
 
 _registry = {}
@@ -29,3 +31,6 @@ register_reward('weighted', reward=LLWeightedBaselineReward)
 register_reward('gb_bpdr_ci', reward=LLGraphWithBinarySafetyProgressTimesDistanceTargetContinuousIndicator)
 # Evaluation
 register_reward('eval', reward=LLEvalConfig)
+
+register_reward('sparse_target', reward=LLSparseTargetReward)
+register_reward('hrs_sparse_target', reward=LLHierarchicalShapingOnSparseTargetReward)
