@@ -247,7 +247,7 @@ class CartPoleContObsEnv(gym.Env):
                 'pole_length': self.pole_length, 'axle_y': self.axle_y,
                 'is_feasible': self.is_feasible, 'feasible_height': self.feasible_height,
                 'collision': collision, 'overcome': overcome, 'outside': outside, 'falldown': falldown,
-                'default_reward': reward}
+                'default_reward': reward, 'done': self.done}
         return state, reward, self.done, info
 
     def reward(self):

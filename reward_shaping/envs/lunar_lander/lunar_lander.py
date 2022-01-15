@@ -427,7 +427,8 @@ class LunarLander(gym.Env, EzPickle):
                 "half_width": VIEWPORT_W / SCALE / 2,
                 "halfwidth_landing_area": self.halfwidth_landing_area,
                 "collision": self.game_over,
-                "default_reward": reward}
+                "default_reward": reward,
+                "done": done}
 
         return state, reward, done, info
 

@@ -8,7 +8,7 @@ from reward_shaping.training.train import train
 def main(args):
     train_params = {'steps': args.steps,
                     'video_every': int(1e5),    # note: rendering causes trouble with containers, eventually disable it
-                    'n_recorded_episodes': 20,
+                    'n_recorded_episodes': 3,
                     'eval_every': min(10000, int(args.steps / 10)),
                     'n_eval_episodes': 10,
                     'checkpoint_every': int(args.steps / 10)}

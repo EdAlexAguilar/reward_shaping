@@ -498,6 +498,7 @@ class BipedalWalker(gym.Env, EzPickle):
                 "angle_vel_limit": self.angle_vel_limit,
                 "speed_x_target": self.speed_x_target,
                 "default_reward": reward,
+                "done": done
                 }
         return state, reward, done, info
 
