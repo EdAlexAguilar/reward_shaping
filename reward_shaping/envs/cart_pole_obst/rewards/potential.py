@@ -5,25 +5,24 @@ import numpy as np
 class CPOHierarchicalShapingOnSparseTargetReward(CPOSparseTargetReward):
 
     def _hrs_potential(self, state, info):
-        assert 'x_target' in info
-        assert 'pole_length' in info
-        assert 'axle_y' in info
+        assert all([s in state for s in ["x", "theta", "collision"]])
+        assert all([i in info for i in ["x_target", "theta_limit", "theta_target_tol", "pole_length", "axle_y"]])
+        x, theta, collision = state['x'], state['theta'], state["collision"]
         #
-        falldown = (state["theta"] <= info["theta_limit"])
-        outside = (state["x"] <= info["x_limit"])
-        collision = (state["collision"]<=0)
+        falldown = (theta <= info["theta_limit"])
+        outside = (x <= info["x_limit"])
+        collision = (collision <= 0)
         safety_reward = int(falldown) + int(outside) + int(collision)
         safety_weight = int(falldown) * int(outside) * int(collision)
         #
-        x, theta = state['x'], state['theta']
         pole_x, pole_y = x + info['pole_length'] * np.sin(theta), \
                          info['axle_y'] + info['pole_length'] * np.cos(theta)
         goal_x, goal_y = info['x_target'], info['axle_y'] + info['pole_length']
-        dist_goal = np.sqrt((goal_x - pole_x) ** 2 + (goal_y - pole_y) ** 2)
+        dist_goal = np.linalg.norm([goal_x - pole_x, goal_y - pole_y])
         target_reward = 1 - np.clip(dist_goal, 0, 2.5) / 2.5
         target_weight = target_reward
         #
-        dist_to_balance = 1 / info["theta_target_tol"] * np.clip(abs(state["theta"]), 0, info["theta_target_tol"])
+        dist_to_balance = 1 / info["theta_target_tol"] * np.clip(abs(theta), 0, info["theta_target_tol"])
         comfort_reward = 1 - dist_to_balance
         return safety_reward + target_reward + safety_weight * target_weight * comfort_reward
 

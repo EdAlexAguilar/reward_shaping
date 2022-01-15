@@ -163,6 +163,7 @@ class BipedalWalker(gym.Env, EzPickle):
             joint3_angle=Box(low=-np.Inf, high=np.Inf, dtype=np.float32, shape=(1,)),
             joint3_angle_speed=Box(low=-np.Inf, high=np.Inf, dtype=np.float32, shape=(1,)),
             ground_contact_leg1=Box(low=0.0, high=1.0, dtype=np.float32, shape=(1,)),
+            collision=Box(low=0.0, high=1.0, dtype=np.float32, shape=(1,)),
             lidar=Box(low=0.0, high=1.0, dtype=np.float32, shape=(10,)),
         ))
 
@@ -459,6 +460,7 @@ class BipedalWalker(gym.Env, EzPickle):
             "joint3_angle": self.joints[3].angle + 1.0,
             "joint3_angle_speed": self.joints[3].speed / SPEED_KNEE,
             "ground_contact_leg1": 1.0 if self.legs[3].ground_contact else 0.0,
+            "collision": 1.0 if self.game_over else 0.0,
             "lidar": np.array([l.fraction for l in self.lidar])
         }
 
@@ -563,7 +565,7 @@ if __name__ == "__main__":
         vars = "hull_angle,hull_angle_speed,horizontal_speed,vertical_speed," \
                "joint0_angle,joint0_angle_speed,joint1_angle,joint1_angle_speed," \
                "ground_contact_leg0,joint2_angle,joint2_angle_speed,joint3_angle," \
-               "joint3_angle_speed,ground_contact_leg1"
+               "joint3_angle_speed,ground_contact_leg1,collision"
         return np.concatenate([[state[k] for k in vars.split(",")], state['lidar']])
 
 
