@@ -4,7 +4,8 @@ from reward_shaping.envs.bipedal_walker.rewards.baselines import BWWeightedBasel
 from reward_shaping.envs.bipedal_walker.rewards.graph_based import BWChainGraph, \
     BWGraphWithBinarySafetyProgressTargetContinuousIndicator, \
     BWGraphWithBinarySafetyProgressTargetContinuousIndicatorNoComfort
-from reward_shaping.envs.bipedal_walker.rewards.potential import BWHierarchicalShapingOnSparseTargetReward
+from reward_shaping.envs.bipedal_walker.rewards.potential import BWHierarchicalShapingOnSparseTargetReward, \
+    BWHierarchicalShapingOnSparseTargetRewardLiveness
 from reward_shaping.envs.bipedal_walker.rewards.stl_based import BWSTLReward
 
 _registry = {}
@@ -36,3 +37,4 @@ register_reward('eval', reward=BWEvalConfig)
 
 register_reward('sparse_target', reward=BWSparseTargetReward)
 register_reward('hrs_sparse_target', reward=BWHierarchicalShapingOnSparseTargetReward)
+register_reward('hrs_sparse_target_liveness', reward=BWHierarchicalShapingOnSparseTargetRewardLiveness)

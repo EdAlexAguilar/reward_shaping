@@ -177,6 +177,7 @@ class BipedalWalker(gym.Env, EzPickle):
         self.speed_y_limit = speed_y_limit
         self.angle_vel_limit = angle_vel_limit
         self.speed_x_target = speed_x_target
+        self.target_x = target_x / 1600 * max_steps
         self.step_count = 0
 
         self.reset()
@@ -483,7 +484,7 @@ class BipedalWalker(gym.Env, EzPickle):
             reward = -100
 
         done = bool(
-            pos[0] < 0 or pos[0] > target_x
+            pos[0] < 0 or pos[0] > self.target_x
             or self.step_count > self.max_episode_steps
             or (self.terminate_on_collision and self.game_over))
 
@@ -491,7 +492,7 @@ class BipedalWalker(gym.Env, EzPickle):
         info = {"time": self.step_count,
                 "max_steps": self.max_episode_steps,
                 "position_x": pos[0],
-                "target_x": target_x,
+                "target_x": self.target_x,
                 "norm_target_x": 1.0,
                 "collision": self.game_over,
                 "dist_hull_limit": self.dist_hull_limit,
@@ -570,7 +571,7 @@ if __name__ == "__main__":
 
 
     # Heurisic: suboptimal, have no notion of balance.
-    env = BipedalWalker(seed=np.random.randint(0, 10000))
+    env = BipedalWalker(seed=np.random.randint(0, 10000), max_steps=500)
     env.reset()
     steps = 0
     total_reward = 0

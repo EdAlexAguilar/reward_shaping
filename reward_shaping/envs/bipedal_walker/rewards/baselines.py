@@ -24,6 +24,21 @@ class BWSparseTargetReward(RewardFunction):
         return -time_cost
 
 
+class BWSparseLivenessTargetReward(RewardFunction):
+    """
+    reward(s,a) := bonus, if target is reached
+    reward(s,a) := small time penalty
+    """
+
+    def __call__(self, state, action=None, next_state=None, info=None) -> float:
+        assert 'speed_x_target' in info
+        assert 'horizontal_speed' in next_state
+        time_cost = 1 / info["max_steps"]
+        if info['position_x'] >= info['target_x']:
+            return +1.0
+        return -time_cost
+
+
 class BWWeightedBaselineReward(WeightedReward):
     """
     reward(s,a) := w_s * sum([score in safeties]) + w_t * sum([score in targets]) + w_c * sum([score in comforts])
