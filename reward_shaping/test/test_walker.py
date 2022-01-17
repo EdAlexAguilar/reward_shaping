@@ -43,6 +43,11 @@ class TestBipedalWalker(TestCase):
         result = generic_env_test(env_name, task, reward)
         self.assertTrue(result)
 
+    def test_sparse_repeat(self):
+        reward = "hrs_sparse_target"
+        result = generic_env_test(env_name, task, reward)
+        self.assertTrue(result)
+
 
 class TestTrainingLoop(TestCase):
 
