@@ -27,6 +27,20 @@ class BWSparseTargetReward(RewardFunction):
             return +1.0
         return -time_cost
 
+class BWZeroTargetReward(RewardFunction):
+    """
+    reward(s,a) := 0
+    """
+
+    def __call__(self, state, action=None, next_state=None, info=None) -> float:
+        assert 'speed_x_target' in info
+        assert 'horizontal_speed' in next_state
+        """
+        idea1: scale the target reward over the episode length
+        idea2: give penalty for not-advancing in the sparse base reward        
+        """
+        return 0.0
+
 
 class BWSparseNegTargetReward(RewardFunction):
     """
