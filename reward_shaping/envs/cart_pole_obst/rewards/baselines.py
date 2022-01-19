@@ -80,7 +80,7 @@ class CPOProgressTargetReward(RewardFunction):
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
         assert 'x_limit' in info and 'theta_limit' in info
         assert 'x_target' in info and 'x_target_tol' in info
-        if state['collision'] > 0:
+        if info['collision'] or info['outside'] or info['falldown']:
             return -1
         progress = self.target_potential(next_state, info) - self.target_potential(state, info)
         return progress
