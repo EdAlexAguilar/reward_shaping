@@ -9,21 +9,26 @@ from reward_shaping.training.utils import make_env, make_agent, load_env_params,
 def generic_env_test(env_name, task, reward_name, potential=False):
     seed = np.random.randint(0, 1000000)
     env, env_params = make_env(env_name, task, reward_name, use_potential=potential, eval=True, logdir=None, seed=seed)
+    from stable_baselines3 import SAC
+    agent = SAC.load("model_1000000_steps.zip")
     # check
     check_env(env)
     # evaluation
-    for _ in range(2):
-        _ = env.reset()
+    for _ in range(1):
+        obs = env.reset()
         env.render()
         tot_reward = 0.0
         done = False
+        t = 0
         while not done:
-            action = env.action_space.sample()
+            t += 1
+            #action = env.action_space.sample()
+            action, _ = agent.predict(obs)
             obs, reward, done, info = env.step(action)
             print(reward)
             tot_reward += reward
             env.render()
-        print(f"[{reward_name}] tot reward: {tot_reward:.3f}")
+        print(f"[{reward_name}] tot steps: {t}, tot reward: {tot_reward:.3f}")
     env.close()
     return True
 

@@ -8,7 +8,7 @@ from reward_shaping.envs.cart_pole_obst.rewards.graph_based import CPOGraphWithC
     CPOGraphContinuousSafetyProgressMaxTargetContinuousIndicator, \
     CPOGraphBinarySafetyProgressDistanceTargetContinuousIndicator
 from reward_shaping.envs.cart_pole_obst.rewards.potential import CPOHierarchicalShapingOnSparseTargetReward, \
-    CPOHierarchicalShapingOnSafeProgressReward
+    CPOHierarchicalShapingOnSafeProgressReward, CPOHierarchicalPotentialShaping
 from reward_shaping.envs.cart_pole_obst.rewards.stl_based import CPOSTLReward
 
 _registry = {}
@@ -38,3 +38,5 @@ register_reward('hrs_sparse_target', reward=CPOHierarchicalShapingOnSparseTarget
 
 register_reward('safe_progress', reward=CPOProgressTargetReward)
 register_reward('hrs_safe_progress', reward=CPOHierarchicalShapingOnSafeProgressReward)
+
+register_reward('hrs_pot_shaping', reward=CPOHierarchicalPotentialShaping)

@@ -58,6 +58,11 @@ class CPOSparseTargetReward(RewardFunction):
         assert 'x_target' in info and 'x_target_tol' in info
         x, theta, collision = next_state['x'], next_state['theta'], next_state['collision']
         time_cost = 1 / info["max_steps"]
+        falldown = (abs(theta) > info["theta_limit"])
+        outside = (abs(x) > info["x_limit"])
+        collision = (collision > 0)
+        if falldown or outside or collision:
+            return -1
         if abs(x - info['x_target']) <= info['x_target_tol'] and abs(theta) <= info["theta_target_tol"]:
             return +1.0
         return -time_cost
@@ -80,8 +85,6 @@ class CPOProgressTargetReward(RewardFunction):
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
         assert 'x_limit' in info and 'theta_limit' in info
         assert 'x_target' in info and 'x_target_tol' in info
-        if info['collision'] or info['outside'] or info['falldown']:
-            return -1
         progress = self.target_potential(next_state, info) - self.target_potential(state, info)
         return progress
 
