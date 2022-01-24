@@ -24,7 +24,7 @@ def hrs_potential(state, info):
 class BWHierarchicalShapingOnSparseTargetReward(BWSparseTargetReward):
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        # note: for episodic undiscounted (gamma=1) tasks, terminal state must have 0 potential
+        # note: for episodic undiscounted (gamma=1) config, terminal state must have 0 potential
         reward = super(BWHierarchicalShapingOnSparseTargetReward, self).__call__(state, action, next_state, info)
         if not info["done"]:
             potential = hrs_potential(next_state, info) - hrs_potential(state, info)
@@ -36,7 +36,7 @@ class BWHierarchicalShapingOnSparseTargetReward(BWSparseTargetReward):
 class BWHierarchicalShapingOnSparseNegTargetReward(BWSparseNegTargetReward):
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        # note: for episodic undiscounted (gamma=1) tasks, terminal state must have 0 potential
+        # note: for episodic undiscounted (gamma=1) config, terminal state must have 0 potential
         reward = super(BWHierarchicalShapingOnSparseNegTargetReward, self).__call__(state, action, next_state, info)
         if not info["done"]:
             potential = hrs_potential(next_state, info) - hrs_potential(state, info)
@@ -48,7 +48,7 @@ class BWHierarchicalShapingOnSparseNegTargetReward(BWSparseNegTargetReward):
 class BWHierarchicalShapingOnSparseNegSmallTargetReward(BWSparseNegSmallTargetReward):
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        # note: for episodic undiscounted (gamma=1) tasks, terminal state must have 0 potential
+        # note: for episodic undiscounted (gamma=1) config, terminal state must have 0 potential
         reward = super(BWHierarchicalShapingOnSparseNegSmallTargetReward, self).__call__(state, action, next_state,
                                                                                          info)
         if not info["done"]:
@@ -61,7 +61,7 @@ class BWHierarchicalShapingOnSparseNegSmallTargetReward(BWSparseNegSmallTargetRe
 class BWHierarchicalShapingNoTargetReward(BWZeroTargetReward):
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        # note: for episodic undiscounted (gamma=1) tasks, terminal state must have 0 potential
+        # note: for episodic undiscounted (gamma=1) config, terminal state must have 0 potential
         reward = super(BWHierarchicalShapingNoTargetReward, self).__call__(state, action, next_state, info)
         if not info["done"]:
             potential = hrs_potential(next_state, info) - hrs_potential(state, info)

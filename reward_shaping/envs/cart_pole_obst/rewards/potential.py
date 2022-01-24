@@ -28,7 +28,7 @@ class CPOHierarchicalShapingOnSparseTargetReward(CPOSparseTargetReward):
         return safety_reward + safety_weight * target_reward + safety_weight * target_weight * comfort_reward
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        # note: for episodic undiscounted (gamma=1) tasks, terminal state must have 0 potential
+        # note: for episodic undiscounted (gamma=1) config, terminal state must have 0 potential
         reward = super(CPOHierarchicalShapingOnSparseTargetReward, self).__call__(state, action, next_state, info)
         if not info["done"]:
             potential = self._hrs_potential(next_state, info) - self._hrs_potential(state, info)
@@ -62,7 +62,7 @@ class CPOHierarchicalShapingOnSafeProgressReward(CPOProgressTargetReward):
         return safety_reward + safety_weight * target_reward + safety_weight * target_weight * comfort_reward
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        # note: for episodic undiscounted (gamma=1) tasks, terminal state must have 0 potential
+        # note: for episodic undiscounted (gamma=1) config, terminal state must have 0 potential
         reward = super(CPOHierarchicalShapingOnSafeProgressReward, self).__call__(state, action, next_state, info)
         if not info["done"]:
             potential = self._hrs_potential(next_state, info) - self._hrs_potential(state, info)

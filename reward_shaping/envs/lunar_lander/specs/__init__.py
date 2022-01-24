@@ -28,7 +28,7 @@ def _build_no_outside(_):
 def _build_reach_target(env_params):
     assert "halfwidth_landing_area" in env_params
     dist_x = lambda state, info: env_params["halfwidth_landing_area"] - abs(state["x"])
-    dist_y = lambda state, info: 0.001 - abs(state["y"])
+    dist_y = lambda state, info: 0.0001 - abs(state["y"])
     return lambda state, info: min(dist_x(state, info), dist_y(state, info))
 
 

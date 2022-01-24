@@ -28,7 +28,7 @@ def make_env(env_name, task, reward, use_potential=False, eval=False, logdir=Non
 
 def load_env_params(env, task, **kwargs):
     try:
-        config = pathlib.Path(f"{os.path.dirname(__file__)}/../envs/{env}/tasks") / f"{task}.yml"
+        config = pathlib.Path(f"{os.path.dirname(__file__)}/../envs/{env}/config") / f"{task}.yml"
         with open(config, 'r') as file:
             params = yaml.load(file, yaml.FullLoader)
     except FileNotFoundError as error:
