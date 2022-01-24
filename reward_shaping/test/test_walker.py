@@ -63,5 +63,8 @@ class TestTrainingLoop(TestCase):
     def test_train_weighted(self):
         generic_training(env_name, task, 'weighted')
 
-    def test_train_hierarchical(self):
+    def test_train_graph_hierarchical(self):
         generic_training(env_name, task, 'gb_bpr_ci')
+
+    def test_train_hierarchical_potentail(self):
+        generic_training(env_name, task, 'hrs_pot')
