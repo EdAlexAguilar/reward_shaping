@@ -31,3 +31,6 @@ register_reward('gb_bpr_ci', reward=BWGraphWithBinarySafetyProgressTargetContinu
 register_reward('gb_bpr_ci_noc', reward=BWGraphWithBinarySafetyProgressTargetContinuousIndicatorNoComfort)
 # Evaluation
 register_reward('eval', reward=BWEvalConfig)
+
+# Hierarchical Potential Shaping
+register_reward('hrs_pot', reward=BWHierarchicalPotentialShaping)

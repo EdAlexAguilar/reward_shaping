@@ -1,17 +1,39 @@
 import numpy as np
 
-def hrs_potential(state, info):
-    assert all(
-        [s in state for s in ["horizontal_speed", "hull_angle", "hull_angle_speed", "vertical_speed", "collision"]])
-    assert all([i in info for i in ["speed_x_target", "angle_hull_limit", "speed_y_limit", "angle_vel_limit"]])
-    #
-    safety_reward = safety_weight = int(state["collision"] <= 0)
-    target_reward = np.clip(state['horizontal_speed'] - info['speed_x_target'], -0.5, 0.5) + 0.5  # norm in 0,1
-    target_weight = target_reward
-    #
-    phi, vy, phi_dot = state["hull_angle"], state["vertical_speed"], state["hull_angle_speed"]
-    comf_angle = 1 - (1 / info["angle_hull_limit"] * np.clip(abs(phi), 0, info["angle_hull_limit"]))
-    comf_vy = 1 - (1 / info["speed_y_limit"] * np.clip(abs(vy), 0, info["speed_y_limit"]))
-    comf_angle_vel = 1 - (1 / info["angle_vel_limit"] * np.clip(abs(phi_dot), 0, info["angle_vel_limit"]))
-    return safety_reward + safety_reward * target_reward + safety_weight * target_weight * (
-            comf_angle + comf_vy + comf_angle_vel)
+from reward_shaping.core.reward import RewardFunction
+
+
+class BWHierarchicalPotentialShaping(RewardFunction):
+    def _safety_potential(self, state, info):
+        return int(state["collision"] <= 0)
+
+    def _target_potential(self, state, info):
+        return np.clip(info["position_x"], 0.0, info["target_x"]) / info["target_x"]
+
+    def _comfort_potential(self, state, info):
+        vx, vy = state["horizontal_speed"], state["vertical_speed"]
+        phi, phi_dot = state["hull_angle"], state["hull_angle_speed"]
+        # keep minimal speed
+        comfort_vx = (1 / (0.5 - info["speed_x_target"]) * np.clip(vx, info['speed_x_target'], 0.5))
+        # keep comfortable angle
+        comf_angle = 1 - (1 / info["angle_hull_limit"] * np.clip(abs(phi), 0, info["angle_hull_limit"]))
+        # keep comfortable oscillations
+        comf_vy = 1 - (1 / info["speed_y_limit"] * np.clip(abs(vy), 0, info["speed_y_limit"]))
+        # keep comfortable angular velocity
+        comf_angle_vel = 1 - (1 / info["angle_vel_limit"] * np.clip(abs(phi_dot), 0, info["angle_vel_limit"]))
+        # hierarchical weights
+        safety_w, target_w = self._safety_potential(state, info), self._target_potential(state, info)
+        return safety_w * target_w * (comfort_vx + comf_vy + comf_angle + comf_angle_vel)
+
+    def __call__(self, state, action=None, next_state=None, info=None) -> float:
+        # base reward
+        base_reward = 0.0
+        if info["position_x"] >= info["target_x"]:
+            base_reward = 1.0
+        # shaping
+        if info["done"]:
+            return base_reward
+        shaping_safety = self._safety_potential(next_state, info) - self._safety_potential(state, info)
+        shaping_target = self._target_potential(next_state, info) - self._target_potential(state, info)
+        shaping_comfort = self._comfort_potential(next_state, info) - self._comfort_potential(state, info)
+        return base_reward + shaping_safety + shaping_target + shaping_comfort
