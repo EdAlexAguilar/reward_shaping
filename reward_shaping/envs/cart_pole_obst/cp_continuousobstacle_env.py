@@ -259,10 +259,7 @@ class CartPoleContObsEnv(gym.Env):
                 return - 1.0  # early termination: either collision, outside, falldown, battery
             elif self.is_feasible and abs(self.state['x'] - self.x_target) <= self.x_target_tol:
                 return + 1.0  # successfully reach the target (when possible)
-            else:
-                return 0.0
-        else:
-            return 0.0
+        return 0.0
 
     def reset(self):
         """
