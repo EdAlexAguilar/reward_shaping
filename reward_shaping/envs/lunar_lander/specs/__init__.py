@@ -42,8 +42,8 @@ def _build_comfortable_angle_vel(env_params):
     return lambda state, info: env_params['angle_speed_limit'] - abs(state['angle_speed'])
 
 
-register_spec('S1', Operator.ENSURE, _build_no_collision)
-register_spec('S2', Operator.ENSURE, _build_no_outside)
-register_spec("T", Operator.CONQUER, _build_reach_target)
-register_spec("C1", Operator.ENCOURAGE, _build_comfortable_angle)
-register_spec("C2", Operator.ENCOURAGE, _build_comfortable_angle_vel)
+register_spec('s1_coll', Operator.ENSURE, _build_no_collision)
+register_spec('s2_exit', Operator.ENSURE, _build_no_outside)
+register_spec("t_origin", Operator.CONQUER, _build_reach_target)
+register_spec("c1_ang", Operator.ENCOURAGE, _build_comfortable_angle)
+register_spec("c2_angvel", Operator.ENCOURAGE, _build_comfortable_angle_vel)

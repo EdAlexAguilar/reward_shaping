@@ -41,8 +41,8 @@ def _build_balance(env_params):
     return lambda state, info: env_params["theta_target_tol"] - abs(state["theta"] - env_params["theta_target"])
 
 
-register_spec("s1_nofalldown", Operator.ENSURE, _build_no_falldown)
-register_spec("s2_noexit", Operator.ENSURE, _build_no_outside)
-register_spec("s3_nocollide", Operator.ENSURE, _build_no_collision)
-register_spec("t_conquerorigin", Operator.CONQUER, _build_reach_target)
+register_spec("s1_fall", Operator.ENSURE, _build_no_falldown)
+register_spec("s2_exit", Operator.ENSURE, _build_no_outside)
+register_spec("s3_coll", Operator.ENSURE, _build_no_collision)
+register_spec("t_origin", Operator.CONQUER, _build_reach_target)
 register_spec("c_balance", Operator.ENCOURAGE, _build_balance)

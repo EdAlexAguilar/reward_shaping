@@ -6,7 +6,7 @@ import yaml
 from gym.wrappers import Monitor
 from stable_baselines3.common.callbacks import EvalCallback, CheckpointCallback
 
-from .callbacks import VideoRecorderCallback
+from .callbacks import VideoRecorderCallback, CustomEvalCallback
 from .utils import make_env, make_agent
 
 
@@ -30,9 +30,9 @@ def make_log_dirs(args):
 def get_callbacks(env, logdir, checkpointdir, train_params):
     video_cb = VideoRecorderCallback(Monitor(env, logdir / "videos"), render_freq=train_params['video_every'],
                                      n_eval_episodes=train_params['n_recorded_episodes'])
-    eval_cb = EvalCallback(env, eval_freq=train_params['eval_every'],
-                           n_eval_episodes=train_params['n_eval_episodes'],
-                           deterministic=True, render=False)
+    eval_cb = CustomEvalCallback(env, eval_freq=train_params['eval_every'],
+                                 n_eval_episodes=train_params['n_eval_episodes'],
+                                 deterministic=True, render=False)
     checkpoint_cb = CheckpointCallback(save_freq=train_params['checkpoint_every'], save_path=checkpointdir,
                                        name_prefix='model')
     return [video_cb, eval_cb, checkpoint_cb]

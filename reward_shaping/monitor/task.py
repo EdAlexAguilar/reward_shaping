@@ -18,6 +18,10 @@ class RLTask(gym.Wrapper):
         for i, (label, op, pred) in enumerate(requirements):
             self._monitors[i] = Monitor.from_spec(op, pred)
 
+    @property
+    def req_labels(self):
+        return [r for r, op, fn in self._requirements]
+
     def _get_monitor_infos(self, obs, info):
         infos = {}
         for i, monitor in self._monitors.items():
