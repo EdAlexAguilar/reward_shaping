@@ -9,67 +9,6 @@ from reward_shaping.core.reward import WeightedReward, RewardFunction
 from reward_shaping.core.utils import get_normalized_reward
 
 
-class BWSparseTargetReward(RewardFunction):
-    """
-    reward(s,a) := bonus, if target is reached
-    reward(s,a) := small time penalty
-    """
-
-    def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        assert 'speed_x_target' in info
-        assert 'horizontal_speed' in next_state
-        """
-        idea1: scale the target reward over the episode length
-        idea2: give penalty for not-advancing in the sparse base reward        
-        """
-        time_cost = 1 / info["max_steps"]
-        if state['horizontal_speed'] >= info['speed_x_target']:
-            return +1.0
-        return -time_cost
-
-class BWZeroTargetReward(RewardFunction):
-    """
-    reward(s,a) := 0
-    """
-
-    def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        assert 'speed_x_target' in info
-        assert 'horizontal_speed' in next_state
-        """
-        idea1: scale the target reward over the episode length
-        idea2: give penalty for not-advancing in the sparse base reward        
-        """
-        return 0.0
-
-
-class BWSparseNegTargetReward(RewardFunction):
-    """
-    idea: if you dont progress, penalize
-    """
-
-    def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        assert 'speed_x_target' in info
-        assert 'horizontal_speed' in next_state
-        time_cost = 1 / info["max_steps"]
-        if state['horizontal_speed'] >= info['speed_x_target']:
-            return time_cost
-        return -1.0
-
-
-class BWSparseNegSmallTargetReward(RewardFunction):
-    """
-    idea: if you dont progress, small penalize
-    """
-
-    def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        assert 'speed_x_target' in info
-        assert 'horizontal_speed' in next_state
-        time_cost = 1 / info["max_steps"]
-        if state['horizontal_speed'] >= info['speed_x_target']:
-            return time_cost
-        return -time_cost
-
-
 class BWWeightedBaselineReward(WeightedReward):
     """
     reward(s,a) := w_s * sum([score in safeties]) + w_t * sum([score in targets]) + w_c * sum([score in comforts])
@@ -133,6 +72,8 @@ class BWEvalConfig(EvalConfig):
         monitored_state = {
             'time': info['time'],
             'collision': info['collision'],  # already 0 or 1
+            'position_x': info['position_x'],
+            'target_x': info['target_x'],
             'vx': state['horizontal_speed'],
             'vx_target': info['speed_x_target'],
             'phi': state['hull_angle'],
@@ -154,18 +95,25 @@ class BWEvalConfig(EvalConfig):
         safety_rho = monitor_episode(stl_spec=safety_spec,
                                      vars=self.monitoring_variables, types=self.monitoring_types,
                                      episode=episode)[0][1]
-        recurrence_spec = "vx>=vx_target"
-        recurrence_trace = monitor_episode(stl_spec=recurrence_spec,
-                                           vars=self.monitoring_variables, types=self.monitoring_types,
-                                           episode=episode)
-        recurrence_trace = recurrence_trace + [[-1, -1] for _ in range((self._max_episode_len - len(recurrence_trace)))]
-        recurrence_mean = np.mean([float(rob >= 0) for t, rob in recurrence_trace])
-
-        comfort_spec = "(abs(phi) <= phi_limit) and (abs(vy) <= vy_limit) and (abs(phidot) <= phidot_limit)"
-        comfort_trace = monitor_episode(stl_spec=comfort_spec,
-                                        vars=self.monitoring_variables, types=self.monitoring_types,
-                                        episode=episode)
-        comfort_trace = comfort_trace + [[-1, -1] for _ in range((self._max_episode_len - len(comfort_trace)))]
-        comfort_mean = np.mean([float(rob >= 0) for t, rob in comfort_trace])
-        tot_score = float(safety_rho >= 0) + 0.5 * recurrence_mean + 0.25 * comfort_mean
+        #
+        target_spec = "eventually(position_x>=target_x)"
+        target_rho = monitor_episode(stl_spec=target_spec,
+                                     vars=self.monitoring_variables, types=self.monitoring_types,
+                                     episode=episode)[0][1]
+        #
+        comfort_vel_spec = "(vx>=vx_target)"
+        comfort_ang_spec = "(abs(phi)<=phi_limit)"
+        comfort_vy_spec = "(abs(vy)<=vy_limit)"
+        comfort_angvel_spec = "(abs(phidot)<=phidot_limit)"
+        comfort_metrics = []
+        for comfort_spec in [comfort_vel_spec, comfort_ang_spec, comfort_vy_spec, comfort_angvel_spec]:
+            comfort_trace = monitor_episode(stl_spec=comfort_spec,
+                                            vars=self.monitoring_variables, types=self.monitoring_types,
+                                            episode=episode)
+            comfort_trace = comfort_trace + [[-1, -1] for _ in
+                                             range((self._max_episode_len - len(comfort_trace)))]
+            comfort_mean = np.mean([float(rob >= 0) for t, rob in comfort_trace])
+            comfort_metrics.append(comfort_mean)
+        #
+        tot_score = float(safety_rho >= 0) + 0.5 * target_rho + 0.25 * np.mean(comfort_metrics)
         return tot_score

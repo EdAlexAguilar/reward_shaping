@@ -183,5 +183,6 @@ class CPOEvalConfig(EvalConfig):
                                         episode=episode)
         comfort_trace = comfort_trace + [[-1, -1] for _ in range((self._max_episode_len - len(comfort_trace)))]
         comfort_mean = np.mean([float(rob >= 0) for t, rob in comfort_trace])
+        #
         tot_score = float(safety_rho >= 0) + 0.5 * float(target_rho >= 0) + 0.25 * comfort_mean
         return tot_score

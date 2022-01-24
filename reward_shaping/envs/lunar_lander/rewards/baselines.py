@@ -65,22 +65,26 @@ class LLEvalConfig(EvalConfig):
         # discard any eventual prefix
         i_init = np.nonzero(episode['time'] == np.min(episode['time']))[-1][-1]
         episode = {k: l[i_init:] for k, l in episode.items()}
-        # safety
+        #
         safety_spec = "always((collision <= 0.0) and (abs(x) <= x_limit))"
         safety_rho = monitor_episode(stl_spec=safety_spec, vars=self.monitoring_variables,
                                      types=self.monitoring_types, episode=episode)[0][1]
-        # persistence
+        #
         target_spec = "eventually(always(dist_target <= halfwidth_landing_area))"
         target_rho = monitor_episode(stl_spec=target_spec, vars=self.monitoring_variables,
                                      types=self.monitoring_types, episode=episode)[0][1]
-        # comfort
-        comfort_spec = "(abs(angle) <= angle_limit) and (abs(angle_speed) <= angle_speed_limit)"
-        comfort_trace = monitor_episode(stl_spec=comfort_spec, vars=self.monitoring_variables,
-                                        types=self.monitoring_types, episode=episode)
-        comfort_trace = comfort_trace + [[-1, -1] for _ in range(self._max_episode_len - len(comfort_trace))]
-        comfort_mean = np.mean([float(rob >= 0) for t, rob in comfort_trace])
-        # total score
-        tot_score = float(safety_rho >= 0) + 0.5 * float(target_rho >= 0) + 0.25 * comfort_mean
+        #
+        comfort_ang_spec = "(abs(angle) <= angle_limit)"
+        comfort_angspeed_spec = "(abs(angle_speed) <= angle_speed_limit)"
+        comfort_metrics = []
+        for comfort_spec in [comfort_ang_spec, comfort_angspeed_spec]:
+            comfort_trace = monitor_episode(stl_spec=comfort_spec, vars=self.monitoring_variables,
+                                            types=self.monitoring_types, episode=episode)
+            comfort_trace = comfort_trace + [[-1, -1] for _ in range(self._max_episode_len - len(comfort_trace))]
+            comfort_mean = np.mean([float(rob >= 0) for t, rob in comfort_trace])
+            comfort_metrics.append(comfort_mean)
+        #
+        tot_score = float(safety_rho >= 0) + 0.5 * float(target_rho >= 0) + 0.25 * np.mean(comfort_mean)
         return tot_score
 
 

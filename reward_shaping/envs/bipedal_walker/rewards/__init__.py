@@ -1,12 +1,8 @@
 from reward_shaping.core.helper_fns import DefaultReward
-from reward_shaping.envs.bipedal_walker.rewards.baselines import BWWeightedBaselineReward, BWEvalConfig, \
-    BWSparseTargetReward, BWSparseNegTargetReward, BWSparseNegSmallTargetReward, BWZeroTargetReward
+from reward_shaping.envs.bipedal_walker.rewards.baselines import BWWeightedBaselineReward, BWEvalConfig
 from reward_shaping.envs.bipedal_walker.rewards.graph_based import BWChainGraph, \
     BWGraphWithBinarySafetyProgressTargetContinuousIndicator, \
     BWGraphWithBinarySafetyProgressTargetContinuousIndicatorNoComfort
-from reward_shaping.envs.bipedal_walker.rewards.potential import BWHierarchicalShapingOnSparseTargetReward, \
-    BWHierarchicalShapingOnSparseNegTargetReward, BWHierarchicalShapingOnSparseNegSmallTargetReward, \
-    BWHierarchicalShapingNoTargetReward
 from reward_shaping.envs.bipedal_walker.rewards.stl_based import BWSTLReward
 
 _registry = {}
@@ -35,14 +31,3 @@ register_reward('gb_bpr_ci', reward=BWGraphWithBinarySafetyProgressTargetContinu
 register_reward('gb_bpr_ci_noc', reward=BWGraphWithBinarySafetyProgressTargetContinuousIndicatorNoComfort)
 # Evaluation
 register_reward('eval', reward=BWEvalConfig)
-
-register_reward('sparse_target', reward=BWSparseTargetReward)
-register_reward('hrs_sparse_target', reward=BWHierarchicalShapingOnSparseTargetReward)
-
-register_reward('sparse_neg_target', reward=BWSparseNegTargetReward)
-register_reward('sparse_neg_smalltarget', reward=BWSparseNegSmallTargetReward)
-register_reward('hrs_sparse_neg_target', reward=BWHierarchicalShapingOnSparseNegTargetReward)
-register_reward('hrs_sparse_neg_smalltarget', reward=BWHierarchicalShapingOnSparseNegSmallTargetReward)
-
-register_reward('zero_target', reward=BWZeroTargetReward)
-register_reward('hrs_zero_target', reward=BWHierarchicalShapingNoTargetReward)
