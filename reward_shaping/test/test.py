@@ -9,8 +9,6 @@ from reward_shaping.training.utils import make_env, make_agent, load_env_params,
 def generic_env_test(env_name, task, reward_name, potential=False):
     seed = np.random.randint(0, 1000000)
     env, env_params = make_env(env_name, task, reward_name, use_potential=potential, eval=True, logdir=None, seed=seed)
-    from stable_baselines3 import SAC
-    agent = SAC.load("model_1000000_steps.zip")
     # check
     check_env(env)
     # evaluation
@@ -22,8 +20,7 @@ def generic_env_test(env_name, task, reward_name, potential=False):
         t = 0
         while not done:
             t += 1
-            #action = env.action_space.sample()
-            action, _ = agent.predict(obs)
+            action = env.action_space.sample()
             obs, reward, done, info = env.step(action)
             print(reward)
             tot_reward += reward

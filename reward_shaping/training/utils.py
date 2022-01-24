@@ -7,6 +7,7 @@ from gym.wrappers import FlattenObservation
 
 from reward_shaping.core.helper_fns import PotentialReward
 from reward_shaping.core.wrappers import RewardWrapper
+from reward_shaping.monitor.task import RLTask
 
 
 def make_env(env_name, task, reward, use_potential=False, eval=False, logdir=None, seed=0):
@@ -53,14 +54,22 @@ def load_eval_params(env, task):
 def make_base_env(env, env_params={}):
     if env == "cart_pole_obst":
         from reward_shaping.envs import CartPoleContObsEnv
+        from reward_shaping.envs.cart_pole_obst.specs import get_all_specs
         env = CartPoleContObsEnv(**env_params)
+        specs = [(k, op, build_pred(env_params)) for k, (op, build_pred) in get_all_specs().items()]
+        env = RLTask(env=env, requirements=specs)
     elif env == "bipedal_walker":
         from reward_shaping.envs import BipedalWalker
+        from reward_shaping.envs.bipedal_walker.specs import get_all_specs
         env = BipedalWalker(**env_params)
+        specs = [(k, op, build_pred(env_params)) for k, (op, build_pred) in get_all_specs().items()]
+        env = RLTask(env=env, requirements=specs)
     elif env == "lunar_lander":
         from reward_shaping.envs import LunarLanderContinuous
+        from reward_shaping.envs.lunar_lander.specs import get_all_specs
         env = LunarLanderContinuous(**env_params)
-        env = LunarLanderContinuous(**env_params)
+        specs = [(k, op, build_pred(env_params)) for k, (op, build_pred) in get_all_specs().items()]
+        env = RLTask(env=env, requirements=specs)
     else:
         raise NotImplementedError(f"not implemented env for {env}")
     return env
