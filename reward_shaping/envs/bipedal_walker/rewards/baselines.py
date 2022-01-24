@@ -61,11 +61,11 @@ class BWEvalConfig(EvalConfig):
 
     @property
     def monitoring_variables(self):
-        return ['time', 'collision', 'vx', 'phi', 'vy', 'phidot', 'phi_limit', 'vy_limit', 'phidot_limit', 'vx_target']
+        return ['time', 'collision', 'position_x', 'target_x', 'vx', 'vx_target', 'phi', 'vy', 'phidot', 'phi_limit', 'vy_limit', 'phidot_limit', 'vx_target']
 
     @property
     def monitoring_types(self):
-        return ['int', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float']
+        return ['int', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float']
 
     def get_monitored_state(self, state, done, info) -> Dict[str, Any]:
         # compute monitoring variables (all of them normalized in 0,1)
