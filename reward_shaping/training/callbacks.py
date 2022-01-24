@@ -141,7 +141,7 @@ class CustomEvalCallback(EvalCallback):
             self.logger.record("eval/mean_reward", float(mean_reward))
             self.logger.record("eval/mean_ep_length", mean_ep_length)
             for m in mean_metrics:
-                self.logger.record(f"eval/reqs/{m}", float(mean_metrics[m]))
+                self.logger.record(f"reqs/{m}", float(mean_metrics[m]))
 
             if len(self._is_success_buffer) > 0:
                 success_rate = np.mean(self._is_success_buffer)
