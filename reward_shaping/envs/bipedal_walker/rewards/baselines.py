@@ -61,7 +61,7 @@ class BWEvalConfig(EvalConfig):
 
     @property
     def monitoring_variables(self):
-        return ['time', 'collision', 'position_x',
+        return ['time', 'collision', 'x',
                 'target_x', 'vx', 'phi', 'vy', 'phidot', 'phi_limit',
                 'vy_limit', 'phidot_limit', 'vx_target']
 
