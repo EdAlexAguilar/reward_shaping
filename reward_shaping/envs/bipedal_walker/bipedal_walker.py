@@ -149,6 +149,7 @@ class BipedalWalker(gym.Env, EzPickle):
 
         self.action_space = spaces.Box(np.array([-1, -1, -1, -1]), np.array([1, 1, 1, 1]), dtype=np.float32)
         self.observation_space = gym.spaces.Dict(dict(
+            x=Box(low=0, high=1, dtype=np.float32, shape=(1,)),
             hull_angle=Box(low=-np.Inf, high=np.Inf, dtype=np.float32, shape=(1,)),
             hull_angle_speed=Box(low=-np.Inf, high=np.Inf, dtype=np.float32, shape=(1,)),
             horizontal_speed=Box(low=-np.Inf, high=np.Inf, dtype=np.float32, shape=(1,)),
@@ -447,6 +448,7 @@ class BipedalWalker(gym.Env, EzPickle):
             self.world.RayCast(self.lidar[i], self.lidar[i].p1, self.lidar[i].p2)
 
         state = {
+            "x": pos[0] / self.target_x,
             "hull_angle": self.hull.angle,
             "hull_angle_speed": 2.0 * self.hull.angularVelocity / FPS,
             "horizontal_speed": 0.3 * vel.x * (VIEWPORT_W / SCALE) / FPS,

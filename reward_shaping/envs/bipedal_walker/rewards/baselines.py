@@ -74,8 +74,8 @@ class BWEvalConfig(EvalConfig):
         monitored_state = {
             'time': info['time'],
             'collision': info['collision'],  # already 0 or 1
-            'position_x': info['position_x'],
-            'target_x': info['target_x'],
+            'x': state['x'],   # already in 0 or 1
+            'target_x': info['norm_target_x'],
             'vx': state['horizontal_speed'],
             'vx_target': info['speed_x_target'],
             'phi': state['hull_angle'],
@@ -98,7 +98,7 @@ class BWEvalConfig(EvalConfig):
                                      vars=self.monitoring_variables, types=self.monitoring_types,
                                      episode=episode)[0][1]
         #
-        target_spec = "eventually(position_x>=target_x)"
+        target_spec = "eventually(x>=norm_target_x)"
         target_rho = monitor_episode(stl_spec=target_spec,
                                      vars=self.monitoring_variables, types=self.monitoring_types,
                                      episode=episode)[0][1]

@@ -8,7 +8,7 @@ class BWHierarchicalPotentialShaping(RewardFunction):
         return int(state["collision"] <= 0)
 
     def _target_potential(self, state, info):
-        return np.clip(info["position_x"], 0.0, info["target_x"]) / info["target_x"]
+        return np.clip(state["x"], 0.0, 1)  # already normalize, safety check to avoid unexpected values
 
     def _comfort_potential(self, state, info):
         vx, vy = state["horizontal_speed"], state["vertical_speed"]
@@ -28,7 +28,7 @@ class BWHierarchicalPotentialShaping(RewardFunction):
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
         # base reward
         base_reward = 0.0
-        if info["position_x"] >= info["target_x"]:
+        if next_state["x"] >= info["norm_target_x"]:
             base_reward = 1.0
         # shaping
         if info["done"]:
