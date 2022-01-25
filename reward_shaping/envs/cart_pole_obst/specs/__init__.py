@@ -32,8 +32,11 @@ def _build_no_collision(_):
 
 
 def _build_reach_target(env_params):
-    assert "x_target_tol" in env_params and "x_target" in env_params
-    return lambda state, info: env_params['x_target_tol'] - abs(state["x"] - env_params['x_target'])
+    # normalization of robustnesss does not play a big role here because we care only about the sign (sat/unsat)
+    # to eventually increment/reset the target counter
+    dist_x = lambda state, info: info['x_target_tol'] - abs(state["x"] - env_params['x_target'])
+    dist_theta = lambda state, info: info['theta_target_tol'] - abs(state['theta'])
+    return lambda state, info: min(dist_x(state, info), dist_theta(state, info))
 
 
 def _build_balance(env_params):

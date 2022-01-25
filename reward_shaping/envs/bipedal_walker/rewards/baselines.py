@@ -117,5 +117,5 @@ class BWEvalConfig(EvalConfig):
             comfort_mean = np.mean([float(rob >= 0) for t, rob in comfort_trace])
             comfort_metrics.append(comfort_mean)
         #
-        tot_score = float(safety_rho >= 0) + 0.5 * target_rho + 0.25 * np.mean(comfort_metrics)
+        tot_score = float(safety_rho >= 0) + 0.5 * float(target_rho >= 0) + 0.25 * np.mean(comfort_metrics)
         return tot_score
