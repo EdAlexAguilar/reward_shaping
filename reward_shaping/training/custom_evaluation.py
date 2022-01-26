@@ -88,10 +88,7 @@ def evaluate_policy_with_monitors(
                     for m in list_of_metrics:
                         assert m in episode_metrics, f"{m} not found in list of metrics"
                         assert m in info, f"{m} not found in info dictionary"
-                        if m.startswith("t"):
-                            episode_metrics[m].append(int(info[m] > 0))  # target requirements evaluate 0/1
-                        else:
-                            episode_metrics[m].append(info[m] / current_lengths[i])  # safety/comfort as fraction 0..1
+                        episode_metrics[m].append(info[m] / current_lengths[i])  # safety/comfort as fraction 0..1
                     episode_counts[i] += 1
                     current_rewards[i] = 0
                     current_lengths[i] = 0
