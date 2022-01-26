@@ -98,7 +98,7 @@ class BWEvalConfig(EvalConfig):
                                      vars=self.monitoring_variables, types=self.monitoring_types,
                                      episode=episode)[0][1]
         #
-        target_spec = "eventually(x>=norm_target_x)"
+        target_spec = "eventually(x>=target_x)"
         target_rho = monitor_episode(stl_spec=target_spec,
                                      vars=self.monitoring_variables, types=self.monitoring_types,
                                      episode=episode)[0][1]
