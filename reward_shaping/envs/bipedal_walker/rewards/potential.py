@@ -3,7 +3,7 @@ import numpy as np
 from reward_shaping.core.reward import RewardFunction
 
 
-class BWHierarchicalPotentialShapingUnclipped(RewardFunction):
+class BWHierarchicalPotentialShaping(RewardFunction):
     def _safety_potential(self, state, info):
         return int(state["collision"] <= 0)
 
