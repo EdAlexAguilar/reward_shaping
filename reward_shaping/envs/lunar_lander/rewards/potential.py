@@ -1,9 +1,9 @@
 import numpy as np
 
-from reward_shaping.envs.lunar_lander.rewards.baselines import LLSparseTargetReward
+from reward_shaping.core.reward import RewardFunction
 
 
-class LLHierarchicalShapingOnSparseTargetReward(LLSparseTargetReward):
+class LLHierarchicalShapingOnSparseTargetReward(RewardFunction):
     def _check_goal_condition(self, state, info):
         dist_x = info["halfwidth_landing_area"] - abs(state["x"])
         dist_y = 0.0001 - abs(state["y"])

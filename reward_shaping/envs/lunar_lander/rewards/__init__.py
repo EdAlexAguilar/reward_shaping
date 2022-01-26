@@ -32,5 +32,4 @@ register_reward('gb_bpdr_ci', reward=LLGraphWithBinarySafetyProgressTimesDistanc
 # Evaluation
 register_reward('eval', reward=LLEvalConfig)
 
-register_reward('sparse_target', reward=LLSparseTargetReward)
-register_reward('hrs_sparse_target', reward=LLHierarchicalShapingOnSparseTargetReward)
+register_reward('hrs_pot', reward=LLHierarchicalShapingOnSparseTargetReward)
