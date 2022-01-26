@@ -41,9 +41,9 @@ class CPOSparseReward(RewardFunction):
         assert 'x_target' in info and 'x_target_tol' in info
         x, theta, collision = next_state['x'], next_state['theta'], next_state['collision']
         if abs(x - info['x_target']) <= info['x_target_tol']:
-            return +10.0
+            return +1.0
         if abs(theta) > info['theta_limit'] or abs(x) > info['x_limit'] or collision:
-            return -10.0
+            return -1.0
         return 0.0
 
 

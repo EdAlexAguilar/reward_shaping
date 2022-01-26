@@ -39,4 +39,4 @@ register_reward('hrs_sparse_target', reward=CPOHierarchicalShapingOnSparseTarget
 register_reward('safe_progress', reward=CPOProgressTargetReward)
 register_reward('hrs_safe_progress', reward=CPOHierarchicalShapingOnSafeProgressReward)
 
-register_reward('hrs_pot_shaping', reward=CPOHierarchicalPotentialShaping)
+register_reward('hrs_pot', reward=CPOHierarchicalPotentialShaping)

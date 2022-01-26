@@ -10,17 +10,20 @@ class BWHierarchicalPotentialShapingUnclipped(RewardFunction):
     def _target_potential(self, state, info):
         return np.clip(state["x"], 0.0, 1)  # already normalize, safety check to avoid unexpected values
 
+    def _clip_and_norm(self, v, min, max):
+        return (np.clip(v, min, max) - min) / (max-min)
+
     def _comfort_potential(self, state, info):
         vx, vy = state["horizontal_speed"], state["vertical_speed"]
         phi, phi_dot = state["hull_angle"], state["hull_angle_speed"]
         # keep minimal speed
-        comfort_vx = (1 / 0.5 * np.clip(vx, 0.0, 0.5))
+        comfort_vx = self._clip_and_norm(vx, 0.0, info["speed_x_target"])
         # keep comfortable angle
-        comf_angle = 1 - np.clip(abs(phi), 0, 1.0)
+        comf_angle = 1 - self._clip_and_norm(abs(phi), info["angle_hull_limit"], 1.0)
         # keep comfortable oscillations
-        comf_vy = 1 - np.clip(abs(vy), 0, 1.0)
+        comf_vy = 1 - self._clip_and_norm(abs(vy), info["speed_y_limit"], 1.0)
         # keep comfortable angular velocity
-        comf_angle_vel = 1 - np.clip(abs(phi_dot), 0, 1.0)
+        comf_angle_vel = 1 - self._clip_and_norm(abs(phi_dot), info["angle_vel_limit"], 1.0)
         # hierarchical weights
         safety_w, target_w = self._safety_potential(state, info), self._target_potential(state, info)
         return safety_w * target_w * (comfort_vx + comf_vy + comf_angle + comf_angle_vel)

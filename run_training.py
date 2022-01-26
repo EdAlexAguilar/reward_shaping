@@ -10,7 +10,7 @@ def main(args):
                     'video_every': int(1e5),    # note: rendering causes trouble with containers, eventually disable it
                     'n_recorded_episodes': 3,
                     'eval_every': min(10000, int(args.steps / 10)),
-                    'n_eval_episodes': 10,
+                    'n_eval_episodes': 1,
                     'checkpoint_every': int(args.steps / 10)}
     train(args.env, args.task, args.reward, train_params, algo=args.algo,
           seed=args.seed if args.seed is not None else np.random.randint(low=0, high=1000000),

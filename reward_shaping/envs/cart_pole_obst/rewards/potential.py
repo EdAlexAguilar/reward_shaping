@@ -72,19 +72,12 @@ class CPOHierarchicalShapingOnSafeProgressReward(CPOProgressTargetReward):
 
 
 class CPOHierarchicalPotentialShaping(RewardFunction):
-    def __init__(self, **kwargs):
-        super(CPOHierarchicalPotentialShaping, self).__init__(**kwargs)
-        self._goal_condition = lambda state, info: self._check_goal_condition(state, info)
-        self._goal_counter = 0
+    def _clip_and_norm(self, v, min, max):
+        return (np.clip(v, min, max) - min) / (max-min)
 
     def _check_goal_condition(self, state, info):
-        result = abs(state['x'] - info['x_target']) <= info['x_target_tol'] and \
+        return abs(state['x'] - info['x_target']) <= info['x_target_tol'] and \
                abs(state['theta']) <= info["theta_target_tol"]
-        if result is True:
-            self._goal_counter += 1 # count consecutive steps in the goal
-        else:
-            self._goal_counter = 0  # reset the counter when leaving the goal
-        return result
 
     def _safety_potential(self, state, info):
         """
@@ -109,23 +102,22 @@ class CPOHierarchicalPotentialShaping(RewardFunction):
         goal_x, goal_y = info['x_target'], info['axle_y'] + info['pole_length']
         dist_goal = np.linalg.norm([goal_x - pole_x, goal_y - pole_y])
         target_reward = 1 - np.clip(dist_goal, 0, 2.5) / 2.5
-        # evaluate persistence at goal
-        persistence_reward = self._goal_counter #/ info['max_steps']
-        assert persistence_reward == 0 or target_reward == 1, "error in couters: (persistence_r>0 -> target_r==1)"
-        return target_reward + persistence_reward
+        # hierarchical weights
+        safety_w = self._safety_potential(state, info)
+        return safety_w * target_reward
 
     def _comfort_potential(self, state, info):
         x, theta, collision = state['x'], state['theta'], state["collision"]
-        dist_to_balance = 1 / info["theta_target_tol"] * np.clip(abs(theta), 0, info["theta_target_tol"])
-        comfort_reward = 1 - dist_to_balance
-        return comfort_reward
+        comfort_reward = 1 - self._clip_and_norm(abs(theta), info["theta_target_tol"], info["theta_limit"])
+        # hierarchical weights
+        safety_w, target_w = self._safety_potential(state, info), self._target_potential(state, info)
+        return safety_w * target_w * comfort_reward
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
         assert all([s in state for s in ["x", "theta", "collision"]])
         assert all([i in info for i in ["x_target", "theta_limit", "theta_target_tol", "pole_length", "axle_y"]])
-        x, theta, collision = state['x'], state['theta'], state["collision"]
         # base reward
-        base_reward = 1.0 if self._goal_condition(state, info) else 0.0
+        base_reward = 1.0 if self._check_goal_condition(next_state, info) else 0.0
         if info["done"]:
             return base_reward
         # hierarchical shaping function
