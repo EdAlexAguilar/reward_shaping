@@ -9,16 +9,16 @@ from stable_baselines3.common.vec_env import DummyVecEnv, VecEnv, VecMonitor, is
 
 
 def evaluate_policy_with_monitors(
-    model: "base_class.BaseAlgorithm",
-    env: Union[gym.Env, VecEnv],
-    n_eval_episodes: int = 10,
-    deterministic: bool = True,
-    render: bool = False,
-    callback: Optional[Callable[[Dict[str, Any], Dict[str, Any]], None]] = None,
-    reward_threshold: Optional[float] = None,
-    return_episode_rewards: bool = False,
-    warn: bool = True,
-    list_of_metrics: List[str] = None,
+        model: "base_class.BaseAlgorithm",
+        env: Union[gym.Env, VecEnv],
+        n_eval_episodes: int = 10,
+        deterministic: bool = True,
+        render: bool = False,
+        callback: Optional[Callable[[Dict[str, Any], Dict[str, Any]], None]] = None,
+        reward_threshold: Optional[float] = None,
+        return_episode_rewards: bool = False,
+        warn: bool = True,
+        list_of_metrics: List[str] = None,
 ) -> Union[Tuple[float, float, Dict[str, float]], Tuple[List[float], List[int], Dict[str, int]]]:
     """
     This function extends the original stable_baselines3.common.evaluation.evaluate_policy
@@ -89,7 +89,7 @@ def evaluate_policy_with_monitors(
                         assert m in episode_metrics, f"{m} not found in list of metrics"
                         assert m in info, f"{m} not found in info dictionary"
                         if m.startswith("t"):
-                            episode_metrics[m].append(info[m])  # target requirements evaluate 0/1
+                            episode_metrics[m].append(int(info[m] > 0))  # target requirements evaluate 0/1
                         else:
                             episode_metrics[m].append(info[m] / current_lengths[i])  # safety/comfort as fraction 0..1
                     episode_counts[i] += 1
