@@ -7,7 +7,7 @@ class LLHierarchicalShapingOnSparseTargetReward(RewardFunction):
     def _check_goal_condition(self, state, info):
         dist_x = info["halfwidth_landing_area"] - abs(state["x"])
         dist_y = 0.0001 - abs(state["y"])
-        return min(dist_x(state, info), dist_y(state, info)) >= 0
+        return min(dist_x, dist_y) >= 0
 
     def _clip_and_norm(self, v, min, max):
         return (np.clip(v, min, max) - min) / (max-min)
