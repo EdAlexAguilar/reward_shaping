@@ -3,7 +3,8 @@ from reward_shaping.envs.bipedal_walker.rewards.baselines import BWWeightedBasel
 from reward_shaping.envs.bipedal_walker.rewards.graph_based import BWChainGraph, \
     BWGraphWithBinarySafetyProgressTargetContinuousIndicator, \
     BWGraphWithBinarySafetyProgressTargetContinuousIndicatorNoComfort
-from reward_shaping.envs.bipedal_walker.rewards.potential import BWHierarchicalPotentialShaping
+from reward_shaping.envs.bipedal_walker.rewards.potential import BWHierarchicalPotentialShaping, \
+    BWHierarchicalPotentialShapingClipped, BWHierarchicalPotentialShapingUnclipped
 from reward_shaping.envs.bipedal_walker.rewards.stl_based import BWSTLReward
 
 _registry = {}
@@ -34,4 +35,5 @@ register_reward('gb_bpr_ci_noc', reward=BWGraphWithBinarySafetyProgressTargetCon
 register_reward('eval', reward=BWEvalConfig)
 
 # Hierarchical Potential Shaping
-register_reward('hrs_pot', reward=BWHierarchicalPotentialShaping)
+register_reward('hrs_pot', reward=BWHierarchicalPotentialShapingClipped)
+register_reward('hrs_pot_unclipped', reward=BWHierarchicalPotentialShapingUnclipped)
