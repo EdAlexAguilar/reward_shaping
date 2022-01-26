@@ -68,7 +68,7 @@ class EnsureMonitor(GenericMonitor):
         # update counter
         if self._state_id == 1 and current_rob >= 0:
             self._counter += 1
-        assert self._state_id in self._states, f"unexpected state {self._state_id} in a safety automaton"
+        assert self._state_id in self._states, f"unexpected state {self._state_id} in a ensure automaton"
         return self._state_id, self._counter
 
 
@@ -100,15 +100,15 @@ class AchieveMonitor(GenericMonitor):
         # update counter
         if current_rob >= 0:
             self._counter += 1
-        assert self._state_id in self._states, f"unexpected state {self._state_id} in a target automaton"
+        assert self._state_id in self._states, f"unexpected state {self._state_id} in a achieve automaton"
         return self._state_id, self._counter
 
 
 class ConquerMonitor(GenericMonitor):
     def __init__(self, predicate: Callable):
         self._p = predicate
-        self._states = {0: "not_achieved", 1: "not_achieved"}
-        self._terminal_ids = {1}
+        self._states = {0: "not_achieved", 1: "achieved", 2: "conquer"}
+        self._terminal_ids = {2}
         self._state_id = None
         self._counter = None
         self.reset()
@@ -121,21 +121,26 @@ class ConquerMonitor(GenericMonitor):
         """
         Transition definition (S x R x B -> S x R):
             (0, k), p(x)<0 -> (0, k)
-            (0, k), p(x)>0 -> (1, k++)
-            (1, k), p(x)<0 -> (0, 0)
-            (1, k), p(x)>0 -> (1, k++)
+            (0, k), p(x)>0 -> (2, k++)
+            (1, k), p(x)<0 -> (1, 0)
+            (1, k), p(x)>0 -> (2, k++)
+            (2, k), p(x)<0 -> (1, 0)
+            (2, k), p(x)>0 -> (2, k++)
          """
         current_rob = self._p(state, info)
         # transition
         if self._state_id == 0 and current_rob >= 0:
+            self._state_id = 2
+        elif self._state_id == 1 and current_rob >= 0:
+            self._state_id = 2
+        elif self._state_id == 2 and current_rob < 0:
             self._state_id = 1
-        if self._state_id == 1 and current_rob < 0:
-            self._state_id = 0
-            self._counter = 0   # reset counter
-        # update counter
+        # counter
         if current_rob >= 0:
             self._counter += 1
-        assert self._state_id in self._states, f"unexpected state {self._state_id} in a target automaton"
+        else:
+            self._counter = 0  # reset counter
+        assert self._state_id in self._states, f"unexpected state {self._state_id} in a conquer automaton"
         return self._state_id, self._counter
 
 
@@ -167,7 +172,7 @@ class EncourageMonitor(GenericMonitor):
         # update counter
         if current_rob >= 0:
             self._counter += 1
-        assert self._state_id in self._states, f"unexpected state {self._state_id} in a target automaton"
+        assert self._state_id in self._states, f"unexpected state {self._state_id} in a encourage automaton"
         return self._state_id, self._counter
 
 
