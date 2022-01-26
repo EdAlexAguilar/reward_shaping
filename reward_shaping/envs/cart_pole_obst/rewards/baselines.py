@@ -40,7 +40,8 @@ class CPOSparseReward(RewardFunction):
         assert 'x_limit' in info and 'theta_limit' in info
         assert 'x_target' in info and 'x_target_tol' in info
         x, theta, collision = next_state['x'], next_state['theta'], next_state['collision']
-        if abs(x - info['x_target']) <= info['x_target_tol']:
+        if abs(state['x'] - info['x_target']) <= info['x_target_tol'] and \
+           abs(state['theta']) <= info["theta_target_tol"]:
             return +1.0
         if abs(theta) > info['theta_limit'] or abs(x) > info['x_limit'] or collision:
             return -1.0
@@ -73,6 +74,7 @@ class CPOProgressTargetReward(RewardFunction):
     reward(s, a, s') := target(s') - target(s), if target is reached
     reward(s, a, s') := small time penalty
     """
+
     def target_potential(self, state, info):
         x, theta, collision = state['x'], state['theta'], state['collision']
         pole_x, pole_y = x + info['pole_length'] * np.sin(theta), \
@@ -87,6 +89,7 @@ class CPOProgressTargetReward(RewardFunction):
         assert 'x_target' in info and 'x_target_tol' in info
         progress = self.target_potential(next_state, info) - self.target_potential(state, info)
         return progress
+
 
 class CPOWeightedBaselineReward(WeightedReward):
     """
