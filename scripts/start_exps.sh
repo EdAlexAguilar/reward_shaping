@@ -10,10 +10,18 @@ args=(
   #
   # Sequential run of 3 seeds, 1M steps for easy envs: cpole and bw
   #
-  "cart_pole_obst fixed_height sac ${logdir} 3 default 1000000"
-  "cart_pole_obst fixed_height sac ${logdir} 3 hrs_pot 1000000"
-  "bipedal_walker forward sac ${logdir} 3 default 1000000"
-  "bipedal_walker forward sac ${logdir} 3 hrs_pot 1000000"
+  "cart_pole_obst fixed_height sac ${logdir} default 1000000"
+  "cart_pole_obst fixed_height sac ${logdir} default 1000000"
+  "cart_pole_obst fixed_height sac ${logdir} default 1000000"
+  "cart_pole_obst fixed_height sac ${logdir} hrs_pot 1000000"
+  "cart_pole_obst fixed_height sac ${logdir} hrs_pot 1000000"
+  "cart_pole_obst fixed_height sac ${logdir} hrs_pot 1000000"
+  "bipedal_walker forward sac ${logdir} default 1000000"
+  "bipedal_walker forward sac ${logdir} default 1000000"
+  "bipedal_walker forward sac ${logdir} default 1000000"
+  "bipedal_walker forward sac ${logdir} hrs_pot 1000000"
+  "bipedal_walker forward sac ${logdir} hrs_pot 1000000"
+  "bipedal_walker forward sac ${logdir} hrs_pot 1000000"
   #
   # Parallel run of 3 seeds, 2M steps for bw hardcore
   #
@@ -41,9 +49,7 @@ do
   index=$(($exp-1))
   n_args=$(echo ${args[$index]} | wc -w)
   #
-  if [ $n_args == 7 ]; then
-      $DIR/run_n_exps_docker.sh exp_$exp $(echo ${args[$index]})
-  elif [ $n_args == 6 ]; then
+  if [ $n_args == 6 ]; then
       $DIR/run_exp_docker.sh exp_$exp $(echo ${args[$index]})
   else
       echo "[$debug_prefix] Invalid exp: exp_$exp"
