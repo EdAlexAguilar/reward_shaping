@@ -15,8 +15,5 @@ do
       c_sub_name="exp_${i}_${j}"
       docker kill $c_sub_name &> /dev/null && echo "[$debug_prefix] Killed: $c_sub_name"
     done
-  } || {
-      # if failed again, then assume not existing container
-      echo "[$debug_prefix] Failed to kill: ${c_name}_[1-10]"
   }
 done
