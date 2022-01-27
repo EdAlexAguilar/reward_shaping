@@ -25,9 +25,10 @@ fi
 }
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+cd $DIR/..    # to mount the working dir
 
 echo "[$debug_prefix] Running ${name}"
 docker run --rm -it --name $name \
 	       -u $(id -u):$(id -g) -v $(pwd):/src \
 	       --gpus $gpus $image \
-	       /bin/bash $DIR/../entrypoint.sh $env $task $algo $expdir $reward $steps
+	       /bin/bash entrypoint.sh $env $task $algo $expdir $reward $steps
