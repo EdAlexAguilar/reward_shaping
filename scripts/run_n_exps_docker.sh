@@ -5,7 +5,7 @@ env=$2
 task=$3
 algo=$4
 expdir=$5
-n_exps=$6
+n_seeds=$6
 reward=$7
 steps=$8
 
@@ -16,7 +16,7 @@ debug_prefix="run_n_exps"
 
 if [ $# -ne 8 ]
 then
-	echo "illegal number of params. help: $0 <exp-name> <env> <task> <algo> <exp_dir> <N-exps> <reward> <steps>"
+	echo "illegal number of params. help: $0 <exp-name> <env> <task> <algo> <exp_dir> <N-seeds> <reward> <steps>"
 	exit -1
 fi
 
@@ -29,6 +29,6 @@ do
 	docker run --rm -it --name $expname \
                -u $(id -u):$(id -g) -v $(pwd):/src \
                --gpus $gpus $image \
-               /bin/bash entrypoint.sh $env $task $algo $expdir $reward $steps
+               /bin/bash entrypoint.sh $env $task $algo $expdir $reward $steps $n_seeds
 
 done
