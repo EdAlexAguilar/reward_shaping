@@ -20,8 +20,10 @@ then
 	exit -1
 fi
 
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
 for i in `seq 1 $n_exps`
 do
   expname="${name}_${i}"
-	./scripts/run_exp_docker.sh $expname $env $task $algo $expdir $reward $steps
+	$DIR/run_exp_docker.sh $expname $env $task $algo $expdir $reward $steps
 done
