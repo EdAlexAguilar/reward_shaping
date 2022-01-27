@@ -28,7 +28,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 cd $DIR/..    # to mount the working dir
 
 echo "[$debug_prefix] Running ${name}"
-docker run --rm -it --name $name \
+docker run --rm -it --name $name -d \
 	       -u $(id -u):$(id -g) -v $(pwd):/src \
 	       --gpus $gpus $image \
 	       /bin/bash entrypoint.sh $env $task $algo $expdir $reward $steps
