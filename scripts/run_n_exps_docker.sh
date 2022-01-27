@@ -23,9 +23,11 @@ fi
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 cd $DIR/..    # to mount the working dir
 
-for i in `seq 1 $n_exps`
+
+echo "[$debug_prefix] Running ${expname}: repeat ${n_seeds} seeds"
+
+for i in `seq 1 $n_seeds`
 do
-	expname="${name}_${i}"
 	docker run --rm -it --name $expname \
                -u $(id -u):$(id -g) -v $(pwd):/src \
                --gpus $gpus $image \
