@@ -14,6 +14,7 @@ do
     do
       c_name="exp_$i_$j"
       docker kill $c_name &> /dev/null && echo "[$debug_prefix] Killed: $c_name"
+    done
   } || {
     # if failed again, then assume not existing container
     echo "[$debug_prefix] Failed to kill: $c_name"
