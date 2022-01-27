@@ -25,7 +25,7 @@ if __name__ == "__main__":
     parser.add_argument("--task", type=str, required=True)
     parser.add_argument("--reward", type=str, required=True)
     parser.add_argument("--steps", type=int, default=1e6)
-    parser.add_argument("--n_seed", type=int, default=1)
+    parser.add_argument("--n_seeds", type=int, default=1)
     parser.add_argument("--algo", type=str, default="sac")
     parser.add_argument("--expdir", type=str, default=None, help="name of intermediate dir to group experiments")
     args = parser.parse_args()
