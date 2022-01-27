@@ -1,6 +1,6 @@
 #!/bin/bash
 
-logdir=$1
+logdir=$(date '+%d%m%Y_%H%M%S')
 
 debug_prefix="start_exp"
 
