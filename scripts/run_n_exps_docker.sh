@@ -26,11 +26,7 @@ cd $DIR/..    # to mount the working dir
 
 echo "[$debug_prefix] Running ${expname}: repeat ${n_seeds} seeds"
 
-for i in `seq 1 $n_seeds`
-do
-	docker run --rm -it --name $expname -d \
+docker run --rm -it --name $expname -d \
                -u $(id -u):$(id -g) -v $(pwd):/src \
                --gpus $gpus $image \
                /bin/bash entrypoint.sh $env $task $algo $expdir $reward $steps $n_seeds
-
-done
