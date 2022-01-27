@@ -1,23 +1,27 @@
 #!/bin/bash
 
-env=$1
-task=$2
-algo=$3
-expdir=$4
-n_exps=$5
-reward=$6
-steps=$7
+name=$1
+env=$2
+task=$3
+algo=$4
+expdir=$5
+n_exps=$6
+reward=$7
+steps=$8
 
 image=luigi/reward_shaping:pot
 gpus=all
 
-if [ $# -ne 7 ]
+debug_prefix="run_n_exps"
+
+if [ $# -ne 8 ]
 then
-	echo "illegal number of params. help: $0 <env> <task> <algo> <exp_dir> <N-exps> <reward> <steps>"
+	echo "illegal number of params. help: $0 <exp-name> <env> <task> <algo> <exp_dir> <N-exps> <reward> <steps>"
 	exit -1
 fi
 
 for i in `seq 1 $n_exps`
 do
-	./scripts/run_exp_docker.sh $env $task $algo $expdir $reward $steps
+  expname="${name}_${i}"
+	./scripts/run_exp_docker.sh $expname $env $task $algo $expdir $reward $steps
 done

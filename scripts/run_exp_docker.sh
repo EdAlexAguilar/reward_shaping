@@ -1,22 +1,31 @@
 #!/bin/bash
 
-env=$1
-task=$2
-algo=$3
-expdir=$4
-reward=$5
-steps=$6
+name=$1
+env=$2
+task=$3
+algo=$4
+expdir=$5
+reward=$6
+steps=$7
 
 image=luigi/reward_shaping:pot
 gpus=all
 
-if [ $# -ne 6 ]
+debug_prefix="run_exp"
+
+if [ $# -ne 7 ]
 then 
-	echo "illegal number of params. help: $0 <env> <task> <algo> <exp_dir> <reward> <steps> "
+	echo "illegal number of params. help: $0 <exp-name> <env> <task> <algo> <exp_dir> <reward> <steps> "
 	exit -1
 fi
 
-docker run --rm -it \
-	       -u $(id -u):$(id -g) -v $(pwd):/src \
-	       --gpus $gpus $image \
-	       /bin/bash entrypoint.sh $env $task $algo $expdir $reward $steps
+{
+  docker container rm "${name}" &> /dev/null &&
+  echo "[$debug_prefix] Removed existing container ${expname}"
+}
+
+echo "[$debug_prefix] Running ${name}"
+#echo "docker run --rm -it --name $name \
+	       #-u $(id -u):$(id -g) -v $(pwd):/src \
+	       #--gpus $gpus $image \
+	       #/bin/bash entrypoint.sh $env $task $algo $expdir $reward $steps"
