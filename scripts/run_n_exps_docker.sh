@@ -21,9 +21,14 @@ then
 fi
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+cd $DIR/..    # to mount the working dir
 
 for i in `seq 1 $n_exps`
 do
-  expname="${name}_${i}"
-	$DIR/run_exp_docker.sh $expname $env $task $algo $expdir $reward $steps
+	expname="${name}_${i}"
+	docker run --rm -it --name $expname \
+               -u $(id -u):$(id -g) -v $(pwd):/src \
+               --gpus $gpus $image \
+               /bin/bash entrypoint.sh $env $task $algo $expdir $reward $steps
+
 done
