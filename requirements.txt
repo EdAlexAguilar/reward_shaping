@@ -4,6 +4,7 @@ h5py
 matplotlib
 numpy
 stable-baselines3[extra]
+sb3-contrib
 moviepy
 PyYAML
 git+https://github.com/nickovic/rtamt.git

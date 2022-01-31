@@ -83,7 +83,7 @@ def make_agent(env_name, env, reward, rl_algo, logdir=None):
             algo_params = yaml.load(file, yaml.FullLoader)
     else:
         algo_params = {}
-    if 'stl' in reward:
+    if 'tl' in reward:
         # propagate the terminal reward over all the states in the episode
         algo_params['gamma'] = 1.0
     # create model
@@ -93,6 +93,15 @@ def make_agent(env_name, env, reward, rl_algo, logdir=None):
     elif algo == "sac":
         from stable_baselines3 import SAC
         model = SAC("MlpPolicy", env, verbose=1, tensorboard_log=logdir, **algo_params)
+    elif algo == "ddpg":
+        from stable_baselines3 import DDPG
+        model = DDPG("MlpPolicy", env, verbose=1, tensorboard_log=logdir, **algo_params)
+    elif algo == "ars":
+        from sb3_contrib import ARS
+        model = ARS("MlpPolicy", env, verbose=1, tensorboard_log=logdir, **algo_params)
+    elif algo == "td3":
+        from stable_baselines3 import TD3
+        model = TD3("MlpPolicy", env, verbose=1, tensorboard_log=logdir, **algo_params)
     else:
         raise NotImplementedError()
     # copy params in logdir (optional)

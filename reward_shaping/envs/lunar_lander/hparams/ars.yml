@@ -1,0 +1,7 @@
+learning_rate: 0.018
+n_delta: 6
+n_top: 1
+delta_std: 0.1
+policy_kwargs:
+  net_arch: [16]
+zero_policy: False
