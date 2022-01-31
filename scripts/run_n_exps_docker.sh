@@ -24,7 +24,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 cd $DIR/..    # to mount the working dir
 
 
-echo "[$debug_prefix] Running ${expname}: repeat ${n_seeds} seeds"
+echo "[$debug_prefix] Running ${expname} (${n_seeds} seeds): ${env} ${task} ${algo} ${expdir} ${reward} ${steps}"
 
 docker run --rm -it --name $expname -d \
                -u $(id -u):$(id -g) -v $(pwd):/src \
