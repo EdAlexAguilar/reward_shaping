@@ -7,7 +7,7 @@ from reward_shaping.core.configs import TLRewardConfig
 
 class BWSTLReward(TLRewardConfig):
     _no_collision = "always(collision <= 0)"
-    _continuous_progress = "eventually(x >= x_target))"
+    _continuous_progress = "eventually(x >= x_target)"
 
     @property
     def spec(self) -> str:

@@ -91,7 +91,7 @@ def evaluate_policy_with_monitors(
                         if m.startswith("t_"):
                             episode_metrics[m].append(int(info[m]>0))  # target as boolean 0/1
                         else:
-                            episode_metrics[m].append(info[m] / current_lengths[i])  # safety/comfort as fraction 0..1
+                            episode_metrics[m].append(info[m])  # safety/comfort as fraction 0..1
                     episode_counts[i] += 1
                     current_rewards[i] = 0
                     current_lengths[i] = 0
