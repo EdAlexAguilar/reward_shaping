@@ -2,7 +2,7 @@
 
 debug_prefix="kill_all"
 
-for i in {1..16}
+for i in {1..24}
 do
   c_name="exp_$i"
   {

@@ -42,8 +42,8 @@ do
   n_args=$(echo ${args[$index]} | wc -w)
   #
   if [ $n_args == 7 ]; then
-      $DIR/run_n_exps_docker.sh exp_$exp $(echo ${args[$index]})
+	$DIR/run_n_exps_docker.sh exp_$exp $(echo ${args[$index]})
   else
-      echo "[$debug_prefix] Invalid exp: exp_$exp"
+	echo "[$debug_prefix] Invalid exp: exp_$exp"
   fi
 done

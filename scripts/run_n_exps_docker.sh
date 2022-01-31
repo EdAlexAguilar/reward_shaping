@@ -1,6 +1,6 @@
 #!/bin/bash
 
-name=$1
+expname=$1
 env=$2
 task=$3
 algo=$4
