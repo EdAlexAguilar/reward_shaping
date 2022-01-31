@@ -5,12 +5,11 @@ import matplotlib.pyplot as plt
 import yaml
 from gym.wrappers import FlattenObservation
 
-from reward_shaping.core.helper_fns import PotentialReward
 from reward_shaping.core.wrappers import RewardWrapper
 from reward_shaping.monitor.task import RLTask
 
 
-def make_env(env_name, task, reward, use_potential=False, eval=False, logdir=None, seed=0):
+def make_env(env_name, task, reward, eval=False, logdir=None, seed=0):
     # make base env
     extra_params = load_eval_params(env_name, task) if eval else {}
     extra_params['seed'] = seed
@@ -21,7 +20,7 @@ def make_env(env_name, task, reward, use_potential=False, eval=False, logdir=Non
             yaml.dump(env_params, file)
     env = make_base_env(env_name, env_params)
     # set reward
-    env = make_reward_wrap(env_name, env, env_params, reward, use_potential=use_potential)
+    env = make_reward_wrap(env_name, env, env_params, reward)
     env = FlattenObservation(env)
     return env, env_params
 
@@ -118,25 +117,15 @@ def get_reward_conf(env_name, env_params, reward):
     return reward_conf
 
 
-def make_reward_wrap(env_name, env, env_params, reward, use_potential=False, logdir=None):
+def make_reward_wrap(env_name, env, env_params, reward, logdir=None):
     reward_conf = get_reward_conf(env_name, env_params, reward)
-    if 'stl' in reward:
-        assert not use_potential, 'potential function not support for stl reward'
-        from reward_shaping.core.wrappers import STLRewardWrapper
-        env = STLRewardWrapper(env, stl_conf=reward_conf)
+    if 'tl' in reward:
+        from reward_shaping.core.wrappers import TLRewardWrapper
+        env = TLRewardWrapper(env, tl_conf=reward_conf)
     elif 'eval' in reward:
         from reward_shaping.core.wrappers import EvaluationRewardWrapper
         env = EvaluationRewardWrapper(env, conf=reward_conf)
     else:
-        if 'gb' in reward:
-            from reward_shaping.core.configs import BuildGraphReward
-            reward_fn = BuildGraphReward.from_conf(graph_config=reward_conf)
-            if logdir is not None:
-                reward_fn.render()
-                plt.savefig(logdir / "graph_reward.pdf")
-        else:
-            reward_fn = reward_conf
-        if use_potential:
-            reward_fn = PotentialReward(reward_fn)
+        reward_fn = reward_conf
         env = RewardWrapper(env, reward_fn=reward_fn)
     return env

@@ -2,7 +2,7 @@ from typing import Dict, Any
 
 import numpy as np
 
-from reward_shaping.core.configs import STLRewardConfig
+from reward_shaping.core.configs import TLRewardConfig
 
 
 def _get_cpo_default_monitoring_variables():
@@ -44,7 +44,7 @@ def _get_cpo_default_monitoring_procedure(state, done, info):
     return monitored_state
 
 
-class CPOSTLReward(STLRewardConfig):
+class CPOSTLReward(TLRewardConfig):
     _no_falldown = "always(abs(theta) <= theta_limit)"
     _no_outside = "always(abs(x) <= x_limit)"
     _no_collision = "always(collision <= 0.0)"

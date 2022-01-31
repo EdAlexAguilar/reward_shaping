@@ -1,14 +1,6 @@
-from reward_shaping.envs.cart_pole_obst.rewards.baselines import CPOSparseReward, CPOContinuousReward, \
-    CPOWeightedBaselineReward, CPOEvalConfig, CPOSparseTargetReward, CPOProgressTargetReward
-from reward_shaping.envs.cart_pole_obst.rewards.graph_based import CPOGraphWithContinuousScoreBinaryIndicator, \
-    CPOGraphWithContinuousScoreContinuousIndicator, CPOGraphWithProgressScoreBinaryIndicator, \
-    CPOGraphWithBinarySafetyScoreBinaryIndicator, CPOChainGraph, CPOGraphBinarySafetyProgressTargetContinuousIndicator, \
-    CPOGraphContinuousSafetyProgressTargetContinuousIndicator, \
-    CPOGraphContinuousSafetyProgressDistanceTargetContinuousIndicator, \
-    CPOGraphContinuousSafetyProgressMaxTargetContinuousIndicator, \
-    CPOGraphBinarySafetyProgressDistanceTargetContinuousIndicator
-from reward_shaping.envs.cart_pole_obst.rewards.potential import CPOHierarchicalShapingOnSparseTargetReward, \
-    CPOHierarchicalShapingOnSafeProgressReward, CPOHierarchicalPotentialShaping
+from reward_shaping.envs.cart_pole_obst.rewards.baselines import CPOSparseReward, CPOEvalConfig
+from reward_shaping.envs.cart_pole_obst.rewards.potential import CPOHierarchicalPotentialShaping, \
+    CPOUniformScalarizedMultiObjectivization, CPODecreasingScalarizedMultiObjectivization
 from reward_shaping.envs.cart_pole_obst.rewards.stl_based import CPOSTLReward
 
 _registry = {}
@@ -24,19 +16,13 @@ def register_reward(name: str, reward):
 
 
 # Baselines
-register_reward('stl', reward=CPOSTLReward)
-register_reward('weighted', reward=CPOWeightedBaselineReward)
 register_reward('default', reward=CPOSparseReward)
-register_reward('gb_chain', reward=CPOChainGraph)
-# Hierarchical
-register_reward('gb_bpdr_ci', reward=CPOGraphBinarySafetyProgressDistanceTargetContinuousIndicator)
+register_reward('tltl', reward=CPOSTLReward)
+register_reward('morl_uni', reward=CPOUniformScalarizedMultiObjectivization)
+register_reward('morl_dec', reward=CPODecreasingScalarizedMultiObjectivization)
+
+# Hierarchical Potential Shaping
+register_reward('hrs_pot', reward=CPOHierarchicalPotentialShaping)
+
 # Evaluation
 register_reward('eval', reward=CPOEvalConfig)
-
-register_reward('sparse_target', reward=CPOSparseTargetReward)
-register_reward('hrs_sparse_target', reward=CPOHierarchicalShapingOnSparseTargetReward)
-
-register_reward('safe_progress', reward=CPOProgressTargetReward)
-register_reward('hrs_safe_progress', reward=CPOHierarchicalShapingOnSafeProgressReward)
-
-register_reward('hrs_pot', reward=CPOHierarchicalPotentialShaping)

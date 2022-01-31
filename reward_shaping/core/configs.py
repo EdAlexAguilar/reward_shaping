@@ -10,7 +10,7 @@ class RewardConfig(ABC):
         self._env_params = env_params
 
 
-class STLRewardConfig(RewardConfig):
+class TLRewardConfig(RewardConfig):
     @property
     @abstractmethod
     def monitoring_variables(self) -> List[str]:

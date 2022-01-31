@@ -2,10 +2,10 @@ from typing import Dict, Any
 
 import numpy as np
 
-from reward_shaping.core.configs import STLRewardConfig
+from reward_shaping.core.configs import TLRewardConfig
 
 
-class BWSTLReward(STLRewardConfig):
+class BWSTLReward(TLRewardConfig):
     _no_collision = "always(collision<=0)"
     _continuous_progress = "always(eventually[0:5](vx>=0.0))"
 

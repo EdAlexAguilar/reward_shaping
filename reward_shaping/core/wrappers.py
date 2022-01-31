@@ -2,7 +2,7 @@ from typing import Any
 
 import gym
 
-from reward_shaping.core.configs import STLRewardConfig, EvalConfig
+from reward_shaping.core.configs import TLRewardConfig, EvalConfig
 from reward_shaping.core.helper_fns import monitor_episode
 from reward_shaping.core.reward import RewardFunction
 
@@ -62,12 +62,12 @@ class CollectionWrapper(gym.Wrapper):
         return super(CollectionWrapper, self).render(mode=mode, info={'reward': self._reward, 'return': self._return})
 
 
-class STLRewardWrapper(CollectionWrapper):
+class TLRewardWrapper(CollectionWrapper):
     """ This is an 'episodic' wrapper which evaluate a spec in the terminal states."""
 
-    def __init__(self, env: gym.Env, stl_conf: STLRewardConfig):
-        super(STLRewardWrapper, self).__init__(env, stl_conf.monitoring_variables, stl_conf.get_monitored_state)
-        self._stl_conf = stl_conf
+    def __init__(self, env: gym.Env, tl_conf: TLRewardConfig):
+        super(TLRewardWrapper, self).__init__(env, tl_conf.monitoring_variables, tl_conf.get_monitored_state)
+        self._tl_conf = tl_conf
         self._reward = 0.0
         self._return = 0.0
 
@@ -78,8 +78,8 @@ class STLRewardWrapper(CollectionWrapper):
         return state
 
     def _compute_episode_robustness(self):
-        return monitor_episode(self._stl_conf.spec, self._stl_conf.monitoring_variables,
-                               self._stl_conf.monitoring_types, self._episode)[0][1]
+        return monitor_episode(self._tl_conf.spec, self._tl_conf.monitoring_variables,
+                               self._tl_conf.monitoring_types, self._episode)[0][1]
 
     def get_monitored_episode(self):
         return self._episode
@@ -92,7 +92,7 @@ class STLRewardWrapper(CollectionWrapper):
         return obs, reward, done, info
 
     def render(self, mode='human', **kwargs):
-        return super(STLRewardWrapper, self).render(mode=mode, info={'reward': self._reward, 'return': self._return})
+        return super(TLRewardWrapper, self).render(mode=mode, info={'reward': self._reward, 'return': self._return})
 
 
 class EvaluationRewardWrapper(CollectionWrapper):

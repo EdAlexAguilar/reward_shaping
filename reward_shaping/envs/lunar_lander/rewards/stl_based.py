@@ -2,10 +2,10 @@ from typing import Dict, Any
 
 import numpy as np
 
-from reward_shaping.core.configs import STLRewardConfig
+from reward_shaping.core.configs import TLRewardConfig
 
 
-class LLSTLReward(STLRewardConfig):
+class LLSTLReward(TLRewardConfig):
     _no_collision = "always(collision <= 0.0)"  # Safety 1: no collision with obstacle
     _no_outside = "always(abs(x) <= x_limit)"  # Safety 2: craft always within the x limits
     _reach_origin = "eventually(always(dist_target <= halfwidth_landing_area))"  # Target: reach origin
