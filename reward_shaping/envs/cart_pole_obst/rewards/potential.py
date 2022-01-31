@@ -3,47 +3,26 @@ from typing import Union, List
 from reward_shaping.core.reward import RewardFunction
 import numpy as np
 
+from reward_shaping.core.utils import clip_and_norm
 from reward_shaping.envs.cart_pole_obst.specs import get_all_specs
-
-
-def clip_and_norm(v: Union[int, float], minv: Union[int, float], maxv: Union[int, float]):
-    """
-    utility function which returns the normalized value v' in [0, 1].
-
-    @params: value `v` before normalization,
-    @params: `minv`, `maxv` extreme values of the domain.
-    """
-    return (np.clip(v, minv, maxv) - minv) / (maxv - minv)
-
-
-def simple_base_reward(state, info):
-    """
-    sparse reward which returns +1 when the target configuration has been reached,
-    otherwise 0.
-    """
-    assert all([s in state for s in ["x", "theta"]])
-    assert all([i in info for i in ["x_target", "x_target_tol", "theta_target_tol"]])
-    check_goal = abs(state['x'] - info['x_target']) <= info['x_target_tol'] and \
-                 abs(state['theta']) <= info["theta_target_tol"]
-    return 1.0 if check_goal else 0.0
 
 
 def safety_falldown_potential(state, info):
     assert "theta" in state and "theta_limit" in info
     falldown = (state["theta"] <= info["theta_limit"])
-    return int(falldown)
+    return float(falldown)
 
 
 def safety_exit_potential(state, info):
     assert "x" in state and "x_limit" in info
     outside = (state["x"] <= info["x_limit"])
-    return int(outside)
+    return float(outside)
 
 
 def safety_collision_potential(state, info):
     assert "collision" in state
     collision = (state["collision"] <= 0)
-    return int(collision)
+    return float(collision)
 
 
 def target_dist_to_goal_potential(state, info):
@@ -63,13 +42,25 @@ def comfort_balance_potential(state, info):
     return comfort_reward
 
 
+def simple_base_reward(state, info):
+    """
+    sparse reward which returns +1 when the target configuration has been reached,
+    otherwise 0.
+    """
+    assert all([s in state for s in ["x", "theta"]])
+    assert all([i in info for i in ["x_target", "x_target_tol", "theta_target_tol"]])
+    check_goal = abs(state['x'] - info['x_target']) <= info['x_target_tol'] and \
+                 abs(state['theta']) <= info["theta_target_tol"]
+    return 1.0 if check_goal else 0.0
+
+
 class CPOHierarchicalPotentialShaping(RewardFunction):
 
     def _safety_potential(self, state, info):
-        falldown = safety_falldown_potential(state, info)
-        exit = safety_exit_potential(state, info)
-        collision = safety_collision_potential(state, info)
-        return int(falldown) + int(exit) + int(collision)
+        falldown_reward = safety_falldown_potential(state, info)
+        exit_reward = safety_exit_potential(state, info)
+        collision_reward = safety_collision_potential(state, info)
+        return falldown_reward + exit_reward + collision_reward
 
     def _target_potential(self, state, info):
         """
@@ -100,7 +91,7 @@ class CPOScalarizedMultiObjectivization(RewardFunction):
 
     def __init__(self, weights: List[float], **kwargs):
         assert len(weights) == len(get_all_specs()), f"nr weights ({len(weights)}) != nr reqs {len(get_all_specs())}"
-        assert sum(weights) == 1.0, f"sum of weights ({sum(weights)}) != 1.0"
+        assert (sum(weights) - 1.0) <= 0.0001, f"sum of weights ({sum(weights)}) != 1.0"
         self._weights = weights
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
@@ -130,5 +121,11 @@ class CPOUniformScalarizedMultiObjectivization(CPOScalarizedMultiObjectivization
 class CPODecreasingScalarizedMultiObjectivization(CPOScalarizedMultiObjectivization):
 
     def __init__(self, **kwargs):
-        weights = [0.25, 0.25, 0.25, 0.15, 0.10]
+        """
+        weights selected considering a budget of 1.0 + 0.5 + 0.25 = 1.75, then:
+            - the sum of safety weights is ~ 1.0/1.75
+            - the sum of target weights is ~ 0.50/1.75
+            - the sum of comfort weights is ~ 0.25/1.75
+        """
+        weights = [0.19, 0.19, 0.19, 0.28, 0.15]
         super(CPODecreasingScalarizedMultiObjectivization, self).__init__(weights=weights, **kwargs)

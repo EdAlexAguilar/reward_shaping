@@ -13,23 +13,18 @@ class TestBipedalWalker(TestCase):
         result = generic_env_test(env_name, task, reward)
         self.assertTrue(result)
 
-    def test_stl(self):
-        reward = "stl"
+    def test_tltl(self):
+        reward = "tltl"
         result = generic_env_test(env_name, task, reward)
         self.assertTrue(result)
 
-    def test_weighted(self):
-        reward = "weighted"
+    def test_morl_uni(self):
+        reward = "morl_uni"
         result = generic_env_test(env_name, task, reward)
         self.assertTrue(result)
 
-    def test_chain(self):
-        reward = "gb_chain"
-        result = generic_env_test(env_name, task, reward)
-        self.assertTrue(result)
-
-    def test_binary_progress(self):
-        reward = "gb_bpr_ci"
+    def test_morl_dec(self):
+        reward = "morl_dec"
         result = generic_env_test(env_name, task, reward)
         self.assertTrue(result)
 
@@ -38,13 +33,8 @@ class TestBipedalWalker(TestCase):
         result = generic_env_test(env_name, task, reward)
         self.assertTrue(result)
 
-    def test_nocomfort(self):
-        reward = "gb_bpr_ci_noc"
-        result = generic_env_test(env_name, task, reward)
-        self.assertTrue(result)
-
-    def test_sparse_repeat(self):
-        reward = "hrs_sparse_target"
+    def test_hrs_reward(self):
+        reward = "hrs_pot"
         result = generic_env_test(env_name, task, reward)
         self.assertTrue(result)
 
@@ -54,17 +44,14 @@ class TestTrainingLoop(TestCase):
     def test_train_sparse(self):
         generic_training(env_name, task, 'default')
 
-    def test_train_stl(self):
-        generic_training(env_name, task, 'stl')
+    def test_train_tltl(self):
+        generic_training(env_name, task, 'tltl')
 
-    def test_train_chain(self):
-        generic_training(env_name, task, 'gb_chain')
-
-    def test_train_weighted(self):
-        generic_training(env_name, task, 'weighted')
-
-    def test_train_graph_hierarchical(self):
-        generic_training(env_name, task, 'gb_bpr_ci')
-
-    def test_train_hierarchical_potentail(self):
+    def test_train_hrs_pot(self):
         generic_training(env_name, task, 'hrs_pot')
+
+    def test_train_morl_uni(self):
+        generic_training(env_name, task, 'morl_uni')
+
+    def test_train_morl_dec(self):
+        generic_training(env_name, task, 'morl_dec')

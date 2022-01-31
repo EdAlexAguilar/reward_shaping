@@ -2,27 +2,8 @@ from typing import Dict, Any
 
 import numpy as np
 
-import reward_shaping.envs.lunar_lander.rewards.subtask_rewards as fns
 from reward_shaping.core.configs import EvalConfig
 from reward_shaping.core.helper_fns import monitor_episode
-from reward_shaping.core.reward import WeightedReward, RewardFunction
-from reward_shaping.core.utils import get_normalized_reward
-
-
-class LLSparseTargetReward(RewardFunction):
-    """
-    reward(s,a) := bonus, if target is reached
-    reward(s,a) := small time penalty
-    """
-
-    def __call__(self, state, action=None, next_state=None, info=None) -> float:
-        assert 'halfwidth_landing_area' in info
-        assert 'x' in next_state and 'y' in next_state
-        dist_target = np.linalg.norm([state["x"], state["y"]])
-        time_cost = 1 / info["max_steps"]
-        if dist_target <= info["halfwidth_landing_area"]:
-            return +1.0
-        return -time_cost
 
 
 class LLEvalConfig(EvalConfig):
@@ -86,48 +67,3 @@ class LLEvalConfig(EvalConfig):
         #
         tot_score = float(safety_rho >= 0) + 0.5 * float(target_rho >= 0) + 0.25 * np.mean(comfort_mean)
         return tot_score
-
-
-class LLWeightedBaselineReward(WeightedReward):
-    """
-    reward(s,a) := w_s * sum([score in safeties]) + w_t * sum([score in targets]) + w_c * sum([score in comforts])
-    """
-
-    def __init__(self, env_params, safety_weight=1.0, target_weight=0.5, comfort_weight=0.25):
-        # parameters
-        super().__init__()
-        self._env_params = env_params
-        self._safety_weight = safety_weight
-        self._target_weight = target_weight
-        self._comfort_weight = comfort_weight
-        # prepare env info for normalize the functions
-        info = {'FPS': self._env_params['FPS'],
-                'angle_limit': self._env_params['angle_limit'],
-                'angle_speed_limit': self._env_params['angle_speed_limit'],
-                "x_target": self._env_params['x_target'],
-                "y_target": self._env_params['y_target'],
-                "halfwidth_landing_area": self._env_params['halfwidth_landing_area'],
-                }
-
-        # safety rules (no need returned indicators)
-        binary_collision = fns.get_subtask_reward("binary_collision")
-        binary_exit = fns.get_subtask_reward("binary_exit")
-
-        # target rules
-        progress_fn = fns.get_subtask_reward("continuous_progress")
-
-        # comfort rules
-        angle_limit = self._env_params['angle_limit']
-        angle_fn, _ = get_normalized_reward(fns.MinimizeCraftAngle(),
-                                            min_r_state={'angle': angle_limit},
-                                            max_r_state={'angle': 0.0},
-                                            info=info)
-        angle_speed_limit = self._env_params['angle_speed_limit']
-        angle_speed_fn, _ = get_normalized_reward(fns.MinimizeAngleVelocity(),
-                                                  min_r_state={'angle_speed': angle_speed_limit},
-                                                  max_r_state={'angle_speed': 0.0},
-                                                  info=info)
-        # comfort rules
-        self._safety_rules = [binary_collision, binary_exit]
-        self._target_rules = [progress_fn]
-        self._comfort_rules = [angle_fn, angle_speed_fn]

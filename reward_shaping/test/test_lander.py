@@ -14,22 +14,22 @@ class TestContinuousLunarLander(TestCase):
         self.assertTrue(result)
 
     def test_stl_reward(self):
-        reward = "stl"
+        reward = "tltl"
         result = generic_env_test(env_name, task, reward)
         self.assertTrue(result)
 
-    def test_chain_reward(self):
-        reward = "gb_chain"
+    def test_hrs_reward(self):
+        reward = "hrs_pot"
         result = generic_env_test(env_name, task, reward)
         self.assertTrue(result)
 
-    def test_weighted_reward(self):
-        reward = "weighted"
+    def test_morl_uni_reward(self):
+        reward = "morl_uni"
         result = generic_env_test(env_name, task, reward)
         self.assertTrue(result)
 
-    def test_gb_bpdr_ci(self):
-        reward = "gb_bpdr_ci"
+    def test_morl_dec_reward(self):
+        reward = "morl_dec"
         result = generic_env_test(env_name, task, reward)
         self.assertTrue(result)
 
@@ -39,14 +39,11 @@ class TestTrainingLoop(TestCase):
     def test_train_sparse(self):
         generic_training(env_name, task, 'default')
 
-    def test_train_stl(self):
-        generic_training(env_name, task, 'stl')
+    def test_train_tltl(self):
+        generic_training(env_name, task, 'tltl')
 
-    def test_train_chain(self):
-        generic_training(env_name, task, 'gb_chain')
+    def test_train_morl_uni(self):
+        generic_training(env_name, task, 'morl_uni')
 
-    def test_train_weighted(self):
-        generic_training(env_name, task, 'weighted')
-
-    def test_train_hierarchical(self):
-        generic_training(env_name, task, 'gb_bpdr_ci')
+    def test_train_morl_dec(self):
+        generic_training(env_name, task, 'morl_dec')

@@ -1,9 +1,7 @@
 from reward_shaping.core.helper_fns import DefaultReward
-from reward_shaping.envs.lunar_lander.rewards.baselines import LLEvalConfig, LLWeightedBaselineReward, \
-    LLSparseTargetReward
-from reward_shaping.envs.lunar_lander.rewards.graph_based import LLGraphWithBinarySafetyBinaryIndicator, LLChainGraph, \
-    LLGraphWithBinarySafetyContinuousIndicator, LLGraphWithBinarySafetyProgressTimesDistanceTargetContinuousIndicator
-from reward_shaping.envs.lunar_lander.rewards.potential import LLHierarchicalShapingOnSparseTargetReward
+from reward_shaping.envs.lunar_lander.rewards.baselines import LLEvalConfig
+from reward_shaping.envs.lunar_lander.rewards.potential import LLHierarchicalShapingOnSparseTargetReward, \
+    LLUniformScalarizedMultiObjectivization, LLDecreasingScalarizedMultiObjectivization
 from reward_shaping.envs.lunar_lander.rewards.stl_based import LLSTLReward
 
 _registry = {}
@@ -24,12 +22,14 @@ def register_reward(name: str, reward):
 
 # Baselines
 register_reward('default', reward=DefaultReward)
-register_reward('stl', reward=LLSTLReward)
-register_reward('gb_chain', reward=LLChainGraph)
-register_reward('weighted', reward=LLWeightedBaselineReward)
-# Graph-based
-register_reward('gb_bpdr_ci', reward=LLGraphWithBinarySafetyProgressTimesDistanceTargetContinuousIndicator)
+register_reward('tltl', reward=LLSTLReward)
+
+register_reward('morl_uni', reward=LLUniformScalarizedMultiObjectivization)
+register_reward('morl_dec', reward=LLDecreasingScalarizedMultiObjectivization)
+
+# Hierarchical Potential Shaping
+register_reward('hrs_pot', reward=LLHierarchicalShapingOnSparseTargetReward)
+
 # Evaluation
 register_reward('eval', reward=LLEvalConfig)
 
-register_reward('hrs_pot', reward=LLHierarchicalShapingOnSparseTargetReward)
