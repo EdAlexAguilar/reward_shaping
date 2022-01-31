@@ -6,8 +6,8 @@ from reward_shaping.core.configs import TLRewardConfig
 
 
 class BWSTLReward(TLRewardConfig):
-    _no_collision = "always(collision<=0)"
-    _continuous_progress = "always(eventually[0:5](vx>=0.0))"
+    _no_collision = "always(collision <= 0)"
+    _continuous_progress = "eventually(x >= x_target))"
 
     @property
     def spec(self) -> str:
@@ -27,16 +27,18 @@ class BWSTLReward(TLRewardConfig):
 
     @property
     def monitoring_variables(self):
-        return ['time', 'collision', 'vx', 'phi_norm', 'vy_norm', 'phidot_norm']
+        return ['time', 'collision', 'x', 'x_target', 'vx', 'phi_norm', 'vy_norm', 'phidot_norm']
 
     @property
     def monitoring_types(self):
-        return ['int', 'float', 'float', 'float', 'float', 'float']
+        return ['int', 'float', 'float', 'float', 'float', 'float', 'float', 'float']
 
     def get_monitored_state(self, state, done, info) -> Dict[str, Any]:
         # compute monitoring variables (all of them normalized in 0,1)
         monitored_state = {
             'time': info['time'],
+            'x': state['x'],    # already normalized in 0..1
+            'x_target': info['norm_target_x'],
             'collision': info['collision'],  # already 0 or 1
             'vx': state['horizontal_speed'],
             'phi_norm': np.clip(state['hull_angle'], -info['angle_hull_limit'], info['angle_hull_limit']) / info[

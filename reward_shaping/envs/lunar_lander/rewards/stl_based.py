@@ -8,7 +8,8 @@ from reward_shaping.core.configs import TLRewardConfig
 class LLSTLReward(TLRewardConfig):
     _no_collision = "always(collision <= 0.0)"  # Safety 1: no collision with obstacle
     _no_outside = "always(abs(x) <= x_limit)"  # Safety 2: craft always within the x limits
-    _reach_origin = "eventually(always(dist_target <= halfwidth_landing_area))"  # Target: reach origin
+    _reach_origin = "eventually(always((dist_x <= halfwidth_landing_area) and (dist_y <= 0.0001)))"
+
 
     @property
     def spec(self) -> str:
@@ -20,11 +21,11 @@ class LLSTLReward(TLRewardConfig):
 
     @property
     def monitoring_variables(self):
-        return ['time', 'x', 'x_limit', 'fuel', 'collision', 'dist_target', 'halfwidth_landing_area']
+        return ['time', 'x', 'x_limit', 'fuel', 'collision', 'dist_x', 'dist_y', 'halfwidth_landing_area']
 
     @property
     def monitoring_types(self):
-        return ['int', 'float', 'float', 'float', 'float', 'float', 'float']
+        return ['int', 'float', 'float', 'float', 'float', 'float', 'float', 'float']
 
     def get_monitored_state(self, state, done, info) -> Dict[str, Any]:
         # compute monitoring variables
@@ -34,7 +35,8 @@ class LLSTLReward(TLRewardConfig):
             'x_limit': info['x_limit'],
             'fuel': state['fuel'],  # in [0,1]
             'collision': state['collision'],
-            'dist_target': np.linalg.norm([state['x'], state['y']]),
+            'dist_x': abs(state['x']),
+            'dist_y': abs(state['y']),
             'halfwidth_landing_area': info['halfwidth_landing_area']
         }
         return monitored_state

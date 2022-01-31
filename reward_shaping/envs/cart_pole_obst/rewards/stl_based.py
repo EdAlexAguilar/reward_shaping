@@ -48,7 +48,7 @@ class CPOSTLReward(TLRewardConfig):
     _no_falldown = "always(abs(theta) <= theta_limit)"
     _no_outside = "always(abs(x) <= x_limit)"
     _no_collision = "always(collision <= 0.0)"
-    _reach_origin = "eventually(always(dist_target_x <= x_target_tol))"
+    _reach_origin = "eventually(always((dist_target_x <= x_target_tol) and (abs(theta) <= theta_target_tol)))"
 
     @property
     def spec(self) -> str:
