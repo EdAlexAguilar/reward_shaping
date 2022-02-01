@@ -1,5 +1,4 @@
 from reward_shaping.monitor.formula import Operator
-import numpy as np
 
 _registry = {}
 

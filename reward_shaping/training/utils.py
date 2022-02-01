@@ -21,7 +21,8 @@ def make_env(env_name, task, reward, eval=False, logdir=None, seed=0):
     env = make_base_env(env_name, env_params)
     # set reward
     env = make_reward_wrap(env_name, env, env_params, reward)
-    env = FlattenObservation(env)
+    if env_name != "f1tenth":
+        env = FlattenObservation(env)
     return env, env_params
 
 
@@ -64,15 +65,19 @@ def make_base_env(env, env_params={}):
         env = RLTask(env=env, requirements=specs)
     elif env == "f1tenth":
         from reward_shaping.envs.f1tenth.core.single_agent_env import SingleAgentRaceEnv
+        from reward_shaping.envs.f1tenth.core.wrappers.wrappers import FlattenAction
+        from reward_shaping.envs.f1tenth.specs import get_all_specs
         env = SingleAgentRaceEnv(**env_params)
-        #specs = [(k, op, build_pred(env_params)) for k, (op, build_pred) in get_all_specs().items()]
-        #env = RLTask(env=env, requirements=specs)
+        env = FlattenAction(env)
+        specs = [(k, op, build_pred(env_params)) for k, (op, build_pred) in get_all_specs().items()]
+        env = RLTask(env=env, requirements=specs)
     else:
         raise NotImplementedError(f"not implemented env for {env}")
     return env
 
 
 def make_agent(env_name, env, reward, rl_algo, logdir=None):
+    policy = "MultiInputPolicy" if env_name == "f1tenth" else "MlpPolicy"
     # load model parameters
     algo = rl_algo.split("_", 1)[0]
     algo_config = pathlib.Path(f"{os.path.dirname(__file__)}/../envs/{env_name}/hparams") / f"{algo}.yml"
@@ -87,19 +92,19 @@ def make_agent(env_name, env, reward, rl_algo, logdir=None):
     # create model
     if algo == "ppo":
         from stable_baselines3 import PPO
-        model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=logdir, **algo_params)
+        model = PPO(policy, env, verbose=1, tensorboard_log=logdir, **algo_params)
     elif algo == "sac":
         from stable_baselines3 import SAC
-        model = SAC("MlpPolicy", env, verbose=1, tensorboard_log=logdir, **algo_params)
+        model = SAC(policy, env, verbose=1, tensorboard_log=logdir, **algo_params)
     elif algo == "ddpg":
         from stable_baselines3 import DDPG
-        model = DDPG("MlpPolicy", env, verbose=1, tensorboard_log=logdir, **algo_params)
+        model = DDPG(policy, env, verbose=1, tensorboard_log=logdir, **algo_params)
     elif algo == "ars":
         from sb3_contrib import ARS
-        model = ARS("MlpPolicy", env, verbose=1, tensorboard_log=logdir, **algo_params)
+        model = ARS(policy, env, verbose=1, tensorboard_log=logdir, **algo_params)
     elif algo == "td3":
         from stable_baselines3 import TD3
-        model = TD3("MlpPolicy", env, verbose=1, tensorboard_log=logdir, **algo_params)
+        model = TD3(policy, env, verbose=1, tensorboard_log=logdir, **algo_params)
     else:
         raise NotImplementedError()
     # copy params in logdir (optional)

@@ -1,4 +1,5 @@
 from reward_shaping.core.helper_fns import DefaultReward
+from reward_shaping.envs.f1tenth.rewards.stl_based import F110STLReward
 
 _registry = {}
 
@@ -28,4 +29,4 @@ register_reward('default', reward=DefaultReward)
 
 # Evaluation
 #
-register_reward('eval', reward=...)
+register_reward('eval', reward=F110STLReward)

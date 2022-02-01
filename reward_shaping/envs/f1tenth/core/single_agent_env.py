@@ -99,7 +99,7 @@ class SingleAgentRaceEnv(F110Env):
              'collision': old_obs['collisions'][0]})
         return obs
 
-    def _prepare_info(self, old_obs, action, old_info):
+    def _prepare_info(self, old_obs, reward, action, old_info):
         assert all([f in old_obs for f in ['lap_times', 'lap_counts', 'collisions', 'linear_vels_x']]), f'obs keys are {old_obs.keys()}'
         assert all([f in action for f in ['steering', 'speed']]), f'action keys are {action.keys()}'
         assert all([f in old_info for f in ['checkpoint_done']]), f'info keys are {old_info.keys()}'
@@ -108,7 +108,10 @@ class SingleAgentRaceEnv(F110Env):
                 'lap_count': old_obs['lap_counts'][0],
                 'collision': old_obs['collisions'][0],
                 'velocity': old_obs['linear_vels_x'][0],
-                'action': action
+                'time': self._step,
+                'progress': self._track.get_progress(np.array([old_obs['poses_x'][0], old_obs['poses_y'][0]])),
+                'action': action,
+                'default_reward': reward
                 }
         return info
 
@@ -124,7 +127,7 @@ class SingleAgentRaceEnv(F110Env):
             flat_action = self._get_flat_action(action)
             original_obs, reward, done, original_info = super().step(flat_action)
             obs = self._prepare_obs(original_obs)
-            info = self._prepare_info(original_obs, action, original_info)
+            info = self._prepare_info(original_obs, reward, action, original_info)
             done = bool(done)
         if self._gui and self._step % self._render_freq == 0:
             self.render()
