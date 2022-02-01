@@ -39,15 +39,8 @@ def load_env_params(env, task, **kwargs):
 
 
 def load_eval_params(env, task):
-    if env == "cart_pole_obst" and task == "random_height":
-        params = {"eval": True, "prob_sampling_feasible": 0.5}
-    elif env == "cart_pole_obst" and task == "fixed_height":
-        params = {"eval": True}
-    elif env == "lunar_lander":
-        params = {"eval": True, "max_steps": 500}
-    else:
-        params = {"eval": True}
-    return params
+    """ this can be use to pass additional parameters to constraint the evaluation episodes."""
+    return {}
 
 
 def make_base_env(env, env_params={}):
@@ -69,6 +62,11 @@ def make_base_env(env, env_params={}):
         env = LunarLanderContinuous(**env_params)
         specs = [(k, op, build_pred(env_params)) for k, (op, build_pred) in get_all_specs().items()]
         env = RLTask(env=env, requirements=specs)
+    elif env == "f1tenth":
+        from reward_shaping.envs.f1tenth.core.single_agent_env import SingleAgentRaceEnv
+        env = SingleAgentRaceEnv(**env_params)
+        #specs = [(k, op, build_pred(env_params)) for k, (op, build_pred) in get_all_specs().items()]
+        #env = RLTask(env=env, requirements=specs)
     else:
         raise NotImplementedError(f"not implemented env for {env}")
     return env
@@ -120,6 +118,9 @@ def get_reward_conf(env_name, env_params, reward):
         reward_conf = get_reward(reward)(env_params=env_params)
     elif env_name == "lunar_lander":
         from reward_shaping.envs.lunar_lander import get_reward
+        reward_conf = get_reward(reward)(env_params=env_params)
+    elif env_name == "f1tenth":
+        from reward_shaping.envs.f1tenth import get_reward
         reward_conf = get_reward(reward)(env_params=env_params)
     else:
         raise NotImplementedError(f'{reward} not implemented for {env_name}')

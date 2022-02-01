@@ -88,7 +88,7 @@ class LunarLander(gym.Env, EzPickle):
                  x_target=0.0, y_target=0.0, halfwidth_landing_area=1.0,
                  angle_limit=1, angle_speed_limit=0.5, max_steps=300,
                  obstacle_lowleft_x=10.0, obstacle_lowleft_y=7.0, obstacle_width=2.0, obstacle_height=0.5,
-                 eval=False, seed=0):
+                 seed=0):
         EzPickle.__init__(self)
         # env params
         self.task = task
@@ -96,7 +96,6 @@ class LunarLander(gym.Env, EzPickle):
         self.x_target, self.y_target = x_target, y_target
         self.halfwidth_landing_area = halfwidth_landing_area
         self.discrete_fuel_usage = fuel_usage
-        self.eval = eval
         self.max_episode_steps = max_steps
 
         self.seed(seed)

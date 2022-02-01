@@ -97,7 +97,7 @@ class CartPoleContObsEnv(gym.Env):
                  theta_target=0.0, theta_target_tol=24.0, cart_min_initial_offset=1.2, cart_max_initial_offset=2.0,
                  obstacle_min_w=0.5, obstacle_max_w=0.5, obstacle_min_h=0.5, obstacle_max_h=0.5, obstacle_min_dist=0.1,
                  obstacle_max_dist=0.2, feasible_height=0.97, prob_sampling_feasible=0.5, terminate_on_collision=True,
-                 terminate_on_battery=False, randomize_side=True, eval=False, seed=None):
+                 terminate_on_battery=False, randomize_side=True, seed=None):
         super().__init__()
         # Physical Constants
         self.gravity = 9.8
@@ -118,7 +118,6 @@ class CartPoleContObsEnv(gym.Env):
         self.max_action = 1.0
 
         self.task = task
-        self.eval_env = eval
         self.n_resets = 0
 
         # Obstacle spec

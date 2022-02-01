@@ -10,3 +10,4 @@ PyYAML
 git+https://github.com/nickovic/rtamt.git
 networkx
 tensorboard
+yamldataclassconfig
