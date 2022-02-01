@@ -12,6 +12,7 @@ args=(
   "cart_pole_obst fixed_height sac ${logdir} 1 default 1000000"
   "cart_pole_obst fixed_height sac ${logdir} 1 hrs_pot 1000000"
   "cart_pole_obst fixed_height sac ${logdir} 1 tltl 1000000"
+  "cart_pole_obst fixed_height sac ${logdir} 1 bhnr 1000000"
   "cart_pole_obst fixed_height sac ${logdir} 1 morl_uni 1000000"
   "cart_pole_obst fixed_height sac ${logdir} 1 morl_dec 1000000"
   ##
@@ -20,6 +21,7 @@ args=(
   "bipedal_walker forward sac ${logdir} 1 default 1000000"
   "bipedal_walker forward sac ${logdir} 1 hrs_pot 1000000"
   "bipedal_walker forward sac ${logdir} 1 tltl 1000000"
+  "bipedal_walker forward sac ${logdir} 1 bhnr 1000000"
   "bipedal_walker forward sac ${logdir} 1 morl_uni 1000000"
   "bipedal_walker forward sac ${logdir} 1 morl_dec 1000000"
   ##
@@ -28,6 +30,7 @@ args=(
   "bipedal_walker forward_hardcore sac ${logdir} 1 default 2000000"
   "bipedal_walker forward_hardcore sac ${logdir} 1 hrs_pot 2000000"
   "bipedal_walker forward_hardcore sac ${logdir} 1 tltl 2000000"
+  "bipedal_walker forward_hardcore sac ${logdir} 1 bhnr 2000000"
   "bipedal_walker forward_hardcore sac ${logdir} 1 morl_uni 2000000"
   "bipedal_walker forward_hardcore sac ${logdir} 1 morl_dec 2000000"
   ##
@@ -36,9 +39,11 @@ args=(
   "lunar_lander land sac ${logdir} 1 default 2000000"
   "lunar_lander land sac ${logdir} 1 hrs_pot 2000000"
   "lunar_lander land sac ${logdir} 1 tltl 2000000"
+  "lunar_lander land sac ${logdir} 1 bhnr 2000000"
   "lunar_lander land sac ${logdir} 1 morl_uni 2000000"
   "lunar_lander land sac ${logdir} 1 morl_dec 2000000"
 )
+
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
