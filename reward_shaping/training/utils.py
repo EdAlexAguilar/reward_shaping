@@ -128,9 +128,13 @@ def get_reward_conf(env_name, env_params, reward):
 
 def make_reward_wrap(env_name, env, env_params, reward, logdir=None):
     reward_conf = get_reward_conf(env_name, env_params, reward)
-    if 'tl' in reward:
+    if 'tltl' in reward:
         from reward_shaping.core.wrappers import TLRewardWrapper
-        env = TLRewardWrapper(env, tl_conf=reward_conf)
+        env = TLRewardWrapper(env, tl_conf=reward_conf, window_len=None, eval_at_end=True)
+    elif 'bhnr' in reward:
+        from reward_shaping.core.wrappers import TLRewardWrapper
+        window = int(env_params["max_steps"] // 20)
+        env = TLRewardWrapper(env, tl_conf=reward_conf, window_len=window, eval_at_end=False)
     elif 'eval' in reward:
         from reward_shaping.core.wrappers import EvaluationRewardWrapper
         env = EvaluationRewardWrapper(env, conf=reward_conf)

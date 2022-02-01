@@ -1,9 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from reward_shaping.core.graph_based import GraphBasedReward
-from reward_shaping.core.reward import RewardFunction
-
 
 class RewardConfig(ABC):
     def __init__(self, env_params):
@@ -59,22 +56,3 @@ class EvalConfig(RewardConfig):
     def eval_episode(self, episode) -> float:
         """custom method to eval episode """
         pass
-
-
-class GraphRewardConfig(RewardConfig):
-    @property
-    @abstractmethod
-    def nodes(self):
-        pass
-
-    @property
-    @abstractmethod
-    def topology(self):
-        pass
-
-
-class BuildGraphReward:
-    @staticmethod
-    def from_conf(graph_config: GraphRewardConfig) -> RewardFunction:
-        reward_fn = GraphBasedReward.from_collections(nodes=graph_config.nodes, topology=graph_config.topology)
-        return reward_fn

@@ -22,8 +22,12 @@ def register_reward(name: str, reward):
 
 # Baselines
 register_reward('default', reward=DefaultReward)
-register_reward('tltl', reward=LLSTLReward)
 
+# TL-based
+register_reward('tltl', reward=LLSTLReward)  # evaluate on complete episode
+register_reward('bhnr', reward=LLSTLReward)  # evaluate with a moving window
+
+# Multi-objectivization solved via linear scalarization
 register_reward('morl_uni', reward=LLUniformScalarizedMultiObjectivization)
 register_reward('morl_dec', reward=LLDecreasingScalarizedMultiObjectivization)
 
@@ -32,4 +36,3 @@ register_reward('hrs_pot', reward=LLHierarchicalShapingOnSparseTargetReward)
 
 # Evaluation
 register_reward('eval', reward=LLEvalConfig)
-

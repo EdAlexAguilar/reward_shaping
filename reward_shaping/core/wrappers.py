@@ -1,4 +1,5 @@
-from typing import Any
+from collections import deque
+from typing import Any, Callable, List
 
 import gym
 
@@ -36,17 +37,28 @@ class RewardWrapper(gym.Wrapper):
 
 
 class CollectionWrapper(gym.Wrapper):
+    """
+    This wrapper collects the measurable variables obtainable from the env state through the `extractor_fn`
+    and store them in a dictionary under the names `variables`.
+    It stores the `window_len` most recent variables using a moving-window.
 
-    def __init__(self, env, variables, extractor_fn):
+    @param: env: gym environment
+    @param: variables: name of the collected variables
+    @param: extractor_fn: callable function to extract the variables from the env state
+    @param: window_len: size of the moving window, if None then stores the whole episode till termination
+    """
+
+    def __init__(self, env: gym.Env, variables: List[str], extractor_fn: Callable, window_len: int = None):
         super(CollectionWrapper, self).__init__(env)
         self.env = env
         self._variables = variables
         self._extractor_fn = extractor_fn
-        self._episode = {var: [] for var in self._variables}
+        self._window_len = window_len
+        self._episode = {var: deque(maxlen=self._window_len) for var in self._variables}
 
     def reset(self, **kwargs):
         state = self.env.reset(**kwargs)
-        self._episode = {var: [] for var in self._variables}
+        self._episode = {var: deque(maxlen=self._window_len) for var in self._variables}
         return state
 
     def step(self, action):
@@ -63,11 +75,18 @@ class CollectionWrapper(gym.Wrapper):
 
 
 class TLRewardWrapper(CollectionWrapper):
-    """ This is an 'episodic' wrapper which evaluate a spec in the terminal states."""
+    """
+    This is an 'episodic' wrapper which evaluate a spec using RTAMT monitor.
+    It evaluates the episode (or a slice of it), and return the robustness of the specification.
 
-    def __init__(self, env: gym.Env, tl_conf: TLRewardConfig):
-        super(TLRewardWrapper, self).__init__(env, tl_conf.monitoring_variables, tl_conf.get_monitored_state)
-        self._tl_conf = tl_conf
+    @param: eval_at_end: boolean indicating if evaluating only on terminal states or at each step
+    """
+
+    def __init__(self, env: gym.Env, tl_conf: TLRewardConfig, window_len: int = None, eval_at_end=True):
+        super(TLRewardWrapper, self).__init__(env, tl_conf.monitoring_variables, tl_conf.get_monitored_state,
+                                              window_len)
+        self._tl_conf = tl_conf  # tl-spec configuration
+        self._eval_at_end = eval_at_end
         self._reward = 0.0
         self._return = 0.0
 
@@ -77,16 +96,19 @@ class TLRewardWrapper(CollectionWrapper):
         state = super().reset(**kwargs)
         return state
 
-    def _compute_episode_robustness(self):
-        return monitor_episode(self._tl_conf.spec, self._tl_conf.monitoring_variables,
-                               self._tl_conf.monitoring_types, self._episode)[0][1]
+    def _compute_episode_robustness(self, done):
+        reward = 0.0
+        if len(self._episode['time']) > 1 and (not self._eval_at_end or done):
+            reward = monitor_episode(self._tl_conf.spec, self._tl_conf.monitoring_variables,
+                                     self._tl_conf.monitoring_types, self._episode)[0][1]
+        return reward
 
     def get_monitored_episode(self):
         return self._episode
 
     def step(self, action):
         obs, _, done, info = super().step(action)
-        reward = self._compute_episode_robustness() if done else 0.0
+        reward = self._compute_episode_robustness(done)
         self._reward = reward
         self._return += reward
         return obs, reward, done, info
