@@ -166,7 +166,7 @@ class SingleAgentRaceEnv(F110Env):
                    'pose': np.array([old_obs['poses_x'][0], old_obs['poses_y'][0], old_obs['poses_theta'][0]]),
                    'velocity': np.array([old_obs['linear_vels_x'][0]]),
                    'steering': np.array([action["steering"]]),
-                   'progress': self._track.get_progress(np.array([old_obs['poses_x'][0], old_obs['poses_y'][0]])),
+                   'progress': self._track.get_progress(np.array([old_obs['poses_x'][0], old_obs['poses_y'][0]])) - self.p0,
                    'lane': self._track.get_lane(np.array([old_obs['poses_x'][0], old_obs['poses_y'][0]])),
                    'collision': old_obs['collisions'][0]}
         filtered_obs = {}
@@ -245,6 +245,7 @@ class SingleAgentRaceEnv(F110Env):
         pose = [wp[0], wp[1], theta]
         # call original method
         original_obs, reward, done, original_info = super().reset(poses=np.array([pose]))
+        self.p0 = self._track.get_progress(np.array([original_obs['poses_x'][0], original_obs['poses_y'][0]])),
         obs = self.prepare_obs(original_obs, {"steering": 0.0, "speed": 0.0})
         self._step = 0
         return obs
@@ -292,13 +293,13 @@ def render_callback(env_renderer):
 
 if __name__ == "__main__":
     env = SingleAgentRaceEnv("Catalunya")
-    for i in range(1):
+    for i in range(2):
         print(f"episode {i + 1}")
         obs = env.reset(mode='random')
         for j in range(500):
             obs, reward, done, info = env.step({'steering': 0.0, 'speed': 2.0})
-            print(obs["lane"])
-            img = env.render()
+            env.render()
+        print()
     # check env
     try:
         from stable_baselines3.common.env_checker import check_env
