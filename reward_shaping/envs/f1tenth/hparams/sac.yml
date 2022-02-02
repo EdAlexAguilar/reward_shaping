@@ -1,6 +1,6 @@
 gamma: 0.98
 learning_rate: 0.00073
-buffer_size: 50000
+buffer_size: 100000
 learning_starts: 1000
 train_freq: 64
 batch_size: 256
