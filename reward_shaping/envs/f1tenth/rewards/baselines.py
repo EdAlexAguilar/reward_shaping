@@ -13,24 +13,27 @@ class F110EvalConfig(EvalConfig):
         self._max_episode_len = 0
 
     @property
-    def requirements_dict(self):
-        return {'no_collision': self._no_collision,
-                'complete_lap': self._complete_lap}
-
-    @property
     def monitoring_variables(self):
-        return ['time', 'collision', 'progress']
+        return ['time', 'collision', 'progress', 'velocity', 'steering', 'lane',
+                'comfortable_steering', 'comfortable_speed_min', 'comfortable_speed_max', 'favourite_lane']
 
     @property
     def monitoring_types(self):
-        return ['int', 'float', 'float']
+        return ['int', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float']
 
     def get_monitored_state(self, state, done, info) -> Dict[str, Any]:
         # compute monitoring variables (all of them normalized in 0,1)
         monitored_state = {
             'time': info['time'],
-            'collision': info['collision'],  # already 0 or 1
-            'progress': info['progress']
+            'collision': info['state']['collision'],  # already 0 or 1
+            'progress': info['state']['progress'],
+            'velocity': info['state']['velocity'],
+            'steering': info['state']['steering'],
+            'lane': info['state']['lane'],
+            'comfortable_steering': info['comfortable_steering'],
+            'comfortable_speed_min': info['comfortable_speed_min'],
+            'comfortable_speed_max': info['comfortable_speed_max'],
+            'favourite_lane': info['favourite_lane']
         }
         return monitored_state
 
@@ -49,11 +52,11 @@ class F110EvalConfig(EvalConfig):
                                      vars=self.monitoring_variables, types=self.monitoring_types,
                                      episode=episode)[0][1]
         #
-        comfort_metrics = [0]
-        """
-        comfort_spec1 = ""
-        comfort_spec2 = ""        
-        for comfort_spec in [comfort_spec1, comfort_spec2]:
+        comfort_metrics = []
+        comfort_speed = "(velocity >= comfortable_speed_min) and (velocity <= comfortable_speed_max)"
+        comfort_steer = "(abs(steering) <= comfortable_steering)"
+        comfort_lane = "(lane == favourite_lane)"
+        for comfort_spec in [comfort_speed, comfort_steer, comfort_lane]:
             comfort_trace = monitor_episode(stl_spec=comfort_spec,
                                             vars=self.monitoring_variables, types=self.monitoring_types,
                                             episode=episode)
@@ -61,7 +64,6 @@ class F110EvalConfig(EvalConfig):
                                              range((self._max_episode_len - len(comfort_trace)))]
             comfort_mean = np.mean([float(rob >= 0) for t, rob in comfort_trace])
             comfort_metrics.append(comfort_mean)
-        """
         #
         tot_score = float(safety_rho >= 0) + 0.5 * float(target_rho >= 0) + 0.25 * np.mean(comfort_metrics)
         return tot_score

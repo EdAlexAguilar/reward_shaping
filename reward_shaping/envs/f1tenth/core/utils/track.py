@@ -48,7 +48,7 @@ class Track:
             self.track_length += np.linalg.norm([y_diff, x_diff])
 
     def get_id_closest_point2centerline(self, point: Tuple[float, float], min_id: int = 0):
-        idx = (np.linalg.norm(self.centerline[min_id:, 0:2] - point, axis=1)).argmin()
+        idx = min_id + (np.linalg.norm(self.centerline[min_id:, 0:2] - point, axis=1)).argmin()
         return idx
 
     def get_progress(self, point: Tuple[float, float], above_val: float = 0.0, return_meters: bool = False):
@@ -62,6 +62,17 @@ class Track:
         if return_meters:
             progress *= self.track_length
         return progress
+
+    def get_lane(self, point: Tuple[float, float]):
+        """ get lane w.r.t. the centerline as 0 (right) or 1 (left)"""
+        n_points = self.centerline.shape[0]
+        wp1 = self.get_id_closest_point2centerline(point)
+        wp2 = self.get_id_closest_point2centerline(point, min_id=wp1 + 1 % n_points)
+        #
+        x1, y1 = self.centerline[wp1][:2]
+        x2, y2 = self.centerline[wp2][:2]
+        lane = ((x2 - x1) * (point[1] - y1) - (y2 - y1) * (point[0] - x1)) > 0
+        return int(lane)
 
     @staticmethod
     def from_track_name(track: str):

@@ -34,7 +34,13 @@ def _build_comfortable_steering(_):
     return lambda state, info: info["comfortable_steering"] - abs(state["steering"])
 
 
+def _build_keep_right(_):
+    lanes = {"right": 0, "left": 1}
+    return lambda state, info: -1 if state["lane"] == lanes["right"] else +1
+
+
 register_spec('s_coll', Operator.ENSURE, _build_no_collision)
 register_spec("t_lap", Operator.ACHIEVE, _build_complete_lap)
-register_spec("c_speed", Operator.ENCOURAGE, _build_speed_limit)
-register_spec("c_steering", Operator.ENCOURAGE, _build_comfortable_steering)
+register_spec("c1_speed", Operator.ENCOURAGE, _build_speed_limit)
+register_spec("c2_steering", Operator.ENCOURAGE, _build_comfortable_steering)
+register_spec("c3_keep_right_lane", Operator.ENCOURAGE, _build_keep_right)

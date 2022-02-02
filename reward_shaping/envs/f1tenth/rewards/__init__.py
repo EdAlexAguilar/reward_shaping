@@ -29,5 +29,4 @@ register_reward('bhnr', reward=F110STLReward)  # evaluation with a moving window
 #register_reward('hrs_pot', reward=CPOHierarchicalPotentialShaping)
 
 # Evaluation
-#
 register_reward('eval', reward=F110EvalConfig)

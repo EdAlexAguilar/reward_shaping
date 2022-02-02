@@ -22,7 +22,7 @@ actions_conf:
   min_steering: -0.4189
   max_steering: 0.4189
   min_speed: 0.5
-  max_speed: 2.0
+  max_speed: 3.0
 observations_conf:
   max_range: 10.0
   resolution: 0.25
@@ -33,7 +33,7 @@ termination_conf:
   max_lap: 1
   on_collision: True
 # for task specification
-comfortable_speed_min: 1.0  # m/s
+comfortable_speed_min: 1.5  # m/s
 comfortable_speed_max: 2.0  # m/s
 comfortable_steering: 0.10  # rad
-
+favourite_lane: 0 # 0 is right lane, 1 is left lane

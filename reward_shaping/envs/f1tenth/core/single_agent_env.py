@@ -85,6 +85,7 @@ class SingleAgentRaceEnv(F110Env):
                       "steering": gym.spaces.Box(low=-0.4189, high=0.4189, shape=(1,)),
                       "collision": gym.spaces.Box(low=0.0, high=1.0, shape=(1,)),
                       "progress": gym.spaces.Box(low=0.0, high=1.0, shape=(1,)),
+                      "lane": gym.spaces.Box(low=0.0, high=1.0, shape=(1,)),
                       }
         for obs, space in obs_spaces.items():
             if obs not in self.observations_conf["types"]:
@@ -125,7 +126,7 @@ class SingleAgentRaceEnv(F110Env):
         return self._process_conf(default, action_conf)
 
     def process_obs_conf(self, obs_conf):
-        default = {'types': ['scan', 'pose', 'velocity', 'lidar_occupancy', 'steering', 'progress', 'collision'],
+        default = {'types': ['scan', 'pose', 'velocity', 'lidar_occupancy', 'steering', 'progress', 'collision', 'lane'],
                    'max_range': 10.0, 'resolution': 0.25, 'frame_skip': 4, 'degree_fov': 360}
         return self._process_conf(default, obs_conf)
 
@@ -166,6 +167,7 @@ class SingleAgentRaceEnv(F110Env):
                    'velocity': np.array([old_obs['linear_vels_x'][0]]),
                    'steering': np.array([action["steering"]]),
                    'progress': self._track.get_progress(np.array([old_obs['poses_x'][0], old_obs['poses_y'][0]])),
+                   'lane': self._track.get_lane(np.array([old_obs['poses_x'][0], old_obs['poses_y'][0]])),
                    'collision': old_obs['collisions'][0]}
         filtered_obs = {}
         for obs, value in all_obs.items():
@@ -295,7 +297,8 @@ if __name__ == "__main__":
         obs = env.reset(mode='random')
         for j in range(500):
             obs, reward, done, info = env.step({'steering': 0.0, 'speed': 2.0})
-            img = env.render(mode="rgb_array")
+            print(obs["lane"])
+            img = env.render()
     # check env
     try:
         from stable_baselines3.common.env_checker import check_env
