@@ -8,3 +8,11 @@ RUN apt-get update && apt-get install -y xvfb python-opengl \
 WORKDIR /src
 COPY . /src
 RUN pip install -r requirements.txt
+
+# install f1tenth gym
+WORKDIR /src/reward_shaping/envs/f1tenth/core/
+RUN git submodule init && git submodule update
+WORKDIR /src/reward_shaping/envs/f1tenth/core/f1tenth_gym/gym
+RUN pip install -e .
+
+WORKDIR /src
