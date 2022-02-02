@@ -282,12 +282,10 @@ def render_callback(env_renderer):
     x = e.cars[0].vertices[::2]
     y = e.cars[0].vertices[1::2]
     top, bottom, left, right = max(y), min(y), min(x), max(x)
-    e.score_label.x = left
-    e.score_label.y = top - 700
-    e.left = left - 800
-    e.right = right + 800
-    e.top = top + 800
-    e.bottom = bottom - 800
+    e.left = left - 400
+    e.right = right + 400
+    e.top = top + 400
+    e.bottom = bottom - 400
 
 
 if __name__ == "__main__":
