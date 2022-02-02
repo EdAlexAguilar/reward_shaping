@@ -36,7 +36,7 @@ class SingleAgentRaceEnv(F110Env):
         - fix rendering issue based on map filepath
     """
 
-    def __init__(self, map_name: str, gui: bool = False, sim_params: Dict[str, Any] = None,
+    def __init__(self, map_name: str, gui: bool = False, sim_params: Dict[str, Any] = {},
                  actions_conf: Dict[str, Any] = {}, observations_conf: Dict[str, Any] = {},
                  termination_conf: Dict[str, Any] = {},
                  comfortable_speed_min: float = 0.0, comfortable_speed_max: float = 7.0,
@@ -50,7 +50,7 @@ class SingleAgentRaceEnv(F110Env):
         self.termination_conf = self.process_term_conf(termination_conf)
         #
         super(SingleAgentRaceEnv, self).__init__(map=self._track.filepath, map_ext=self._track.ext,
-                                                 params=sim_params, num_agents=1, seed=seed)
+                                                 params=self.sim_params, num_agents=1, seed=seed)
         self.add_render_callback(render_callback)
         self._scan_size = self.sim.agents[0].scan_simulator.num_beams
         self._scan_range = self.sim.agents[0].scan_simulator.max_range
@@ -107,9 +107,9 @@ class SingleAgentRaceEnv(F110Env):
         })
 
     @staticmethod
-    def _process_conf(default, sim_params):
+    def _process_conf(default, params):
         conf = default
-        for k, v in sim_params.items():
+        for k, v in params.items():
             conf[k] = v
         return conf
 
@@ -130,7 +130,7 @@ class SingleAgentRaceEnv(F110Env):
         return self._process_conf(default, obs_conf)
 
     def process_term_conf(self, termination_conf):
-        default = {"max_steps": 1500, "lap": 1, "on_collision": True}
+        default = {"max_steps": 1500, "max_lap": 1, "on_collision": True}
         return self._process_conf(default, termination_conf)
 
     @staticmethod
@@ -248,12 +248,30 @@ class SingleAgentRaceEnv(F110Env):
         return obs
 
     def render(self, mode='human', **kwargs):
+        assert mode in ["human", "rgb_array"]
         WINDOW_W, WINDOW_H = 1000, 800
         if self.renderer is None:
             # first call, initialize everything
             F110Env.renderer = EnvRenderer(WINDOW_W, WINDOW_H)
             F110Env.renderer.update_map(self._track.filepath, self._track.ext)
-        super(SingleAgentRaceEnv, self).render(mode)
+
+        if mode == "human":
+            super(SingleAgentRaceEnv, self).render(mode)
+        elif mode == "rgb_array":
+            super(SingleAgentRaceEnv, self).render("human")
+            from pyglet.gl import GLubyte
+            buffer = (GLubyte * (3 * F110Env.renderer.width * F110Env.renderer.height))(0)
+            from pyglet.gl import glReadPixels
+            from pyglet.gl import GL_RGB
+            from pyglet.gl import GL_UNSIGNED_BYTE
+            glReadPixels(0, 0, self.renderer.width, self.renderer.height, GL_RGB, GL_UNSIGNED_BYTE, buffer)
+
+            # Use PIL to convert raw RGB buffer and flip the right way up
+            from PIL import Image
+            image = Image.frombytes(mode="RGB", size=(self.renderer.width, self.renderer.height), data=buffer)
+            image = image.transpose(Image.FLIP_TOP_BOTTOM)
+            image = image.resize((200, 160), Image.ANTIALIAS)
+            return np.array(image)
 
 
 def render_callback(env_renderer):
@@ -273,13 +291,13 @@ def render_callback(env_renderer):
 
 
 if __name__ == "__main__":
-    env = SingleAgentRaceEnv("Treitlstrasse")
+    env = SingleAgentRaceEnv("Catalunya")
     for i in range(1):
         print(f"episode {i + 1}")
         obs = env.reset(mode='random')
         for j in range(500):
             obs, reward, done, info = env.step({'steering': 0.0, 'speed': 2.0})
-            env.render()
+            img = env.render(mode="rgb_array")
     # check env
     try:
         from stable_baselines3.common.env_checker import check_env
