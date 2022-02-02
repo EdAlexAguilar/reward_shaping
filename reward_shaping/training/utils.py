@@ -72,12 +72,13 @@ def make_base_env(env, env_params={}):
         from gym.wrappers import RescaleAction
         from reward_shaping.envs.f1tenth.specs import get_all_specs
         env = SingleAgentRaceEnv(**env_params)
-        env = NormalizeVelocityObservation(env)
         env = FrameSkip(env, skip=env_params['observations_conf']['frame_skip'])
         env = FlattenAction(env)
         env = RescaleAction(env, a=-1, b=+1)
         specs = [(k, op, build_pred(env_params)) for k, (op, build_pred) in get_all_specs().items()]
         env = RLTask(env=env, requirements=specs)
+        env = FilterObservationWrapper(env, ["lidar_occupancy", "velocity"])
+        env = NormalizeVelocityObservation(env)
     else:
         raise NotImplementedError(f"not implemented env for {env}")
     return env

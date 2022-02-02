@@ -39,6 +39,8 @@ class SingleAgentRaceEnv(F110Env):
     def __init__(self, map_name: str, gui: bool = False, sim_params: Dict[str, Any] = None,
                  actions_conf: Dict[str, Any] = {}, observations_conf: Dict[str, Any] = {},
                  termination_conf: Dict[str, Any] = {},
+                 comfortable_speed_min: float = 0.0, comfortable_speed_max: float = 7.0,
+                 comfortable_steering: float = 0.4189,
                  eval: bool = False, seed: int = None):
         self._track = Track.from_track_name(map_name)
         seed = np.random.randint(0, 1000000) if seed is None else seed
@@ -54,6 +56,9 @@ class SingleAgentRaceEnv(F110Env):
         self._scan_range = self.sim.agents[0].scan_simulator.max_range
         # episode
         self.eval = eval
+        # task spec
+        self.comf_speed_min, self.comf_speed_max = comfortable_speed_min, comfortable_speed_max
+        self.comf_steering = comfortable_steering
         # rendering
         self._gui = gui
         self._render_freq = 10
@@ -77,7 +82,9 @@ class SingleAgentRaceEnv(F110Env):
                       "lidar_occupancy": gym.spaces.Box(low=0, high=255, dtype=np.uint8, shape=(1, l2d_bins, l2d_bins)),
                       "pose": gym.spaces.Box(low=np.NINF, high=np.PINF, shape=(3,)),
                       "velocity": gym.spaces.Box(low=-5.0, high=20.0, shape=(1,)),
+                      "steering": gym.spaces.Box(low=-0.4189, high=0.4189, shape=(1,)),
                       "collision": gym.spaces.Box(low=0.0, high=1.0, shape=(1,)),
+                      "progress": gym.spaces.Box(low=0.0, high=1.0, shape=(1,)),
                       }
         for obs, space in obs_spaces.items():
             if obs not in self.observations_conf["types"]:
@@ -118,7 +125,7 @@ class SingleAgentRaceEnv(F110Env):
         return self._process_conf(default, action_conf)
 
     def process_obs_conf(self, obs_conf):
-        default = {'types': ['scan', 'pose', 'velocity'],
+        default = {'types': ['scan', 'pose', 'velocity', 'lidar_occupancy', 'steering', 'progress', 'collision'],
                    'max_range': 10.0, 'resolution': 0.25, 'frame_skip': 4, 'degree_fov': 360}
         return self._process_conf(default, obs_conf)
 
@@ -148,7 +155,7 @@ class SingleAgentRaceEnv(F110Env):
         scan = np.where(mask, scan, np.Inf)
         return polar2cartesian(scan, scan_angles, l2d_bins, resolution)
 
-    def prepare_obs(self, old_obs):
+    def prepare_obs(self, old_obs, action):
         assert all([f in old_obs for f in ['scans', 'poses_x', 'poses_y', 'poses_theta',
                                            'linear_vels_x', 'linear_vels_y', 'ang_vels_z',
                                            'collisions']]), f'obs keys are {old_obs.keys()}'
@@ -157,6 +164,8 @@ class SingleAgentRaceEnv(F110Env):
                    'lidar_occupancy': self.l2d_observation(old_obs),
                    'pose': np.array([old_obs['poses_x'][0], old_obs['poses_y'][0], old_obs['poses_theta'][0]]),
                    'velocity': np.array([old_obs['linear_vels_x'][0]]),
+                   'steering': np.array([action["steering"]]),
+                   'progress': self._track.get_progress(np.array([old_obs['poses_x'][0], old_obs['poses_y'][0]])),
                    'collision': old_obs['collisions'][0]}
         filtered_obs = {}
         for obs, value in all_obs.items():
@@ -179,7 +188,10 @@ class SingleAgentRaceEnv(F110Env):
                 'time': self._step * self.timestep,
                 'progress': self._track.get_progress(np.array([old_obs['poses_x'][0], old_obs['poses_y'][0]])),
                 'action': action,
-                'default_reward': reward
+                'default_reward': reward,
+                'comfortable_speed_min': self.comf_speed_min,
+                'comfortable_speed_max': self.comf_speed_max,
+                'comfortable_steering': self.comf_steering,
                 }
         return info
 
@@ -204,7 +216,7 @@ class SingleAgentRaceEnv(F110Env):
         else:
             flat_action = self._get_flat_action(action)
             original_obs, reward, done, original_info = super().step(flat_action)
-            obs = self.prepare_obs(original_obs)
+            obs = self.prepare_obs(original_obs, action)
             info = self.prepare_info(original_obs, reward, action, original_info)
             done = self.check_termination_conditions(obs, info)
         if self._gui and self._step % self._render_freq == 0:
@@ -231,7 +243,7 @@ class SingleAgentRaceEnv(F110Env):
         pose = [wp[0], wp[1], theta]
         # call original method
         original_obs, reward, done, original_info = super().reset(poses=np.array([pose]))
-        obs = self.prepare_obs(original_obs)
+        obs = self.prepare_obs(original_obs, {"steering": 0.0, "speed": 0.0})
         self._step = 0
         return obs
 
