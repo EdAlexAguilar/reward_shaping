@@ -4,6 +4,7 @@ import pathlib
 import matplotlib.pyplot as plt
 import yaml
 from gym.wrappers import FlattenObservation
+from stable_baselines3.common.env_checker import check_env
 
 from reward_shaping.core.wrappers import RewardWrapper
 from reward_shaping.monitor.task import RLTask
@@ -23,6 +24,7 @@ def make_env(env_name, task, reward, eval=False, logdir=None, seed=0):
     env = make_reward_wrap(env_name, env, env_params, reward)
     if env_name != "f1tenth":
         env = FlattenObservation(env)
+    check_env(env)
     return env, env_params
 
 
@@ -41,7 +43,7 @@ def load_env_params(env, task, **kwargs):
 
 def load_eval_params(env, task):
     """ this can be use to pass additional parameters to constraint the evaluation episodes."""
-    return {}
+    return {'eval': True}
 
 
 def make_base_env(env, env_params={}):
@@ -65,10 +67,15 @@ def make_base_env(env, env_params={}):
         env = RLTask(env=env, requirements=specs)
     elif env == "f1tenth":
         from reward_shaping.envs.f1tenth.core.single_agent_env import SingleAgentRaceEnv
-        from reward_shaping.envs.f1tenth.core.wrappers.wrappers import FlattenAction
+        from reward_shaping.envs.f1tenth.core.wrappers.wrappers import FilterObservationWrapper, NormalizeVelocityObservation
+        from reward_shaping.envs.f1tenth.core.wrappers.wrappers import FlattenAction, FrameSkip, LidarOccupancyObservation
+        from gym.wrappers import RescaleAction
         from reward_shaping.envs.f1tenth.specs import get_all_specs
         env = SingleAgentRaceEnv(**env_params)
+        env = NormalizeVelocityObservation(env)
+        env = FrameSkip(env, skip=env_params['observations_conf']['frame_skip'])
         env = FlattenAction(env)
+        env = RescaleAction(env, a=-1, b=+1)
         specs = [(k, op, build_pred(env_params)) for k, (op, build_pred) in get_all_specs().items()]
         env = RLTask(env=env, requirements=specs)
     else:

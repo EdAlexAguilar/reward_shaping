@@ -7,6 +7,8 @@ from gym.spaces import Box
 from gym.wrappers import LazyFrames
 from numba import njit
 
+from reward_shaping.envs.f1tenth.core.single_agent_env import SingleAgentRaceEnv
+
 
 class LidarOccupancyObservation(gym.ObservationWrapper):
     def __init__(self, env, max_range: float = 10.0, resolution: float = 0.08, degree_fow: int = 270):
@@ -183,35 +185,6 @@ class FixSpeedControl(gym.ActionWrapper):
         return new_action
 
 
-class ConstrainedSpeedControl(gym.ActionWrapper):
-    """
-    control the steering angle and a constrained increment of the velocity
-    """
-
-    def __init__(self, env, max_increment: float = 1.0, max_decrement: float = -1.0):
-        super(ConstrainedSpeedControl, self).__init__(env)
-        assert max_increment > 0 and max_decrement < 0, f'not valid arguments: max_increment {max_increment}, max_decrement {max_decrement}'
-        self._max_increment = max_increment
-        self._max_decrement = max_decrement
-        self._last_velocity = 0.0
-        self._old_action_space = self.action_space
-        self.action_space = gym.spaces.Dict({'steering': self.env.action_space['steering'],
-                                             'delta_velocity': gym.spaces.Box(low=self._max_decrement,
-                                                                              high=self._max_increment, shape=())})
-
-    def reset(self, **kwargs):
-        self._last_velocity = 0.0
-        return super(ConstrainedSpeedControl, self).reset(**kwargs)
-
-    def action(self, action):
-        assert action in self.action_space
-        velocity_low = self._old_action_space['velocity'].low
-        velocity_high = self._old_action_space['velocity'].high
-        velocity = np.clip(self._last_velocity + action['delta_velocity'], velocity_low, velocity_high)
-        new_action = {'steering': action['steering'], 'velocity': velocity}
-        return new_action
-
-
 class FixResetWrapper(gym.Wrapper):
     """Fix a reset mode to sample initial condition from starting grid or randomly over the track."""
 
@@ -317,8 +290,8 @@ def test_wrapped_env(env, render):
 
 
 def test_lidar_occupancy_wrapper(render=False):
-    from racing_rl.envs.single_agent_env import SingleAgentRaceEnv
-    env = SingleAgentRaceEnv("Melbourne")
+    env = SingleAgentRaceEnv("Melbourne", actions_conf={"min_steering": -0.4189, "max_steering": 0.4189,
+                                                      "min_speed": 0.5, "max_speed": 2.0})
     env = LidarOccupancyObservation(env, max_range=10)
     test_wrapped_env(env, render)
 

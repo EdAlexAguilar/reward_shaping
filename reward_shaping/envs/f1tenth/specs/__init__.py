@@ -17,7 +17,7 @@ def register_spec(name, operator, build_predicate):
 
 
 def _build_no_collision(_):
-    return lambda state, info: -1 if state['collision'] == 1 else +1
+    return lambda state, info: -1 if info['collision'] == 1 else +1
 
 
 def _build_complete_lap(env_params):

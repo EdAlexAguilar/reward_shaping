@@ -18,8 +18,22 @@ sim_params:
   v_max: 20.0
   width: 0.31
   length: 0.58
-gym_params:
+actions_conf:
   min_steering: -0.4189
   max_steering: 0.4189
   min_speed: 0.50
   max_speed: 2.00
+observations_conf:
+  types:
+    - scan
+    - lidar_occupancy
+    - velocity
+  max_range: 10.0
+  resolution: 0.25
+  degree_fov: 270
+  frame_skip: 5
+termination_conf:
+  max_steps: 1500
+  max_lap: 1
+  on_collision: True
+

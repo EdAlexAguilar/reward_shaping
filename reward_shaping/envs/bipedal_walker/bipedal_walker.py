@@ -115,7 +115,7 @@ class BipedalWalker(gym.Env, EzPickle):
     def __init__(self, task="forward", hardcore=False, dist_hull_limit=0.25, max_steps=1600,
                  angle_hull_limit=np.pi / 4,
                  speed_y_limit=1.0, angle_vel_limit=.25, speed_x_target=0.0,
-                 terminate_on_collision=True, seed=0):
+                 terminate_on_collision=True, eval=False, seed=0):
         EzPickle.__init__(self)
         self.seed(seed=seed)
 

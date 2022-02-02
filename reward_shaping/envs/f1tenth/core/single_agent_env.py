@@ -1,13 +1,30 @@
 import collections
+import math
 from typing import Dict, Any
 
 import numpy as np
 
 import gym
+from numba import njit
 
 from f110_gym.envs import F110Env
 from f110_gym.envs.rendering import EnvRenderer
 from reward_shaping.envs.f1tenth.core.utils.track import Track
+
+
+@njit(fastmath=False, cache=True)
+def polar2cartesian(dist, angle, n_bins, res):
+    occupancy_map = np.zeros(shape=(n_bins, n_bins), dtype=np.uint8)
+    xx = dist * np.cos(angle)
+    yy = dist * np.sin(angle)
+    xi, yi = np.floor(xx / res), np.floor(yy / res)
+    for px, py in zip(xi, yi):
+        row = min(max(n_bins // 2 + py, 0), n_bins - 1)
+        col = min(max(n_bins // 2 + px, 0), n_bins - 1)
+        if row < n_bins - 1 and col < n_bins - 1:
+            # in this way, then >max_range we dont fill the occupancy map in order to let a visible gap
+            occupancy_map[int(row), int(col)] = 255
+    return np.expand_dims(occupancy_map, 0)
 
 
 class SingleAgentRaceEnv(F110Env):
@@ -19,18 +36,24 @@ class SingleAgentRaceEnv(F110Env):
         - fix rendering issue based on map filepath
     """
 
-    def __init__(self, map_name: str, gui: bool = False,
-                 sim_params: Dict[str, Any] = None, gym_params: Dict[str, Any] = None,
+    def __init__(self, map_name: str, gui: bool = False, sim_params: Dict[str, Any] = None,
+                 actions_conf: Dict[str, Any] = {}, observations_conf: Dict[str, Any] = {},
+                 termination_conf: Dict[str, Any] = {},
                  eval: bool = False, seed: int = None):
         self._track = Track.from_track_name(map_name)
         seed = np.random.randint(0, 1000000) if seed is None else seed
-        sim_params = sim_params if sim_params else self._default_sim_params
-        self.gym_params = gym_params if gym_params else self._default_gym_params
+        self.sim_params = self.process_sim_conf(sim_params)
+        self.actions_conf = self.process_action_conf(actions_conf)
+        self.observations_conf = self.process_obs_conf(observations_conf)
+        self.termination_conf = self.process_term_conf(termination_conf)
+        #
         super(SingleAgentRaceEnv, self).__init__(map=self._track.filepath, map_ext=self._track.ext,
                                                  params=sim_params, num_agents=1, seed=seed)
         self.add_render_callback(render_callback)
         self._scan_size = self.sim.agents[0].scan_simulator.num_beams
         self._scan_range = self.sim.agents[0].scan_simulator.max_range
+        # episode
+        self.eval = eval
         # rendering
         self._gui = gui
         self._render_freq = 10
@@ -48,12 +71,19 @@ class SingleAgentRaceEnv(F110Env):
             velocity: linear x velocity (m/s), linear y velocity (m/s), angular velocity (rad/s)
             collision: 0 if not collision, 1 if collision
         """
-        return gym.spaces.Dict({
-            'scan': gym.spaces.Box(low=0.0, high=self._scan_range, shape=(self._scan_size,)),
-            'pose': gym.spaces.Box(low=np.NINF, high=np.PINF, shape=(3,)),
-            'velocity': gym.spaces.Box(low=-5.0, high=20.0, shape=(1,)),
-            'collision': gym.spaces.Box(low=0.0, high=1.0, shape=(1,)),
-        })
+        obsdict = {}
+        l2d_bins = math.ceil(2 * self.observations_conf["max_range"] / self.observations_conf["resolution"])
+        obs_spaces = {"scan": gym.spaces.Box(low=0.0, high=self._scan_range, shape=(self._scan_size,)),
+                      "lidar_occupancy": gym.spaces.Box(low=0, high=255, dtype=np.uint8, shape=(1, l2d_bins, l2d_bins)),
+                      "pose": gym.spaces.Box(low=np.NINF, high=np.PINF, shape=(3,)),
+                      "velocity": gym.spaces.Box(low=-5.0, high=20.0, shape=(1,)),
+                      "collision": gym.spaces.Box(low=0.0, high=1.0, shape=(1,)),
+                      }
+        for obs, space in obs_spaces.items():
+            if obs not in self.observations_conf["types"]:
+                continue
+            obsdict[obs] = space
+        return gym.spaces.Dict(obsdict)
 
     @property
     def action_space(self):
@@ -61,46 +91,84 @@ class SingleAgentRaceEnv(F110Env):
             steering: desired steering angle (rad)
             speed: desired speed (m/s)
         """
-        steering_low, steering_high = self.gym_params['min_steering'], self.gym_params['max_steering']
-        speed_low, speed_high = self.gym_params['min_speed'], self.gym_params['max_speed']
+        steering_low, steering_high = self.actions_conf['min_steering'], self.actions_conf['max_steering']
+        speed_low, speed_high = self.actions_conf['min_speed'], self.actions_conf['max_speed']
         assert speed_low > 0, "be careful with 0 velocity, it could cause division-by-zero"
         return gym.spaces.Dict({
             "steering": gym.spaces.Box(low=steering_low, high=steering_high, shape=()),
             "speed": gym.spaces.Box(low=speed_low, high=speed_high, shape=())
         })
 
-    @property
-    def _default_sim_params(self):
-        return {'mu': 1.0489, 'C_Sf': 4.718, 'C_Sr': 5.4562, 'lf': 0.15875, 'lr': 0.17145, 'h': 0.074, 'm': 3.74,
-                'I': 0.04712, 's_min': -0.4189, 's_max': 0.4189, 'sv_min': -3.2, 'sv_max': 3.2, 'v_switch': 7.319,
-                'a_max': 9.51, 'v_min': -5.0, 'v_max': 20.0, 'width': 0.31, 'length': 0.58}
+    @staticmethod
+    def _process_conf(default, sim_params):
+        conf = default
+        for k, v in sim_params.items():
+            conf[k] = v
+        return conf
 
-    @property
-    def _default_gym_params(self):
-        return {'min_steering': -0.4189, 'max_steering': 0.4189,
-                'min_speed': -5.0, 'max_speed': 10.0}
+    def process_sim_conf(self, sim_params):
+        default = {'mu': 1.0489, 'C_Sf': 4.718, 'C_Sr': 5.4562, 'lf': 0.15875, 'lr': 0.17145, 'h': 0.074, 'm': 3.74,
+                   'I': 0.04712, 's_min': -0.4189, 's_max': 0.4189, 'sv_min': -3.2, 'sv_max': 3.2,
+                   'v_switch': 7.319,
+                   'a_max': 9.51, 'v_min': -5.0, 'v_max': 20.0, 'width': 0.31, 'length': 0.58}
+        return self._process_conf(default, sim_params)
+
+    def process_action_conf(self, action_conf):
+        default = {"min_steering": -0.4189, "min_steering": 0.4189, "min_speed": -5.0, "min_speed": 10.0}
+        return self._process_conf(default, action_conf)
+
+    def process_obs_conf(self, obs_conf):
+        default = {'types': ['scan', 'pose', 'velocity'],
+                   'max_range': 10.0, 'resolution': 0.25, 'frame_skip': 4, 'degree_fov': 360}
+        return self._process_conf(default, obs_conf)
+
+    def process_term_conf(self, termination_conf):
+        default = {"max_steps": 1500, "lap": 1, "on_collision": True}
+        return self._process_conf(default, termination_conf)
 
     @staticmethod
     def _get_flat_action(action: Dict[str, float]):
         assert 'steering' in action and 'speed' in action
         flat_action = np.array([[action['steering'], action['speed']]])
-        assert flat_action.shape == (1, 2), f'the actions dict-array conversion returns wrong shape {flat_action.shape}'
+        assert flat_action.shape == (
+            1, 2), f'the actions dict-array conversion returns wrong shape {flat_action.shape}'
         return flat_action
 
-    def _prepare_obs(self, old_obs):
+    def l2d_observation(self, observation):
+        assert 'scans' in observation
+        # params
+        degree_fov = self.observations_conf["degree_fov"]
+        resolution = self.observations_conf["resolution"]
+        l2d_bins = math.ceil(2 * self.observations_conf["max_range"] / self.observations_conf["resolution"])
+        # obs
+        scan = observation['scans'][0]
+        scan_angles = self.sim.agents[0].scan_angles  # assumption: all the lidars are equal in ang. spectrum
+        # reduce fow
+        mask = abs(scan_angles) <= np.deg2rad(degree_fov / 2.0)  # mask fov: set 1 for angles in fow, 0 for others
+        scan = np.where(mask, scan, np.Inf)
+        return polar2cartesian(scan, scan_angles, l2d_bins, resolution)
+
+    def prepare_obs(self, old_obs):
         assert all([f in old_obs for f in ['scans', 'poses_x', 'poses_y', 'poses_theta',
                                            'linear_vels_x', 'linear_vels_y', 'ang_vels_z',
                                            'collisions']]), f'obs keys are {old_obs.keys()}'
         # Note: the original env returns `scan` values > `max_range`. To keep compatibility wt obs-space, we clip it
-        obs = collections.OrderedDict(
-            {'scan': np.clip(old_obs['scans'][0], 0, self._scan_range),
-             'pose': np.array([old_obs['poses_x'][0], old_obs['poses_y'][0], old_obs['poses_theta'][0]]),
-             'velocity': np.array([old_obs['linear_vels_x'][0]]),
-             'collision': old_obs['collisions'][0]})
-        return obs
+        all_obs = {'scan': np.clip(old_obs['scans'][0], 0, self._scan_range),
+                   'lidar_occupancy': self.l2d_observation(old_obs),
+                   'pose': np.array([old_obs['poses_x'][0], old_obs['poses_y'][0], old_obs['poses_theta'][0]]),
+                   'velocity': np.array([old_obs['linear_vels_x'][0]]),
+                   'collision': old_obs['collisions'][0]}
+        filtered_obs = {}
+        for obs, value in all_obs.items():
+            if obs not in self.observations_conf["types"]:
+                continue
+            filtered_obs[obs] = value
 
-    def _prepare_info(self, old_obs, reward, action, old_info):
-        assert all([f in old_obs for f in ['lap_times', 'lap_counts', 'collisions', 'linear_vels_x']]), f'obs keys are {old_obs.keys()}'
+        return filtered_obs
+
+    def prepare_info(self, old_obs, reward, action, old_info):
+        assert all([f in old_obs for f in
+                    ['lap_times', 'lap_counts', 'collisions', 'linear_vels_x']]), f'obs keys are {old_obs.keys()}'
         assert all([f in action for f in ['steering', 'speed']]), f'action keys are {action.keys()}'
         assert all([f in old_info for f in ['checkpoint_done']]), f'info keys are {old_info.keys()}'
         info = {'checkpoint_done': old_info['checkpoint_done'][0],
@@ -108,12 +176,22 @@ class SingleAgentRaceEnv(F110Env):
                 'lap_count': old_obs['lap_counts'][0],
                 'collision': old_obs['collisions'][0],
                 'velocity': old_obs['linear_vels_x'][0],
-                'time': self._step,
+                'time': self._step * self.timestep,
                 'progress': self._track.get_progress(np.array([old_obs['poses_x'][0], old_obs['poses_y'][0]])),
                 'action': action,
                 'default_reward': reward
                 }
         return info
+
+    def check_termination_conditions(self, obs, info):
+        done = False
+        if not self.eval and self._step > self.termination_conf["max_steps"]:
+            done = True
+        if self.termination_conf["on_collision"] and info["collision"]:
+            done = True
+        if info["lap_count"] >= self.termination_conf["max_lap"]:
+            done = True
+        return done
 
     def step(self, action):
         """
@@ -126,9 +204,9 @@ class SingleAgentRaceEnv(F110Env):
         else:
             flat_action = self._get_flat_action(action)
             original_obs, reward, done, original_info = super().step(flat_action)
-            obs = self._prepare_obs(original_obs)
-            info = self._prepare_info(original_obs, reward, action, original_info)
-            done = bool(done)
+            obs = self.prepare_obs(original_obs)
+            info = self.prepare_info(original_obs, reward, action, original_info)
+            done = self.check_termination_conditions(obs, info)
         if self._gui and self._step % self._render_freq == 0:
             self.render()
         self._step += 1
@@ -153,11 +231,11 @@ class SingleAgentRaceEnv(F110Env):
         pose = [wp[0], wp[1], theta]
         # call original method
         original_obs, reward, done, original_info = super().reset(poses=np.array([pose]))
-        obs = self._prepare_obs(original_obs)
+        obs = self.prepare_obs(original_obs)
         self._step = 0
         return obs
 
-    def render(self, mode='human'):
+    def render(self, mode='human', **kwargs):
         WINDOW_W, WINDOW_H = 1000, 800
         if self.renderer is None:
             # first call, initialize everything
