@@ -4,7 +4,7 @@ import numpy as np
 
 from reward_shaping.core.reward import RewardFunction
 from reward_shaping.core.utils import clip_and_norm
-from reward_shaping.envs.bipedal_walker.specs import get_all_specs
+from reward_shaping.envs.f1tenth.specs import get_all_specs
 
 
 def safety_collision_potential(state, info):
