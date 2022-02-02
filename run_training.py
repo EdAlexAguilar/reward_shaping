@@ -6,8 +6,9 @@ from reward_shaping.training.train import train
 
 
 def main(args):
+    video_every = (args.steps - 1) if args.env == "f1tenth" else int(1e5)  # f1tenth records only once at the end
     train_params = {'steps': args.steps,
-                    'video_every': int(1e5),    # note: rendering causes trouble with containers, eventually disable it
+                    'video_every': video_every,  # note: rendering causes trouble with containers, eventually disable it
                     'n_recorded_episodes': 3,
                     'eval_every': min(10000, int(args.steps / 10)),
                     'n_eval_episodes': 10,

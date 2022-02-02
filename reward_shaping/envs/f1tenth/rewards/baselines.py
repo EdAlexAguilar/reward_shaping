@@ -4,6 +4,18 @@ import numpy as np
 
 from reward_shaping.core.configs import EvalConfig
 from reward_shaping.core.helper_fns import monitor_episode
+from reward_shaping.core.reward import RewardFunction
+
+
+class MinActionReward(RewardFunction):
+
+    def __call__(self, state, action=None, next_state=None, info=None) -> float:
+        assert all(abs(a) <= 1 for a in action)
+        if state["collision"] > 0:
+            reward = -1.0
+        else:
+            reward = 1 - (1 / len(action) * np.linalg.norm(action) ** 2)
+        return reward
 
 
 class F110EvalConfig(EvalConfig):
@@ -25,11 +37,11 @@ class F110EvalConfig(EvalConfig):
         # compute monitoring variables (all of them normalized in 0,1)
         monitored_state = {
             'time': info['time'],
-            'collision': info['state']['collision'],  # already 0 or 1
-            'progress': info['state']['progress'],
-            'velocity': info['state']['velocity'],
-            'steering': info['state']['steering'],
-            'lane': info['state']['lane'],
+            'collision': state['collision'],  # already 0 or 1
+            'progress': state['progress'],
+            'velocity': state['velocity'],
+            'steering': state['steering'],
+            'lane': state['lane'],
             'comfortable_steering': info['comfortable_steering'],
             'comfortable_speed_min': info['comfortable_speed_min'],
             'comfortable_speed_max': info['comfortable_speed_max'],

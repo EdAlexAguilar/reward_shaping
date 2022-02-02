@@ -67,7 +67,7 @@ class Track:
         """ get lane w.r.t. the centerline as 0 (right) or 1 (left)"""
         n_points = self.centerline.shape[0]
         wp1 = self.get_id_closest_point2centerline(point)
-        wp2 = self.get_id_closest_point2centerline(point, min_id=wp1 + 1 % n_points)
+        wp2 = self.get_id_closest_point2centerline(point, min_id=(wp1 + 1) % n_points)
         #
         x1, y1 = self.centerline[wp1][:2]
         x2, y2 = self.centerline[wp2][:2]

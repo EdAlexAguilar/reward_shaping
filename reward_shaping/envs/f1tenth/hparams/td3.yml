@@ -1,0 +1,7 @@
+gamma: 0.98
+buffer_size: 200000
+learning_starts: 10000
+gradient_steps: -1
+learning_rate: 0.001
+policy_kwargs:
+  net_arch: [400, 300]

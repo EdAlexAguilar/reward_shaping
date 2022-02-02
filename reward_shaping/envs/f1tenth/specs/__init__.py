@@ -21,7 +21,7 @@ def _build_no_collision(_):
 
 
 def _build_complete_lap(_):
-    return lambda state, info: state["progress"]
+    return lambda state, info: state["progress"] - info["train_progress_target"]
 
 
 def _build_speed_limit(_):
@@ -36,7 +36,7 @@ def _build_comfortable_steering(_):
 
 def _build_keep_right(_):
     lanes = {"right": 0, "left": 1}
-    return lambda state, info: -1 if state["lane"] == lanes["right"] else +1
+    return lambda state, info: 1.0 if state["lane"] == lanes["right"] else -1
 
 
 register_spec('s_coll', Operator.ENSURE, _build_no_collision)

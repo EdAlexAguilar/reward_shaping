@@ -1,5 +1,6 @@
 import collections
 import math
+from typing import List
 
 import gym
 import numpy as np
@@ -55,6 +56,7 @@ class PreCommandObservation(gym.Wrapper):
     """
     Stack the last command to the observation.
     """
+
     def __init__(self, env):
         super(PreCommandObservation, self).__init__(env)
         # extend observation space
@@ -65,7 +67,8 @@ class PreCommandObservation(gym.Wrapper):
         self._last_action = None
         for action in env.action_space.spaces.keys():
             act_space = env.action_space[action]
-            obs_dict[f"last_{action}"] = gym.spaces.Box(low=np.array([act_space.low]), high=np.array([act_space.high]), shape=(1,))
+            obs_dict[f"last_{action}"] = gym.spaces.Box(low=np.array([act_space.low]), high=np.array([act_space.high]),
+                                                        shape=(1,))
         self.observation_space = gym.spaces.Dict(obs_dict)
 
     def reset(self, **kwargs):
@@ -81,7 +84,7 @@ class PreCommandObservation(gym.Wrapper):
 
     def observation(self, observation):
         for action in self.action_space.spaces.keys():
-            observation[f"last_{action}"] = self._last_action[action].reshape(1,)
+            observation[f"last_{action}"] = self._last_action[action].reshape(1, )
         return observation
 
 
@@ -212,15 +215,27 @@ class LapLimit(gym.Wrapper):
         return obs, reward, done, info
 
 
-class NormalizeVelocityObservation(gym.ObservationWrapper):
-    def __init__(self, env):
+class NormalizeObservations(gym.ObservationWrapper):
+    def __init__(self, env, obss: List[str]):
         super().__init__(env)
+        self._obss = obss
+        self._obss_lows = {o: self.observation_space[o].low for o in self._obss}
+        self._obss_highs = {o: self.observation_space[o].high for o in self._obss}
+        # define new normalized observation space
+        obs_dict = {}
+        for o, space in self.observation_space.spaces.items():
+            if o in self._obss:
+                obs_dict[o] = gym.spaces.Box(low=-1, high=+1, shape=space.shape)
+            else:
+                obs_dict[o] = space
+        self.observation_space = gym.spaces.Dict(obs_dict)
 
     def observation(self, obs):
-        assert 'velocity' in obs
-        low = self.observation_space['velocity'].low
-        high = self.observation_space['velocity'].high
-        obs['velocity'] = 2 * ((obs['velocity'] - low) / (high - low)) - 1
+        for o in self._obss:
+            assert o in obs
+            low = self.observation_space[o].low
+            high = self.observation_space[o].high
+            obs[o] = 2 * ((obs[o] - low) / (high - low)) - 1
         return obs
 
 
@@ -291,7 +306,7 @@ def test_wrapped_env(env, render):
 
 def test_lidar_occupancy_wrapper(render=False):
     env = SingleAgentRaceEnv("Melbourne", actions_conf={"min_steering": -0.4189, "max_steering": 0.4189,
-                                                      "min_speed": 0.5, "max_speed": 2.0})
+                                                        "min_speed": 0.5, "max_speed": 2.0})
     env = LidarOccupancyObservation(env, max_range=10)
     test_wrapped_env(env, render)
 

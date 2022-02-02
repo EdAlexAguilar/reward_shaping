@@ -1,4 +1,4 @@
-map_name: Catalunya
+map_name: Spielberg
 sim_params:
   mu: 1.0489
   C_Sf: 4.718
@@ -29,9 +29,10 @@ observations_conf:
   degree_fov: 270
   frame_skip: 5
 termination_conf:
-  max_steps: 1500
   max_lap: 1
   on_collision: True
+  train_max_steps: 1500        # termination condition only for training episodes
+  train_progress_target: 1.0   # termination condition only for training episodes
 # for task specification
 comfortable_speed_min: 1.5  # m/s
 comfortable_speed_max: 2.0  # m/s

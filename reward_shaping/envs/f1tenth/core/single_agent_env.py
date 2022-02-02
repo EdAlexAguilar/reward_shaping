@@ -40,7 +40,7 @@ class SingleAgentRaceEnv(F110Env):
                  actions_conf: Dict[str, Any] = {}, observations_conf: Dict[str, Any] = {},
                  termination_conf: Dict[str, Any] = {},
                  comfortable_speed_min: float = 0.0, comfortable_speed_max: float = 7.0,
-                 comfortable_steering: float = 0.4189,
+                 comfortable_steering: float = 0.4189, favourite_lane: int = 0,
                  eval: bool = False, seed: int = None):
         self._track = Track.from_track_name(map_name)
         seed = np.random.randint(0, 1000000) if seed is None else seed
@@ -59,10 +59,14 @@ class SingleAgentRaceEnv(F110Env):
         # task spec
         self.comf_speed_min, self.comf_speed_max = comfortable_speed_min, comfortable_speed_max
         self.comf_steering = comfortable_steering
+        self.favourite_lane = favourite_lane
         # rendering
         self._gui = gui
         self._render_freq = 10
         self._step = 0
+        # state
+        self.p0 = 0.0
+        self.progress = 0.0
 
     @property
     def track(self):
@@ -126,18 +130,20 @@ class SingleAgentRaceEnv(F110Env):
         return self._process_conf(default, action_conf)
 
     def process_obs_conf(self, obs_conf):
-        default = {'types': ['scan', 'pose', 'velocity', 'lidar_occupancy', 'steering', 'progress', 'collision', 'lane'],
-                   'max_range': 10.0, 'resolution': 0.25, 'frame_skip': 4, 'degree_fov': 360}
+        default = {
+            'types': ['scan', 'pose', 'velocity', 'lidar_occupancy', 'steering', 'progress', 'collision', 'lane'],
+            'max_range': 10.0, 'resolution': 0.25, 'frame_skip': 4, 'degree_fov': 360}
         return self._process_conf(default, obs_conf)
 
     def process_term_conf(self, termination_conf):
-        default = {"max_steps": 1500, "max_lap": 1, "on_collision": True}
+        default = {"train_max_steps": 1500, "max_lap": 1, "on_collision": True, "train_progress_target": 1.0}
         return self._process_conf(default, termination_conf)
 
-    @staticmethod
-    def _get_flat_action(action: Dict[str, float]):
+    def _preprocess_action(self, action: Dict[str, float]):
         assert 'steering' in action and 'speed' in action
-        flat_action = np.array([[action['steering'], action['speed']]])
+        flat_action = np.array(
+            [[np.clip(action['steering'], self.actions_conf["min_steering"], self.actions_conf["max_steering"]),
+              np.clip(action['speed'], self.actions_conf["min_speed"], self.actions_conf["max_speed"])]])
         assert flat_action.shape == (
             1, 2), f'the actions dict-array conversion returns wrong shape {flat_action.shape}'
         return flat_action
@@ -166,7 +172,7 @@ class SingleAgentRaceEnv(F110Env):
                    'pose': np.array([old_obs['poses_x'][0], old_obs['poses_y'][0], old_obs['poses_theta'][0]]),
                    'velocity': np.array([old_obs['linear_vels_x'][0]]),
                    'steering': np.array([action["steering"]]),
-                   'progress': self._track.get_progress(np.array([old_obs['poses_x'][0], old_obs['poses_y'][0]])) - self.p0,
+                   'progress': self.progress,
                    'lane': self._track.get_lane(np.array([old_obs['poses_x'][0], old_obs['poses_y'][0]])),
                    'collision': old_obs['collisions'][0]}
         filtered_obs = {}
@@ -188,18 +194,24 @@ class SingleAgentRaceEnv(F110Env):
                 'collision': old_obs['collisions'][0],
                 'velocity': old_obs['linear_vels_x'][0],
                 'time': self._step * self.timestep,
-                'progress': self._track.get_progress(np.array([old_obs['poses_x'][0], old_obs['poses_y'][0]])),
+                'progress': self.progress,
+                'train_progress_target': self.termination_conf["train_progress_target"],
                 'action': action,
                 'default_reward': reward,
                 'comfortable_speed_min': self.comf_speed_min,
                 'comfortable_speed_max': self.comf_speed_max,
                 'comfortable_steering': self.comf_steering,
+                'favourite_lane': self.favourite_lane,
+                'max_speed': self.actions_conf["max_speed"],
+                'max_steering': self.actions_conf["max_steering"]
                 }
         return info
 
     def check_termination_conditions(self, obs, info):
         done = False
-        if not self.eval and self._step > self.termination_conf["max_steps"]:
+        if not self.eval and self._step > self.termination_conf["train_max_steps"]:
+            done = True
+        if not self.eval and self.progress > self.termination_conf["train_progress_target"]:
             done = True
         if self.termination_conf["on_collision"] and info["collision"]:
             done = True
@@ -216,11 +228,14 @@ class SingleAgentRaceEnv(F110Env):
         if type(action) == np.ndarray:
             obs, reward, done, info = super().step(action)
         else:
-            flat_action = self._get_flat_action(action)
+            flat_action = self._preprocess_action(action)
             original_obs, reward, done, original_info = super().step(flat_action)
+            self.progress = self._track.get_progress(
+                np.array([original_obs['poses_x'][0], original_obs['poses_y'][0]])) - self.p0
             obs = self.prepare_obs(original_obs, action)
             info = self.prepare_info(original_obs, reward, action, original_info)
             done = self.check_termination_conditions(obs, info)
+            info["done"] = done
         if self._gui and self._step % self._render_freq == 0:
             self.render()
         self._step += 1
@@ -245,9 +260,10 @@ class SingleAgentRaceEnv(F110Env):
         pose = [wp[0], wp[1], theta]
         # call original method
         original_obs, reward, done, original_info = super().reset(poses=np.array([pose]))
-        self.p0 = self._track.get_progress(np.array([original_obs['poses_x'][0], original_obs['poses_y'][0]])),
-        obs = self.prepare_obs(original_obs, {"steering": 0.0, "speed": 0.0})
+        self.p0 = self._track.get_progress(np.array([original_obs['poses_x'][0], original_obs['poses_y'][0]]))
+        self.progress = 0.0
         self._step = 0
+        obs = self.prepare_obs(original_obs, {"steering": 0.0, "speed": 0.0})
         return obs
 
     def render(self, mode='human', **kwargs):

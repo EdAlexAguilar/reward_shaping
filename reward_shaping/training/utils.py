@@ -67,18 +67,15 @@ def make_base_env(env, env_params={}):
         env = RLTask(env=env, requirements=specs)
     elif env == "f1tenth":
         from reward_shaping.envs.f1tenth.core.single_agent_env import SingleAgentRaceEnv
-        from reward_shaping.envs.f1tenth.core.wrappers.wrappers import FilterObservationWrapper, NormalizeVelocityObservation
-        from reward_shaping.envs.f1tenth.core.wrappers.wrappers import FlattenAction, FrameSkip, LidarOccupancyObservation
+        from reward_shaping.envs.f1tenth.core.wrappers.wrappers import FlattenAction, FrameSkip
         from gym.wrappers import RescaleAction
         from reward_shaping.envs.f1tenth.specs import get_all_specs
         env = SingleAgentRaceEnv(**env_params)
         env = FrameSkip(env, skip=env_params['observations_conf']['frame_skip'])
-        env = FlattenAction(env)
-        env = RescaleAction(env, a=-1, b=+1)
         specs = [(k, op, build_pred(env_params)) for k, (op, build_pred) in get_all_specs().items()]
         env = RLTask(env=env, requirements=specs)
-        env = FilterObservationWrapper(env, ["lidar_occupancy", "velocity"])
-        env = NormalizeVelocityObservation(env)
+        env = FlattenAction(env)
+        env = RescaleAction(env, a=-1, b=+1)
     else:
         raise NotImplementedError(f"not implemented env for {env}")
     return env
@@ -155,4 +152,8 @@ def make_reward_wrap(env_name, env, env_params, reward, logdir=None):
     else:
         reward_fn = reward_conf
         env = RewardWrapper(env, reward_fn=reward_fn)
+    if env_name == "f1tenth":
+        from reward_shaping.envs.f1tenth.core.wrappers.wrappers import FilterObservationWrapper, NormalizeObservations
+        env = FilterObservationWrapper(env, ["lidar_occupancy", "velocity", "steering"])
+        env = NormalizeObservations(env, ["velocity", "steering"])
     return env
