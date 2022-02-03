@@ -22,7 +22,10 @@ def make_env(env_name, task, reward, eval=False, logdir=None, seed=0):
     env = make_base_env(env_name, env_params)
     # set reward
     env = make_reward_wrap(env_name, env, env_params, reward)
-    if env_name != "f1tenth":
+    if env_name == "f1tenth":
+        from reward_shaping.envs.f1tenth.core.wrappers.wrappers import FixResetWrapper
+        env = FixResetWrapper(env, mode="grid" if eval else "random")
+    else:
         env = FlattenObservation(env)
     check_env(env)
     return env, env_params

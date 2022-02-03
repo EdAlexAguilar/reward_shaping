@@ -226,9 +226,9 @@ class SingleAgentRaceEnv(F110Env):
 
     def check_termination_conditions(self, obs, info):
         done = False
-        if not self.eval and self._step > self.termination_conf["train_max_steps"]:
+        if self._step > self.termination_conf["max_steps"]:
             done = True
-        if not self.eval and self.progress > self.termination_conf["train_progress_target"]:
+        if not self.eval and self.progress * self.track.track_length > info["progress_target_meters"]:
             done = True
         if self.termination_conf["on_collision"] and info["collision"]:
             done = True
