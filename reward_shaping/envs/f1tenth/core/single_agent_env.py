@@ -308,7 +308,7 @@ class SingleAgentRaceEnv(F110Env):
             from PIL import Image
             image = Image.frombytes(mode="RGB", size=(self.renderer.width, self.renderer.height), data=buffer)
             image = image.transpose(Image.FLIP_TOP_BOTTOM)
-            image = image.resize((200, 160), Image.ANTIALIAS)
+            image = image.resize((400, 320), Image.ANTIALIAS)
             return np.array(image)
 
 
