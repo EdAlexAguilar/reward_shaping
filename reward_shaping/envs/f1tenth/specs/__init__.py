@@ -21,7 +21,9 @@ def _build_no_collision(_):
 
 
 def _build_complete_lap(_):
-    return lambda state, info: state["progress"] - info["train_progress_target"]
+    """ Known bug: when crossing the starting line (ie, completing one lap), the progress step from 0.99 to 1.99 and then restart from 1.01.
+    This depends on the centerline waypoints"""
+    return lambda state, info: state["progress_meters"] - info["progress_target_meters"]
 
 
 def _build_speed_limit(_):

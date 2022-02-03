@@ -47,6 +47,7 @@ class F110EvalConfig(EvalConfig):
             'comfortable_speed_max': info['comfortable_speed_max'],
             'favourite_lane': info['favourite_lane']
         }
+        self._max_episode_len = info['max_steps']
         return monitored_state
 
     def eval_episode(self, episode) -> float:

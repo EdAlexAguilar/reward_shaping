@@ -67,6 +67,7 @@ class SingleAgentRaceEnv(F110Env):
         # state
         self.p0 = 0.0
         self.progress = 0.0
+        self.reverse = False
 
     @property
     def track(self):
@@ -89,6 +90,7 @@ class SingleAgentRaceEnv(F110Env):
                       "steering": gym.spaces.Box(low=-0.4189, high=0.4189, shape=(1,)),
                       "collision": gym.spaces.Box(low=0.0, high=1.0, shape=(1,)),
                       "progress": gym.spaces.Box(low=0.0, high=1.0, shape=(1,)),
+                      "progress_meters": gym.spaces.Box(low=0.0, high=self.track.track_length, shape=(1,)),
                       "lane": gym.spaces.Box(low=0.0, high=1.0, shape=(1,)),
                       }
         for obs, space in obs_spaces.items():
@@ -131,7 +133,7 @@ class SingleAgentRaceEnv(F110Env):
 
     def process_obs_conf(self, obs_conf):
         default = {
-            'types': ['scan', 'pose', 'velocity', 'lidar_occupancy', 'steering', 'progress', 'collision', 'lane'],
+            'types': ['scan', 'pose', 'velocity', 'lidar_occupancy', 'steering', 'progress', 'progress_meters', 'collision', 'lane'],
             'max_range': 10.0, 'resolution': 0.25, 'frame_skip': 4, 'degree_fov': 360}
         return self._process_conf(default, obs_conf)
 
@@ -173,6 +175,7 @@ class SingleAgentRaceEnv(F110Env):
                    'velocity': np.array([old_obs['linear_vels_x'][0]]),
                    'steering': np.array([action["steering"]]),
                    'progress': self.progress,
+                   'progress_meters': self.progress * self.track.track_length,
                    'lane': self._track.get_lane(np.array([old_obs['poses_x'][0], old_obs['poses_y'][0]])),
                    'collision': old_obs['collisions'][0]}
         filtered_obs = {}
@@ -188,6 +191,10 @@ class SingleAgentRaceEnv(F110Env):
                     ['lap_times', 'lap_counts', 'collisions', 'linear_vels_x']]), f'obs keys are {old_obs.keys()}'
         assert all([f in action for f in ['steering', 'speed']]), f'action keys are {action.keys()}'
         assert all([f in old_info for f in ['checkpoint_done']]), f'info keys are {old_info.keys()}'
+        # target_progress := the space that the car can cover with the comfortable speed (or the max track len for shorter tracks)
+        target_progress_mt = min(self.track.track_length,
+                                 self.timestep * self.termination_conf["max_steps"] * (
+                                             self.comf_speed_min + (self.comf_speed_max - self.comf_speed_min) / 2))
         info = {'checkpoint_done': old_info['checkpoint_done'][0],
                 'lap_time': old_obs['lap_times'][0],
                 'lap_count': old_obs['lap_counts'][0],
@@ -195,7 +202,10 @@ class SingleAgentRaceEnv(F110Env):
                 'velocity': old_obs['linear_vels_x'][0],
                 'time': self._step * self.timestep,
                 'progress': self.progress,
-                'train_progress_target': self.termination_conf["train_progress_target"],
+                'progress_meters': self.progress * self.track.track_length,
+                'track_length': self.track.track_length,
+                'reverse_direction': self.reverse,
+                'progress_target_meters': target_progress_mt,
                 'action': action,
                 'default_reward': reward,
                 'comfortable_speed_min': self.comf_speed_min,
@@ -203,9 +213,16 @@ class SingleAgentRaceEnv(F110Env):
                 'comfortable_steering': self.comf_steering,
                 'favourite_lane': self.favourite_lane,
                 'max_speed': self.actions_conf["max_speed"],
-                'max_steering': self.actions_conf["max_steering"]
+                'max_steering': self.actions_conf["max_steering"],
+                'max_steps': self.termination_conf["max_steps"]
                 }
         return info
+
+    def update_progress(self, obs):
+        new_progress = obs['lap_counts'][0] + self._track.get_progress(
+            np.array([obs['poses_x'][0], obs['poses_y'][0]])) - self.p0
+        self.reverse = new_progress < self.progress
+        self.progress = new_progress
 
     def check_termination_conditions(self, obs, info):
         done = False
@@ -216,6 +233,8 @@ class SingleAgentRaceEnv(F110Env):
         if self.termination_conf["on_collision"] and info["collision"]:
             done = True
         if info["lap_count"] >= self.termination_conf["max_lap"]:
+            done = True
+        if self.termination_conf["on_reverse"] and info["reverse_direction"]:
             done = True
         return done
 
@@ -230,8 +249,7 @@ class SingleAgentRaceEnv(F110Env):
         else:
             flat_action = self._preprocess_action(action)
             original_obs, reward, done, original_info = super().step(flat_action)
-            self.progress = self._track.get_progress(
-                np.array([original_obs['poses_x'][0], original_obs['poses_y'][0]])) - self.p0
+            self.update_progress(original_obs)
             obs = self.prepare_obs(original_obs, action)
             info = self.prepare_info(original_obs, reward, action, original_info)
             done = self.check_termination_conditions(obs, info)
@@ -262,6 +280,7 @@ class SingleAgentRaceEnv(F110Env):
         original_obs, reward, done, original_info = super().reset(poses=np.array([pose]))
         self.p0 = self._track.get_progress(np.array([original_obs['poses_x'][0], original_obs['poses_y'][0]]))
         self.progress = 0.0
+        self.reverse = False
         self._step = 0
         obs = self.prepare_obs(original_obs, {"steering": 0.0, "speed": 0.0})
         return obs

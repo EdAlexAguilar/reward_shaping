@@ -31,8 +31,8 @@ observations_conf:
 termination_conf:
   max_lap: 1
   on_collision: True
-  train_max_steps: 1500        # termination condition only for training episodes
-  train_progress_target: 1.0   # termination condition only for training episodes
+  on_reverse: True
+  max_steps: 5000        # termination condition only for training episodes
 # for task specification
 comfortable_speed_min: 1.5  # m/s
 comfortable_speed_max: 2.0  # m/s

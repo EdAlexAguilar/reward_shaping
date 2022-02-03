@@ -71,9 +71,9 @@ def make_base_env(env, env_params={}):
         from gym.wrappers import RescaleAction
         from reward_shaping.envs.f1tenth.specs import get_all_specs
         env = SingleAgentRaceEnv(**env_params)
-        env = FrameSkip(env, skip=env_params['observations_conf']['frame_skip'])
         specs = [(k, op, build_pred(env_params)) for k, (op, build_pred) in get_all_specs().items()]
         env = RLTask(env=env, requirements=specs)
+        env = FrameSkip(env, skip=env_params['observations_conf']['frame_skip'])
         env = FlattenAction(env)
         env = RescaleAction(env, a=-1, b=+1)
     else:

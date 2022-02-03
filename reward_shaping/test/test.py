@@ -1,9 +1,7 @@
 import numpy as np
 from stable_baselines3.common.env_checker import check_env
 
-from reward_shaping.core.wrappers import RewardWrapper
-from reward_shaping.envs.cart_pole_obst.cp_continuousobstacle_env import Obstacle
-from reward_shaping.training.utils import make_env, make_agent, load_env_params, make_base_env, get_reward_conf
+from reward_shaping.training.utils import make_env, make_agent
 
 
 def generic_env_test(env_name, task, reward_name):
@@ -29,6 +27,7 @@ def generic_env_test(env_name, task, reward_name):
     env.close()
     return True
 
+
 def generic_env_test_wt_agent(env_name, model, task, reward_name):
     seed = np.random.randint(0, 1000000)
     env, env_params = make_env(env_name, task, reward_name, eval=True, logdir=None, seed=seed)
@@ -41,17 +40,22 @@ def generic_env_test_wt_agent(env_name, model, task, reward_name):
         tot_reward = 0.0
         done = False
         t = 0
+        rr = []
         while not done:
             t += 1
-            action, _ = model.predict(obs)
+            action, _ = model.predict(obs, deterministic=True)
             obs, reward, done, info = env.step(action)
+            print(f"v: {obs['velocity']}, s: {obs['steering']}, reward: {reward}")
+            rr.append(reward)
             tot_reward += reward
-            env.render()
+            #env.render()
         print(f"[{reward_name}] tot steps: {t}, tot reward: {tot_reward:.3f}")
         for k, v in info.items():
             if "counter" in k:
-                print(f"{k}: {v/t}")
-    env.close()
+                print(f"{k}: {v / t}")
+        import matplotlib.pyplot as plt
+        plt.plot(rr)
+        plt.show()
     return True
 
 

@@ -13,9 +13,8 @@ def safety_collision_potential(state, info):
 
 
 def target_potential(state, info):
-    assert "progress" in state
-    return np.clip(state["progress"], 0.0,
-                   info["train_progress_target"])  # already normalize, safety clipping to avoid unexpected values
+    assert "progress_meters" in state and "progress_target_meters" in info
+    return clip_and_norm(state["progress_meters"], 0, info["progress_target_meters"])
 
 
 def comfort_speed_potential(state, info):
@@ -36,8 +35,8 @@ def comfort_lane_potential(state, info):
 
 
 def simple_base_reward(state, info):
-    assert "progress" in state and "train_progress_target" in info
-    base_reward = 1.0 if state["progress"] >= info["train_progress_target"] else 0.0
+    assert "progress_meters" in state and "progress_target_meters" in info
+    base_reward = 1.0 if state["progress_meters"] >= info["progress_target_meters"] else 0.0
     return base_reward
 
 
@@ -52,12 +51,12 @@ class F110HierarchicalPotentialShaping(RewardFunction):
         return safety_w * target_potential(state, info)
 
     def _comfort_potential(self, state, info):
-        comfort_speed = comfort_speed_potential(state, info)
+        comfort_speed = 0.0  # comfort_speed_potential(state, info)
         comfort_steering = comfort_steering_potential(state, info)
-        comfort_lane = comfort_lane_potential(state, info)
+        comfort_lane = 0.0  # comfort_lane_potential(state, info)
         # hierarchical weights
         safety_w, target_w = self._safety_potential(state, info), self._target_potential(state, info)
-        return safety_w * target_w * (comfort_speed + comfort_steering + comfort_lane)
+        return 0#safety_w * target_w * (comfort_speed + comfort_steering + comfort_lane)
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
         # base reward
