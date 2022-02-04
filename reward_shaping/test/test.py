@@ -66,5 +66,5 @@ def generic_training(env, task, reward):
     # create agent
     model = make_agent(env, train_env, reward, "sac", logdir=None)
     # train
-    model.learn(total_timesteps=1000)
+    model.learn(total_timesteps=1000, eval_freq=500)
     train_env.close()
