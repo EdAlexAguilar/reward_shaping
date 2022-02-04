@@ -108,7 +108,7 @@ class CustomEvalCallback(EvalCallback):
                 self.evaluations_length.append(episode_lengths)
                 # update metrics
                 for m, v in episode_metrics.items():
-                    self.evaluations_metrics[m] = self.evaluations_metrics[m].append(episode_metrics[m])
+                    self.evaluations_metrics[m].append(episode_metrics[m])
 
                 kwargs = {}
                 # Save success log if present
@@ -120,8 +120,8 @@ class CustomEvalCallback(EvalCallback):
                     self.log_path,
                     timesteps=self.evaluations_timesteps,
                     results=self.evaluations_results,
-                    metrics=self.evaluations_metrics,
                     ep_lengths=self.evaluations_length,
+                    **self.evaluations_metrics,
                     **kwargs,
                 )
 
