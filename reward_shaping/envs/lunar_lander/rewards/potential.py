@@ -45,15 +45,15 @@ class LLHierarchicalShapingOnSparseTargetReward(RewardFunction):
     def _target_potential(self, state, info):
         target_reward = target_dist_to_goal_potential(state, info)
         # hierarchical weights
-        safety_weight = self._safety_potential(state, info)
+        safety_weight = safety_collision_potential(state, info) * safety_exit_potential(state, info)
         return safety_weight * target_reward
 
     def _comfort_potential(self, state, info):
         angle_reward = comfort_angle_potential(state, info)
         angvel_reward = comfort_angvel_potential(state, info)
         # hierarchical weights
-        safety_weight = self._safety_potential(state, info)
-        target_weight = self._target_potential(state, info)
+        safety_weight = safety_collision_potential(state, info) * safety_exit_potential(state, info)
+        target_weight = target_dist_to_goal_potential(state, info)
         return safety_weight * target_weight * (angle_reward + angvel_reward)
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:

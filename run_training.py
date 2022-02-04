@@ -11,7 +11,7 @@ def main(args):
                     'video_every': video_every,  # note: causes trouble with containers, one can disable it wt -novideo
                     'n_recorded_episodes': 3,
                     'eval_every': min(10000, int(args.steps / 10)),
-                    'n_eval_episodes': 10,
+                    'n_eval_episodes': 1,
                     'checkpoint_every': int(args.steps / 10)}
     for seed in range(args.n_seeds):
         train(args.env, args.task, args.reward, train_params, algo=args.algo,

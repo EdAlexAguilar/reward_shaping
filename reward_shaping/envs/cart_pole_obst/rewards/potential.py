@@ -68,12 +68,21 @@ class CPOHierarchicalPotentialShaping(RewardFunction):
             - the distance to the target (if not reached yet), and the persistence on the target (once reached)
         """
         target_reward = target_dist_to_goal_potential(state, info)
-        safety_w = self._safety_potential(state, info)
+        # hierarchical weights
+        falldown_reward = safety_falldown_potential(state, info)
+        exit_reward = safety_exit_potential(state, info)
+        collision_reward = safety_collision_potential(state, info)
+        safety_w = falldown_reward * exit_reward * collision_reward
         return safety_w * target_reward
 
     def _comfort_potential(self, state, info):
         comfort_reward = comfort_balance_potential(state, info)
-        safety_w, target_w = self._safety_potential(state, info), self._target_potential(state, info)
+        # hierarchical weights
+        falldown_reward = safety_falldown_potential(state, info)
+        exit_reward = safety_exit_potential(state, info)
+        collision_reward = safety_collision_potential(state, info)
+        safety_w = falldown_reward * exit_reward * collision_reward
+        target_w = target_dist_to_goal_potential(state, info)
         return safety_w * target_w * comfort_reward
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:

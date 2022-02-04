@@ -66,7 +66,7 @@ class TestAgent(TestCase):
 
     def test_agent_hrs_pot(self):
         from stable_baselines3 import PPO
-        agent = PPO.load("/home/luigi/Development/reward_shaping/logs/f1tenth/drive_default_ppo_Seed113231_1643880778/checkpoint/model_100000_steps.zip")
+        agent = PPO.load("/home/luigi/Development/reward_shaping/logs/f1tenth/03022022_215512/drive_hrs_pot_ppo_Seed943197_1643921717/checkpoint/model_100000_steps")
         generic_env_test_wt_agent(env_name, agent, task, 'hrs_pot')
 
     def test_agent_min_action(self):

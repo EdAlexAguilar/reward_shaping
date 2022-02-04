@@ -89,6 +89,7 @@ class SingleAgentRaceEnv(F110Env):
                       "velocity": gym.spaces.Box(low=-5.0, high=20.0, shape=(1,)),
                       "steering": gym.spaces.Box(low=-0.4189, high=0.4189, shape=(1,)),
                       "collision": gym.spaces.Box(low=0.0, high=1.0, shape=(1,)),
+                      "reverse": gym.spaces.Box(low=0.0, high=1.0, shape=(1,)),
                       "progress": gym.spaces.Box(low=0.0, high=1.0, shape=(1,)),
                       "progress_meters": gym.spaces.Box(low=0.0, high=self.track.track_length, shape=(1,)),
                       "lane": gym.spaces.Box(low=0.0, high=1.0, shape=(1,)),
@@ -133,7 +134,8 @@ class SingleAgentRaceEnv(F110Env):
 
     def process_obs_conf(self, obs_conf):
         default = {
-            'types': ['scan', 'pose', 'velocity', 'lidar_occupancy', 'steering', 'progress', 'progress_meters', 'collision', 'lane'],
+            'types': ['scan', 'pose', 'velocity', 'lidar_occupancy', 'steering', 'progress', 'progress_meters',
+                      'collision', 'reverse', 'lane'],
             'max_range': 10.0, 'resolution': 0.25, 'frame_skip': 4, 'degree_fov': 360}
         return self._process_conf(default, obs_conf)
 
@@ -177,7 +179,8 @@ class SingleAgentRaceEnv(F110Env):
                    'progress': self.progress,
                    'progress_meters': self.progress * self.track.track_length,
                    'lane': self._track.get_lane(np.array([old_obs['poses_x'][0], old_obs['poses_y'][0]])),
-                   'collision': old_obs['collisions'][0]}
+                   'collision': old_obs['collisions'][0],
+                   'reverse': self.reverse}
         filtered_obs = {}
         for obs, value in all_obs.items():
             if obs not in self.observations_conf["types"]:
@@ -194,11 +197,11 @@ class SingleAgentRaceEnv(F110Env):
         # target_progress := the space that the car can cover with the comfortable speed (or the max track len for shorter tracks)
         target_progress_mt = min(self.track.track_length,
                                  self.timestep * self.termination_conf["max_steps"] * (
-                                             self.comf_speed_min + (self.comf_speed_max - self.comf_speed_min) / 2))
+                                         self.comf_speed_min + (self.comf_speed_max - self.comf_speed_min) / 2))
         info = {'checkpoint_done': old_info['checkpoint_done'][0],
                 'lap_time': old_obs['lap_times'][0],
                 'lap_count': old_obs['lap_counts'][0],
-                'collision': old_obs['collisions'][0],
+                'collision': bool(old_obs['collisions'][0]),
                 'velocity': old_obs['linear_vels_x'][0],
                 'time': self._step * self.timestep,
                 'progress': self.progress,

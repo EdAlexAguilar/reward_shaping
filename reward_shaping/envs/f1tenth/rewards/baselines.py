@@ -26,18 +26,19 @@ class F110EvalConfig(EvalConfig):
 
     @property
     def monitoring_variables(self):
-        return ['time', 'collision', 'progress', 'velocity', 'steering', 'lane',
+        return ['time', 'collision', 'reverse', 'progress', 'velocity', 'steering', 'lane',
                 'comfortable_steering', 'comfortable_speed_min', 'comfortable_speed_max', 'favourite_lane']
 
     @property
     def monitoring_types(self):
-        return ['int', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float']
+        return ['int', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float']
 
     def get_monitored_state(self, state, done, info) -> Dict[str, Any]:
         # compute monitoring variables (all of them normalized in 0,1)
         monitored_state = {
             'time': info['time'],
             'collision': state['collision'],  # already 0 or 1
+            'reverse': state['reverse'],  # already 0 or 1
             'progress': state['progress'],
             'velocity': state['velocity'],
             'steering': state['steering'],
@@ -55,7 +56,7 @@ class F110EvalConfig(EvalConfig):
         i_init = np.nonzero(episode['time'] == np.min(episode['time']))[-1][-1]
         episode = {k: list(l)[i_init:] for k, l in episode.items()}
         #
-        safety_spec = "always(collision<=0)"
+        safety_spec = "always((collision<=0) and (reverse <= 0))"
         safety_rho = monitor_episode(stl_spec=safety_spec,
                                      vars=self.monitoring_variables, types=self.monitoring_types,
                                      episode=episode)[0][1]

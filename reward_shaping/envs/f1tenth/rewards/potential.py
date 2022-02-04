@@ -12,6 +12,11 @@ def safety_collision_potential(state, info):
     return int(state["collision"] <= 0)
 
 
+def safety_reverse_potential(state, info):
+    assert "reverse" in state
+    return int(state["reverse"] <= 0)
+
+
 def target_potential(state, info):
     assert "progress_meters" in state and "progress_target_meters" in info
     return clip_and_norm(state["progress_meters"], 0, info["progress_target_meters"])
@@ -44,19 +49,22 @@ class F110HierarchicalPotentialShaping(RewardFunction):
 
     @staticmethod
     def _safety_potential(state, info):
-        return safety_collision_potential(state, info)
+        collision_reward = safety_collision_potential(state, info)
+        reverse_reward = safety_reverse_potential(state, info)
+        return collision_reward + reverse_reward
 
     def _target_potential(self, state, info):
-        safety_w = self._safety_potential(state, info)
+        safety_w = safety_collision_potential(state, info) * safety_reverse_potential(state, info)
         return safety_w * target_potential(state, info)
 
     def _comfort_potential(self, state, info):
         comfort_speed = 0.0  # comfort_speed_potential(state, info)
-        comfort_steering = comfort_steering_potential(state, info)
+        comfort_steering = 0.0 # comfort_steering_potential(state, info)
         comfort_lane = 0.0  # comfort_lane_potential(state, info)
         # hierarchical weights
-        safety_w, target_w = self._safety_potential(state, info), self._target_potential(state, info)
-        return 0#safety_w * target_w * (comfort_speed + comfort_steering + comfort_lane)
+        safety_w = safety_collision_potential(state, info) * safety_reverse_potential(state, info)
+        target_w = target_potential(state, info)
+        return safety_w * target_w * (comfort_speed + comfort_steering + comfort_lane)
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
         # base reward

@@ -12,7 +12,7 @@ def safety_collision_potential(state, info):
     return int(state["collision"] <= 0)
 
 
-def target_potential(state, info):
+def dist_to_target(state, info):
     assert "x" in state
     return np.clip(state["x"], 0.0, 1.0)  # already normalize, safety clipping to avoid unexpected values
 
@@ -54,8 +54,8 @@ class BWHierarchicalPotentialShaping(RewardFunction):
         return safety_collision_potential(state, info)
 
     def _target_potential(self, state, info):
-        safety_w = self._safety_potential(state, info)
-        return safety_w * target_potential(state, info)
+        safety_w = safety_collision_potential(state, info)
+        return safety_w * dist_to_target(state, info)
 
     def _comfort_potential(self, state, info):
         comfort_vx = comfort_vx_potential(state, info)
@@ -63,7 +63,8 @@ class BWHierarchicalPotentialShaping(RewardFunction):
         comf_vy = comfort_vy_potential(state, info)
         comf_angle_vel = comfort_ang_vel_potential(state, info)
         # hierarchical weights
-        safety_w, target_w = self._safety_potential(state, info), self._target_potential(state, info)
+        safety_w = safety_collision_potential(state, info)
+        target_w = dist_to_target(state, info)
         return safety_w * target_w * (comfort_vx + comf_vy + comf_angle + comf_angle_vel)
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
@@ -91,7 +92,7 @@ class BWScalarizedMultiObjectivization(RewardFunction):
             return base_reward
         # evaluate individual shaping functions
         shaping_coll = safety_collision_potential(next_state, info) - safety_collision_potential(state, info)
-        shaping_target = target_potential(next_state, info) - target_potential(state, info)
+        shaping_target = dist_to_target(next_state, info) - dist_to_target(state, info)
         shaping_comf_vx = comfort_vx_potential(next_state, info) - comfort_vx_potential(state, info)
         shaping_comf_vy = comfort_vy_potential(next_state, info) - comfort_vy_potential(state, info)
         shaping_comf_ang = comfort_angle_potential(next_state, info) - comfort_angle_potential(state, info)
