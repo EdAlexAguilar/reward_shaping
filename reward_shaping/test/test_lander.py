@@ -52,3 +52,6 @@ class TestTrainingLoop(TestCase):
 
     def test_train_morl_dec(self):
         generic_training(env_name, task, 'morl_dec')
+
+    def test_train_hrs_pot(self):
+        generic_training(env_name, task, 'hrs_pot')

@@ -44,7 +44,7 @@ class TestTrainingLoop(TestCase):
     def test_train_sparse(self):
         generic_training(env_name, task, 'default')
 
-    def test_train_stl(self):
+    def test_train_tltl(self):
         generic_training(env_name, task, 'tltl')
 
     def test_train_morl_uni(self):
