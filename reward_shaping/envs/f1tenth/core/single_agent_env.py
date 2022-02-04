@@ -61,7 +61,7 @@ class SingleAgentRaceEnv(F110Env):
         self.comf_steering = comfortable_steering
         self.favourite_lane = favourite_lane
         # rendering
-        self._gui = True
+        self._gui = False 
         self._render_freq = 10
         self._step = 0
         # state
