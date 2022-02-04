@@ -34,7 +34,6 @@ termination_conf:
   on_reverse: True
   max_steps: 5000        # this number refers to the sim steps (dt=0.01), without considering frame skipping
 # for task specification
-comfortable_speed_min: 1.5  # m/s
-comfortable_speed_max: 2.0  # m/s
+comfortable_speed_limit: 2.0  # m/s
 comfortable_steering: 0.01  # rad
 favourite_lane: 0 # 0 is right lane, 1 is left lane

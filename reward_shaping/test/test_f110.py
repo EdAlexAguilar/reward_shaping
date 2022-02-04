@@ -3,7 +3,7 @@ from unittest import TestCase
 from reward_shaping.test.test import generic_env_test, generic_training, generic_env_test_wt_agent
 
 env_name = "f1tenth"
-task = "drive"
+task = "informatik"
 
 
 class TestF1Tenth(TestCase):
@@ -66,7 +66,7 @@ class TestAgent(TestCase):
 
     def test_agent_hrs_pot(self):
         from stable_baselines3 import PPO
-        agent = PPO.load("/home/luigi/Development/reward_shaping/logs/f1tenth/03022022_215512/drive_hrs_pot_ppo_Seed943197_1643921717/checkpoint/model_100000_steps")
+        agent = PPO.load("/home/luigi/Development/reward_shaping/logs/f1tenth/informatik_hrs_pot_ppo_Seed147254_1643989817/checkpoint/model_100000_steps")
         generic_env_test_wt_agent(env_name, agent, task, 'hrs_pot')
 
     def test_agent_min_action(self):

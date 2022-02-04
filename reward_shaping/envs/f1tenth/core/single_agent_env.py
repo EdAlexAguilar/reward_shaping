@@ -39,7 +39,7 @@ class SingleAgentRaceEnv(F110Env):
     def __init__(self, map_name: str, gui: bool = False, sim_params: Dict[str, Any] = {},
                  actions_conf: Dict[str, Any] = {}, observations_conf: Dict[str, Any] = {},
                  termination_conf: Dict[str, Any] = {},
-                 comfortable_speed_min: float = 0.0, comfortable_speed_max: float = 7.0,
+                 comfortable_speed_limit: float = 7.0,
                  comfortable_steering: float = 0.4189, favourite_lane: int = 0,
                  eval: bool = False, seed: int = None):
         self._track = Track.from_track_name(map_name)
@@ -57,11 +57,11 @@ class SingleAgentRaceEnv(F110Env):
         # episode
         self.eval = eval
         # task spec
-        self.comf_speed_min, self.comf_speed_max = comfortable_speed_min, comfortable_speed_max
+        self.comf_speed_max = comfortable_speed_limit
         self.comf_steering = comfortable_steering
         self.favourite_lane = favourite_lane
         # rendering
-        self._gui = gui
+        self._gui = True
         self._render_freq = 10
         self._step = 0
         # state
@@ -87,11 +87,12 @@ class SingleAgentRaceEnv(F110Env):
                       "lidar_occupancy": gym.spaces.Box(low=0, high=255, dtype=np.uint8, shape=(1, l2d_bins, l2d_bins)),
                       "pose": gym.spaces.Box(low=np.NINF, high=np.PINF, shape=(3,)),
                       "velocity": gym.spaces.Box(low=-5.0, high=20.0, shape=(1,)),
-                      "steering": gym.spaces.Box(low=-0.4189, high=0.4189, shape=(1,)),
+                      "speed_cmd": gym.spaces.Box(low=0.0, high=10.0, shape=(1,)),
+                      "steering_cmd": gym.spaces.Box(low=-0.4189, high=0.4189, shape=(1,)),
                       "collision": gym.spaces.Box(low=0.0, high=1.0, shape=(1,)),
                       "reverse": gym.spaces.Box(low=0.0, high=1.0, shape=(1,)),
                       "progress": gym.spaces.Box(low=0.0, high=1.0, shape=(1,)),
-                      "progress_meters": gym.spaces.Box(low=0.0, high=self.track.track_length, shape=(1,)),
+                      "progress_meters": gym.spaces.Box(low=0.0, high=np.PINF, shape=(1,)),
                       "lane": gym.spaces.Box(low=0.0, high=1.0, shape=(1,)),
                       }
         for obs, space in obs_spaces.items():
@@ -124,23 +125,23 @@ class SingleAgentRaceEnv(F110Env):
     def process_sim_conf(self, sim_params):
         default = {'mu': 1.0489, 'C_Sf': 4.718, 'C_Sr': 5.4562, 'lf': 0.15875, 'lr': 0.17145, 'h': 0.074, 'm': 3.74,
                    'I': 0.04712, 's_min': -0.4189, 's_max': 0.4189, 'sv_min': -3.2, 'sv_max': 3.2,
-                   'v_switch': 7.319,
-                   'a_max': 9.51, 'v_min': -5.0, 'v_max': 20.0, 'width': 0.31, 'length': 0.58}
+                   'v_switch': 7.319, 'a_max': 9.51, 'v_min': -5.0, 'v_max': 20.0, 'width': 0.31, 'length': 0.58}
         return self._process_conf(default, sim_params)
 
     def process_action_conf(self, action_conf):
-        default = {"min_steering": -0.4189, "min_steering": 0.4189, "min_speed": -5.0, "min_speed": 10.0}
+        default = {"min_steering": -0.4189, "max_steering": 0.4189, "min_speed": -5.0, "max_speed": 10.0}
         return self._process_conf(default, action_conf)
 
     def process_obs_conf(self, obs_conf):
         default = {
-            'types': ['scan', 'pose', 'velocity', 'lidar_occupancy', 'steering', 'progress', 'progress_meters',
-                      'collision', 'reverse', 'lane'],
+            'types': ['scan', 'pose', 'velocity', 'lidar_occupancy', 'speed_cmd', 'steering_cmd', 'velocity',
+                      'progress', 'progress_meters', 'collision', 'reverse', 'lane'],
             'max_range': 10.0, 'resolution': 0.25, 'frame_skip': 4, 'degree_fov': 360}
         return self._process_conf(default, obs_conf)
 
     def process_term_conf(self, termination_conf):
-        default = {"train_max_steps": 1500, "max_lap": 1, "on_collision": True, "train_progress_target": 1.0}
+        default = {"train_max_steps": 1500, "max_lap": 1, "on_collision": True, "train_progress_target": 1.0,
+                   "max_steps": 60000}
         return self._process_conf(default, termination_conf)
 
     def _preprocess_action(self, action: Dict[str, float]):
@@ -175,7 +176,8 @@ class SingleAgentRaceEnv(F110Env):
                    'lidar_occupancy': self.l2d_observation(old_obs),
                    'pose': np.array([old_obs['poses_x'][0], old_obs['poses_y'][0], old_obs['poses_theta'][0]]),
                    'velocity': np.array([old_obs['linear_vels_x'][0]]),
-                   'steering': np.array([action["steering"]]),
+                   'speed_cmd': np.array([action["speed"]]),
+                   'steering_cmd': np.array([action["steering"]]),
                    'progress': self.progress,
                    'progress_meters': self.progress * self.track.track_length,
                    'lane': self._track.get_lane(np.array([old_obs['poses_x'][0], old_obs['poses_y'][0]])),
@@ -197,7 +199,8 @@ class SingleAgentRaceEnv(F110Env):
         # target_progress := the space that the car can cover with the comfortable speed (or the max track len for shorter tracks)
         target_progress_mt = min(self.track.track_length,
                                  self.timestep * self.termination_conf["max_steps"] * (
-                                         self.comf_speed_min + (self.comf_speed_max - self.comf_speed_min) / 2))
+                                         self.actions_conf["min_speed"] + (
+                                             self.actions_conf["max_speed"] - self.actions_conf["min_speed"]) / 2))
         info = {'checkpoint_done': old_info['checkpoint_done'][0],
                 'lap_time': old_obs['lap_times'][0],
                 'lap_count': old_obs['lap_counts'][0],
@@ -211,8 +214,7 @@ class SingleAgentRaceEnv(F110Env):
                 'progress_target_meters': target_progress_mt,
                 'action': action,
                 'default_reward': reward,
-                'comfortable_speed_min': self.comf_speed_min,
-                'comfortable_speed_max': self.comf_speed_max,
+                'comfortable_speed_limit': self.comf_speed_max,
                 'comfortable_steering': self.comf_steering,
                 'favourite_lane': self.favourite_lane,
                 'max_speed': self.actions_conf["max_speed"],
@@ -317,6 +319,7 @@ class SingleAgentRaceEnv(F110Env):
 
 def render_callback(env_renderer):
     # custom extra drawing function
+    return
     e = env_renderer
 
     # update camera to follow car

@@ -23,15 +23,13 @@ def target_potential(state, info):
 
 
 def comfort_speed_potential(state, info):
-    assert "velocity" in state and "comfortable_speed_min" in info and "comfortable_speed_max" in info
-    lower = clip_and_norm(state["velocity"][0], 0.0, info["comfortable_speed_min"])  # 0 < threshold
-    upper = 1.0 - clip_and_norm(state["velocity"][0], info["comfortable_speed_max"], info["max_speed"])  # 0 > threshold
-    return min(lower, upper)
+    assert "velocity" in state and "comfortable_speed_limit" in info
+    return 1.0 - clip_and_norm(state["velocity"][0], info["comfortable_speed_limit"], info["max_speed"])  # 0 > threshold
 
 
 def comfort_steering_potential(state, info):
-    assert "steering" in state and "comfortable_steering" in info
-    return 1.0 - clip_and_norm(abs(state["steering"][0]), info["comfortable_steering"], info["max_steering"])
+    assert "steering_cmd" in state and "comfortable_steering" in info
+    return 1.0 - clip_and_norm(abs(state["steering_cmd"][0]), info["comfortable_steering"], info["max_steering"])
 
 
 def comfort_lane_potential(state, info):

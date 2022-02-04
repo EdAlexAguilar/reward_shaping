@@ -27,17 +27,16 @@ def _build_no_reverse(_):
 def _build_complete_lap(_):
     """ Known bug: when crossing the starting line (ie, completing one lap), the progress step from 0.99 to 1.99 and then restart from 1.01.
     This depends on the centerline waypoints"""
-    return lambda state, info: state["progress"] - 1.0
+    return lambda state, info: 0.01 - (state["progress"] - 1.0)     # lap completion is when progress is close to 1.0
 
 
 def _build_speed_limit(_):
-    upper = lambda state, info: info["comfortable_speed_max"] - state["velocity"]
-    lower = lambda state, info: state["velocity"] - info["comfortable_speed_min"]
-    return lambda state, info: min(upper(state, info), lower(state, info))
+    # note: we are evaluating using privileged information of ground-truth velocity
+    return lambda state, info: info["comfortable_speed_limit"] - state["velocity"]
 
 
 def _build_comfortable_steering(_):
-    return lambda state, info: info["comfortable_steering"] - abs(state["steering"])
+    return lambda state, info: info["comfortable_steering"] - abs(state["steering_cmd"])
 
 
 def _build_keep_right(_):

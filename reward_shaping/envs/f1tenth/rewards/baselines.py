@@ -27,7 +27,7 @@ class F110EvalConfig(EvalConfig):
     @property
     def monitoring_variables(self):
         return ['time', 'collision', 'reverse', 'progress', 'velocity', 'steering', 'lane',
-                'comfortable_steering', 'comfortable_speed_min', 'comfortable_speed_max', 'favourite_lane']
+                'comfortable_steering', 'comfortable_speed_limit', 'favourite_lane']
 
     @property
     def monitoring_types(self):
@@ -41,11 +41,10 @@ class F110EvalConfig(EvalConfig):
             'reverse': state['reverse'],  # already 0 or 1
             'progress': state['progress'],
             'velocity': state['velocity'],
-            'steering': state['steering'],
+            'steering': state['steering_cmd'],
             'lane': state['lane'],
             'comfortable_steering': info['comfortable_steering'],
-            'comfortable_speed_min': info['comfortable_speed_min'],
-            'comfortable_speed_max': info['comfortable_speed_max'],
+            'comfortable_speed_limit': info['comfortable_speed_limit'],
             'favourite_lane': info['favourite_lane']
         }
         self._max_episode_len = info['max_steps']
@@ -67,7 +66,7 @@ class F110EvalConfig(EvalConfig):
                                      episode=episode)[0][1]
         #
         comfort_metrics = []
-        comfort_speed = "(velocity >= comfortable_speed_min) and (velocity <= comfortable_speed_max)"
+        comfort_speed = "(velocity <= comfortable_speed_limit)"
         comfort_steer = "(abs(steering) <= comfortable_steering)"
         comfort_lane = "(lane == favourite_lane)"
         for comfort_spec in [comfort_speed, comfort_steer, comfort_lane]:
