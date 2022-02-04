@@ -73,9 +73,9 @@ class BWHierarchicalPotentialShaping(RewardFunction):
         # shaping
         if info["done"]:
             return base_reward
-        shaping_safety = self._safety_potential(next_state, info) - self._safety_potential(state, info)
-        shaping_target = self._target_potential(next_state, info) - self._target_potential(state, info)
-        shaping_comfort = self._comfort_potential(next_state, info) - self._comfort_potential(state, info)
+        shaping_safety = 0.99 * self._safety_potential(next_state, info) - self._safety_potential(state, info)
+        shaping_target = 0.99 * self._target_potential(next_state, info) - self._target_potential(state, info)
+        shaping_comfort = 0.99 * self._comfort_potential(next_state, info) - self._comfort_potential(state, info)
         return base_reward + shaping_safety + shaping_target + shaping_comfort
 
 
