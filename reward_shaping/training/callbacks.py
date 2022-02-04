@@ -1,3 +1,4 @@
+import pathlib
 from typing import Any, Dict, Union, Optional
 
 import gym
@@ -80,6 +81,8 @@ class CustomEvalCallback(EvalCallback):
         # initialize list of metrics, in our case the metric of an individual requirement (e.g., s1_nofalldown_counter)
         self._list_of_metrics = [f"{req}_counter" for req in eval_env.req_labels]
         self.evaluations_metrics = {m: [] for m in self._list_of_metrics}
+        # for logging
+        self.log_dir = pathlib.Path(log_path)
 
     def _on_step(self) -> bool:
 
@@ -116,12 +119,16 @@ class CustomEvalCallback(EvalCallback):
                     self.evaluations_successes.append(self._is_success_buffer)
                     kwargs = dict(successes=self.evaluations_successes)
 
+                # note: EvalCallback set logpath to `logdir/evaluations`
+                # we prefer `logdir/evaluations_<something_identifying_experiment>` to easier post-processing
+                exp_identifier = self.log_dir.name
+                log_path = self.log_dir / f"evaluations_{exp_identifier}"
                 np.savez(
-                    self.log_path,
+                    str(log_path),
                     timesteps=self.evaluations_timesteps,
                     results=self.evaluations_results,
                     ep_lengths=self.evaluations_length,
-                    **self.evaluations_metrics,
+                    **self.evaluations_metrics,     # unpack eval metrics to
                     **kwargs,
                 )
 

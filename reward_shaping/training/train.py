@@ -27,16 +27,19 @@ def make_log_dirs(args):
     return logdir, checkpointdir
 
 
-def get_callbacks(env, logdir, checkpointdir, train_params):
-    video_cb = VideoRecorderCallback(Monitor(env, logdir / "videos"), render_freq=train_params['video_every'],
-                                     n_eval_episodes=train_params['n_recorded_episodes'])
+def get_callbacks(env, logdir, checkpointdir, train_params, novideo):
     eval_cb = CustomEvalCallback(env, eval_freq=train_params['eval_every'],
                                  n_eval_episodes=train_params['n_eval_episodes'],
                                  log_path=logdir,
                                  deterministic=True, render=False)
     checkpoint_cb = CheckpointCallback(save_freq=train_params['checkpoint_every'], save_path=checkpointdir,
                                        name_prefix='model')
-    return [video_cb, eval_cb, checkpoint_cb]
+    callbacks = [eval_cb, checkpoint_cb]
+    if not novideo:
+        video_cb = VideoRecorderCallback(Monitor(env, logdir / "videos"), render_freq=train_params['video_every'],
+                                         n_eval_episodes=train_params['n_recorded_episodes'])
+        callbacks.append(video_cb)
+    return callbacks
 
 
 def evaluate(env, agent, steps):
@@ -56,9 +59,9 @@ def evaluate(env, agent, steps):
     print(f"[Rollout {steps} steps] Result: episodes: {len(rewards)}, mean reward: {sum(rewards) / len(rewards)}")
 
 
-def train(env, task, reward, train_params, algo="sac", seed=0, expdir=None):
+def train(env, task, reward, train_params, algo="sac", seed=0, expdir=None, novideo=False):
     # logs
-    args = Namespace(env=env, task=task, reward=reward, algo=algo, seed=seed, expdir=expdir)
+    args = Namespace(env=env, task=task, reward=reward, algo=algo, seed=seed, expdir=expdir, novideo=novideo)
     logdir, checkpointdir = make_log_dirs(args)
     # prepare envs
     train_env, trainenv_params = make_env(env, task, reward, eval=False, logdir=logdir, seed=seed)
@@ -66,7 +69,7 @@ def train(env, task, reward, train_params, algo="sac", seed=0, expdir=None):
     # create agent
     model = make_agent(env, train_env, reward, algo, logdir)
     # train
-    callbacks = get_callbacks(eval_env, logdir, checkpointdir, train_params)
+    callbacks = get_callbacks(eval_env, logdir, checkpointdir, train_params, novideo)
     model.learn(total_timesteps=train_params['steps'], callback=callbacks)
     # evaluation
     evaluate(eval_env, model, steps=1600)

@@ -1,4 +1,4 @@
-task: "forward_hardcore"
+task: "hardcore"
 # episode definition
 max_steps: 500
 terminate_on_collision: True
