@@ -63,8 +63,9 @@ def generic_training(env, task, reward):
     # create training environment
     seed = np.random.randint(0, 1000000)
     train_env, env_params = make_env(env, task, reward, seed=seed)
+    eval_env, _ = make_env(env, task, "eval", seed=seed)
     # create agent
     model = make_agent(env, train_env, reward, "sac", logdir=None)
     # train
-    model.learn(total_timesteps=1000, eval_freq=500)
+    model.learn(total_timesteps=1000, eval_freq=500, eval_env=eval_env)
     train_env.close()
