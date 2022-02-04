@@ -27,12 +27,12 @@ args=(
   ##
   ## Bipedal Walker Hardcore
   ##
-  "bipedal_walker forward_hardcore sac ${logdir} 1 default 2000000"
-  "bipedal_walker forward_hardcore sac ${logdir} 1 hrs_pot 2000000"
-  "bipedal_walker forward_hardcore sac ${logdir} 1 tltl 2000000"
-  "bipedal_walker forward_hardcore sac ${logdir} 1 bhnr 2000000"
-  "bipedal_walker forward_hardcore sac ${logdir} 1 morl_uni 2000000"
-  "bipedal_walker forward_hardcore sac ${logdir} 1 morl_dec 2000000"
+  "bipedal_walker hardcore sac ${logdir} 1 default 2000000"
+  "bipedal_walker hardcore sac ${logdir} 1 hrs_pot 2000000"
+  "bipedal_walker hardcore sac ${logdir} 1 tltl 2000000"
+  "bipedal_walker hardcore sac ${logdir} 1 bhnr 2000000"
+  "bipedal_walker hardcore sac ${logdir} 1 morl_uni 2000000"
+  "bipedal_walker hardcore sac ${logdir} 1 morl_dec 2000000"
   ##
   ## Lunar Lander
   ##
