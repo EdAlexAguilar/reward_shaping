@@ -19,6 +19,7 @@ def register_spec(name, operator, build_predicate):
 def _build_no_collision(_):
     return lambda state, info: -1 if state['collision'] == 1 else +1
 
+
 def _build_no_reverse(_):
     return lambda state, info: -1 if state['reverse'] == 1 else +1
 
@@ -26,7 +27,7 @@ def _build_no_reverse(_):
 def _build_complete_lap(_):
     """ Known bug: when crossing the starting line (ie, completing one lap), the progress step from 0.99 to 1.99 and then restart from 1.01.
     This depends on the centerline waypoints"""
-    return lambda state, info: state["progress_meters"] - info["progress_target_meters"]
+    return lambda state, info: state["progress"] - 1.0
 
 
 def _build_speed_limit(_):

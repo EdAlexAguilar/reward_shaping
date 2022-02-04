@@ -58,9 +58,9 @@ class F110HierarchicalPotentialShaping(RewardFunction):
         return safety_w * target_potential(state, info)
 
     def _comfort_potential(self, state, info):
-        comfort_speed = 0.0  # comfort_speed_potential(state, info)
-        comfort_steering = 0.0 # comfort_steering_potential(state, info)
-        comfort_lane = 0.0  # comfort_lane_potential(state, info)
+        comfort_speed = comfort_speed_potential(state, info)
+        comfort_steering = comfort_steering_potential(state, info)
+        comfort_lane = comfort_lane_potential(state, info)
         # hierarchical weights
         safety_w = safety_collision_potential(state, info) * safety_reverse_potential(state, info)
         target_w = target_potential(state, info)
