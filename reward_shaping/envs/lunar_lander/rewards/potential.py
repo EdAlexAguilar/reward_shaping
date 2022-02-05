@@ -7,6 +7,8 @@ from reward_shaping.core.utils import clip_and_norm
 from reward_shaping.envs.lunar_lander.specs import get_all_specs
 
 
+gamma = 0.99
+
 def safety_collision_potential(state, info):
     assert "collision" in state
     return int(state["collision"] <= 0)
@@ -61,9 +63,9 @@ class LLHierarchicalShapingOnSparseTargetReward(RewardFunction):
         if info["done"]:
             return base_reward
         # hierarchical shaping
-        shaping_safety = 0.99 * self._safety_potential(next_state, info) - self._safety_potential(state, info)
-        shaping_target = 0.99 * self._target_potential(next_state, info) - self._target_potential(state, info)
-        shaping_comfort = 0.99 * self._comfort_potential(next_state, info) - self._comfort_potential(state, info)
+        shaping_safety = gamma * self._safety_potential(next_state, info) - self._safety_potential(state, info)
+        shaping_target = gamma * self._target_potential(next_state, info) - self._target_potential(state, info)
+        shaping_comfort = gamma * self._comfort_potential(next_state, info) - self._comfort_potential(state, info)
         return base_reward + shaping_safety + shaping_target + shaping_comfort
 
 
@@ -79,11 +81,11 @@ class LLScalarizedMultiObjectivization(RewardFunction):
         if info["done"]:
             return base_reward
         # evaluate individual shaping functions
-        shaping_collision = safety_collision_potential(next_state, info) - safety_collision_potential(state, info)
-        shaping_exit = safety_exit_potential(next_state, info) - safety_exit_potential(state, info)
-        shaping_target = target_dist_to_goal_potential(next_state, info) - target_dist_to_goal_potential(state, info)
-        shaping_comf_ang = comfort_angle_potential(next_state, info) - comfort_angle_potential(state, info)
-        shaping_comf_angvel = comfort_angvel_potential(next_state, info) - comfort_angvel_potential(state, info)
+        shaping_collision = gamma * safety_collision_potential(next_state, info) - safety_collision_potential(state, info)
+        shaping_exit = gamma * safety_exit_potential(next_state, info) - safety_exit_potential(state, info)
+        shaping_target = gamma * target_dist_to_goal_potential(next_state, info) - target_dist_to_goal_potential(state, info)
+        shaping_comf_ang = gamma * comfort_angle_potential(next_state, info) - comfort_angle_potential(state, info)
+        shaping_comf_angvel = gamma * comfort_angvel_potential(next_state, info) - comfort_angvel_potential(state, info)
         # linear scalarization of the multi-objectivized requirements
         reward = base_reward
         for w, f in zip(self._weights, [shaping_collision, shaping_exit, shaping_target, shaping_comf_ang, shaping_comf_angvel]):

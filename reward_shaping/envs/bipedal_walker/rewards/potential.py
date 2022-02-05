@@ -7,6 +7,8 @@ from reward_shaping.core.utils import clip_and_norm
 from reward_shaping.envs.bipedal_walker.specs import get_all_specs
 
 
+gamma = 0.99
+
 def safety_collision_potential(state, info):
     assert "collision" in state
     return int(state["collision"] <= 0)
@@ -73,9 +75,9 @@ class BWHierarchicalPotentialShaping(RewardFunction):
         # shaping
         if info["done"]:
             return base_reward
-        shaping_safety = 0.99 * self._safety_potential(next_state, info) - self._safety_potential(state, info)
-        shaping_target = 0.99 * self._target_potential(next_state, info) - self._target_potential(state, info)
-        shaping_comfort = 0.99 * self._comfort_potential(next_state, info) - self._comfort_potential(state, info)
+        shaping_safety = gamma * self._safety_potential(next_state, info) - self._safety_potential(state, info)
+        shaping_target = gamma * self._target_potential(next_state, info) - self._target_potential(state, info)
+        shaping_comfort = gamma * self._comfort_potential(next_state, info) - self._comfort_potential(state, info)
         return base_reward + shaping_safety + shaping_target + shaping_comfort
 
 
@@ -91,12 +93,12 @@ class BWScalarizedMultiObjectivization(RewardFunction):
         if info["done"]:
             return base_reward
         # evaluate individual shaping functions
-        shaping_coll = safety_collision_potential(next_state, info) - safety_collision_potential(state, info)
-        shaping_target = dist_to_target(next_state, info) - dist_to_target(state, info)
-        shaping_comf_vx = comfort_vx_potential(next_state, info) - comfort_vx_potential(state, info)
-        shaping_comf_vy = comfort_vy_potential(next_state, info) - comfort_vy_potential(state, info)
-        shaping_comf_ang = comfort_angle_potential(next_state, info) - comfort_angle_potential(state, info)
-        shaping_comf_angvel = comfort_ang_vel_potential(next_state, info) - comfort_ang_vel_potential(state, info)
+        shaping_coll = gamma * safety_collision_potential(next_state, info) - safety_collision_potential(state, info)
+        shaping_target = gamma * dist_to_target(next_state, info) - dist_to_target(state, info)
+        shaping_comf_vx = gamma * comfort_vx_potential(next_state, info) - comfort_vx_potential(state, info)
+        shaping_comf_vy = gamma * comfort_vy_potential(next_state, info) - comfort_vy_potential(state, info)
+        shaping_comf_ang = gamma * comfort_angle_potential(next_state, info) - comfort_angle_potential(state, info)
+        shaping_comf_angvel = gamma * comfort_ang_vel_potential(next_state, info) - comfort_ang_vel_potential(state, info)
         # linear scalarization of the multi-objectivized requirements
         reward = base_reward
         for w, f in zip(self._weights,

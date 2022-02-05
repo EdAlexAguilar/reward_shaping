@@ -6,6 +6,7 @@ from reward_shaping.core.reward import RewardFunction
 from reward_shaping.core.utils import clip_and_norm
 from reward_shaping.envs.f1tenth.specs import get_all_specs
 
+gamma = 0.99
 
 def safety_collision_potential(state, info):
     assert "collision" in state
@@ -70,9 +71,9 @@ class F110HierarchicalPotentialShaping(RewardFunction):
         # shaping
         if info["done"]:
             return base_reward
-        shaping_safety = 0.99 * self._safety_potential(next_state, info) - self._safety_potential(state, info)
-        shaping_target = 0.99 * self._target_potential(next_state, info) - self._target_potential(state, info)
-        shaping_comfort = 0.99 * self._comfort_potential(next_state, info) - self._comfort_potential(state, info)
+        shaping_safety = gamma * self._safety_potential(next_state, info) - self._safety_potential(state, info)
+        shaping_target = gamma * self._target_potential(next_state, info) - self._target_potential(state, info)
+        shaping_comfort = gamma * self._comfort_potential(next_state, info) - self._comfort_potential(state, info)
         return base_reward + shaping_safety + shaping_target + shaping_comfort
 
 
@@ -88,11 +89,11 @@ class F110ScalarizedMultiObjectivization(RewardFunction):
         if info["done"]:
             return base_reward
         # evaluate individual shaping functions
-        shaping_coll = safety_collision_potential(next_state, info) - safety_collision_potential(state, info)
-        shaping_target = target_potential(next_state, info) - target_potential(state, info)
-        shaping_comf_speed = comfort_speed_potential(next_state, info) - comfort_speed_potential(state, info)
-        shaping_comf_steer = comfort_steering_potential(next_state, info) - comfort_steering_potential(state, info)
-        shaping_comf_lane = comfort_lane_potential(next_state, info) - comfort_lane_potential(state, info)
+        shaping_coll = gamma * safety_collision_potential(next_state, info) - safety_collision_potential(state, info)
+        shaping_target = gamma * target_potential(next_state, info) - target_potential(state, info)
+        shaping_comf_speed = gamma * comfort_speed_potential(next_state, info) - comfort_speed_potential(state, info)
+        shaping_comf_steer = gamma * comfort_steering_potential(next_state, info) - comfort_steering_potential(state, info)
+        shaping_comf_lane = gamma * comfort_lane_potential(next_state, info) - comfort_lane_potential(state, info)
         # linear scalarization of the multi-objectivized requirements
         reward = base_reward
         for w, f in zip(self._weights,

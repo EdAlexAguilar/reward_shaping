@@ -6,6 +6,7 @@ import numpy as np
 from reward_shaping.core.utils import clip_and_norm
 from reward_shaping.envs.cart_pole_obst.specs import get_all_specs
 
+gamma = 0.99
 
 def safety_falldown_potential(state, info):
     assert "theta" in state and "theta_limit" in info
@@ -90,9 +91,9 @@ class CPOHierarchicalPotentialShaping(RewardFunction):
         if info["done"]:
             return base_reward
         # hierarchical shaping function
-        shaping_safety = 0.99 * self._safety_potential(next_state, info) - self._safety_potential(state, info)
-        shaping_target = 0.99 * self._target_potential(next_state, info) - self._target_potential(state, info)
-        shaping_comfort = 0.99 * self._comfort_potential(next_state, info) - self._comfort_potential(state, info)
+        shaping_safety = gamma * self._safety_potential(next_state, info) - self._safety_potential(state, info)
+        shaping_target = gamma * self._target_potential(next_state, info) - self._target_potential(state, info)
+        shaping_comfort = gamma * self._comfort_potential(next_state, info) - self._comfort_potential(state, info)
         return base_reward + shaping_safety + shaping_target + shaping_comfort
 
 
@@ -108,11 +109,11 @@ class CPOScalarizedMultiObjectivization(RewardFunction):
         if info["done"]:
             return base_reward
         # evaluate individual shaping functions
-        shaping_falldown = safety_falldown_potential(next_state, info) - safety_falldown_potential(state, info)
-        shaping_exit = safety_exit_potential(next_state, info) - safety_exit_potential(state, info)
-        shaping_coll = safety_collision_potential(next_state, info) - safety_collision_potential(state, info)
-        shaping_target = target_dist_to_goal_potential(next_state, info) - target_dist_to_goal_potential(state, info)
-        shaping_comfort = comfort_balance_potential(next_state, info) - comfort_balance_potential(state, info)
+        shaping_falldown = gamma * safety_falldown_potential(next_state, info) - safety_falldown_potential(state, info)
+        shaping_exit = gamma * safety_exit_potential(next_state, info) - safety_exit_potential(state, info)
+        shaping_coll = gamma * safety_collision_potential(next_state, info) - safety_collision_potential(state, info)
+        shaping_target = gamma * target_dist_to_goal_potential(next_state, info) - target_dist_to_goal_potential(state, info)
+        shaping_comfort = gamma * comfort_balance_potential(next_state, info) - comfort_balance_potential(state, info)
         # linear scalarization of the multi-objectivized requirements
         reward = base_reward
         for w, f in zip(self._weights, [shaping_falldown, shaping_exit, shaping_coll, shaping_target, shaping_comfort]):
