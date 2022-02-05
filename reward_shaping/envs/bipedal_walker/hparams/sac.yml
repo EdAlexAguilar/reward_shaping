@@ -1,4 +1,4 @@
-gamma: 0.99
+gamma: 1.0
 learning_rate: 0.00073
 buffer_size: 300000
 learning_starts: 10000

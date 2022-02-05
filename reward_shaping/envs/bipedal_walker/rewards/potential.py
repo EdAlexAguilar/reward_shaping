@@ -7,7 +7,7 @@ from reward_shaping.core.utils import clip_and_norm
 from reward_shaping.envs.bipedal_walker.specs import get_all_specs
 
 
-gamma = 0.99
+gamma = 1.0
 
 def safety_collision_potential(state, info):
     assert "collision" in state
