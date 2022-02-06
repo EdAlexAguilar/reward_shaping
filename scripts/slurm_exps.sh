@@ -9,11 +9,13 @@
 module purge
 module load go/1.13.15 singularity/3.8.3
 
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+image="${DIR}/reward_shaping.sif"
+
 source ${DIR}/scripts/init_exp_list.sh && echo "Loaded ${#args[@]} param configurations"
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 aa=${args[$SLURM_ARRAY_TASK_ID]}
-image="${DIR}/reward_shaping.sif"
+
 
 echo "Dir: ${DIR}"
 echo "Image SIF: ${image}"
