@@ -30,6 +30,6 @@ echo "Dir: ${DIR}"
 echo "Image SIF: ${image}"
 echo "ARGS: ${aa}"
 
-echo singularity exec $image /bin/bash entrypoint.sh $expdir $env $task $algo $reward $steps $n_seeds $novideo
+singularity exec $image /bin/bash entrypoint.sh $expdir $env $task $algo $reward $steps $n_seeds $novideo
 
 
