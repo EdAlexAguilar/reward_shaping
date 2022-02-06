@@ -7,7 +7,7 @@ from reward_shaping.core.utils import clip_and_norm
 from reward_shaping.envs.lunar_lander.specs import get_all_specs
 
 
-gamma = 0.99
+gamma = 1.0
 
 def safety_collision_potential(state, info):
     assert "collision" in state
@@ -96,7 +96,8 @@ class LLScalarizedMultiObjectivization(RewardFunction):
 class LLUniformScalarizedMultiObjectivization(LLScalarizedMultiObjectivization):
 
     def __init__(self, **kwargs):
-        weights = [0.2, 0.2, 0.2, 0.2, 0.2]
+        weights = np.array([1.0, 1.0, 1.0, 1.0, 1.0])
+        weights /= np.sum(weights)
         super(LLUniformScalarizedMultiObjectivization, self).__init__(weights=weights, **kwargs)
 
 
@@ -109,5 +110,6 @@ class LLDecreasingScalarizedMultiObjectivization(LLScalarizedMultiObjectivizatio
             - the sum of target weights is ~ 0.50/1.75
             - the sum of comfort weights is ~ 0.25/1.75
         """
-        weights = [0.29, 0.29, 0.28, 0.07, 0.07]
+        weights = np.array([1.0, 1.0, 0.5, 0.25, 0.25])
+        weights /= np.sum(weights)
         super(LLDecreasingScalarizedMultiObjectivization, self).__init__(weights=weights, **kwargs)

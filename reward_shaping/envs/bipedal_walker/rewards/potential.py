@@ -111,7 +111,8 @@ class BWScalarizedMultiObjectivization(RewardFunction):
 class BWUniformScalarizedMultiObjectivization(BWScalarizedMultiObjectivization):
 
     def __init__(self, **kwargs):
-        weights = [0.167, 0.167, 0.167, 0.167, 0.167,  0.165]   # 0.165 to have sum = 1.0
+        weights = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
+        weights /= np.sum(weights)
         super(BWUniformScalarizedMultiObjectivization, self).__init__(weights=weights, **kwargs)
 
 
@@ -123,5 +124,6 @@ class BWDecreasingScalarizedMultiObjectivization(BWScalarizedMultiObjectivizatio
         - the sum of comfort weights is ~ 0.25/1.75
     """
     def __init__(self, **kwargs):
-        weights = [0.56, 0.28, 0.04, 0.04, 0.04,  0.04]
+        weights = np.array([1.0, 0.5, 0.25, 0.25, 0.25, 0.25])
+        weights /= np.sum(weights)
         super(BWDecreasingScalarizedMultiObjectivization, self).__init__(weights=weights, **kwargs)

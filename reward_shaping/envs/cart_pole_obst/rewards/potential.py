@@ -6,7 +6,7 @@ import numpy as np
 from reward_shaping.core.utils import clip_and_norm
 from reward_shaping.envs.cart_pole_obst.specs import get_all_specs
 
-gamma = 0.99
+gamma = 1.0
 
 def safety_falldown_potential(state, info):
     assert "theta" in state and "theta_limit" in info
@@ -124,7 +124,8 @@ class CPOScalarizedMultiObjectivization(RewardFunction):
 class CPOUniformScalarizedMultiObjectivization(CPOScalarizedMultiObjectivization):
 
     def __init__(self, **kwargs):
-        weights = [0.2, 0.2, 0.2, 0.2, 0.2]
+        weights = np.array([1.0, 1.0, 1.0, 1.0, 1.0])
+        weights /= np.sum(weights)
         super(CPOUniformScalarizedMultiObjectivization, self).__init__(weights=weights, **kwargs)
 
 
@@ -137,5 +138,6 @@ class CPODecreasingScalarizedMultiObjectivization(CPOScalarizedMultiObjectivizat
             - the sum of target weights is ~ 0.50/1.75
             - the sum of comfort weights is ~ 0.25/1.75
         """
-        weights = [0.19, 0.19, 0.19, 0.28, 0.15]
+        weights = np.array([1.0, 1.0, 1.0, 0.5, 0.25])
+        weights /= np.sum(weights)
         super(CPODecreasingScalarizedMultiObjectivization, self).__init__(weights=weights, **kwargs)
