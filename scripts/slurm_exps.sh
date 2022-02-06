@@ -16,8 +16,10 @@ source ${DIR}/scripts/init_exp_list.sh && echo "Loaded ${#args[@]} param configu
 
 aa=${args[$SLURM_ARRAY_TASK_ID]}
 
-
 echo "Dir: ${DIR}"
 echo "Image SIF: ${image}"
 echo "ARGS: ${aa}"
+
+echo singularity exec $image /bin/bash entrypoint.sh $aa
+
 
