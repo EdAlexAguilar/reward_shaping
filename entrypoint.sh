@@ -9,7 +9,7 @@ novideo=$8
 
 if [ $# -ne 7 ] && [ $# -ne 8 ]
 then
-	echo "illegal number of params. help: $0 <env> <task> <algo> <expdir> <reward> <steps> <n_seeds> [-no_video]"
+	echo "illegal number of params. help: $0 <expdir> <env> <task> <algo> <reward> <steps> <n_seeds> [-no_video]"
 	exit -1
 fi
 
