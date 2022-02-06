@@ -14,6 +14,6 @@ module load singularity
 source ./init_exp_list.sh   # load list of args
 
 aa=${args[$SLURM_ARRAY_TASK_ID]}
-image="../reward_shaping.sif"
+image="${DIR}/../reward_shaping.sif"
 
 echo $aa
