@@ -45,13 +45,13 @@ args=(
   ##
   ## F1Tenth
   ##
-  "f1tenth drive sac ${logdir} 1 default 1000000"
-  "f1tenth drive sac ${logdir} 1 min_action 1000000"
-  "f1tenth drive sac ${logdir} 1 hrs_pot 1000000"
-  "f1tenth drive sac ${logdir} 1 tltl 1000000"
-  "f1tenth drive sac ${logdir} 1 bhnr 1000000"
-  "f1tenth drive sac ${logdir} 1 morl_uni 1000000"
-  "f1tenth drive sac ${logdir} 1 morl_dec 1000000"
+  "f1tenth informatik ppo ${logdir} 1 default 1000000 -novideo"
+  "f1tenth informatik ppo ${logdir} 1 min_action 1000000 -novideo"
+  "f1tenth informatik ppo ${logdir} 1 hrs_pot 1000000 -novideo"
+  "f1tenth informatik ppo ${logdir} 1 tltl 1000000 -novideo"
+  "f1tenth informatik ppo ${logdir} 1 bhnr 1000000 -novideo"
+  "f1tenth informatik ppo ${logdir} 1 morl_uni 1000000 -novideo"
+  "f1tenth informatik ppo ${logdir} 1 morl_dec 1000000 -novideo"
 )
 
 
@@ -62,7 +62,7 @@ do
   index=$(($exp-1))
   n_args=$(echo ${args[$index]} | wc -w)
   #
-  if [ $n_args == 7 ]; then
+  if [ $n_args == 7 ] || [ $n_args == 8 ]; then
 	  $DIR/run_n_exps_docker.sh exp_$exp $(echo ${args[$index]})
   else
 	  echo "[$debug_prefix] Invalid exp: exp_$exp"

@@ -8,15 +8,16 @@ expdir=$5
 n_seeds=$6
 reward=$7
 steps=$8
+novideo=$9
 
-image=luigi/reward_shaping:pot
+image=luigiberducci/reward_shaping:latest
 gpus=all
 
 debug_prefix="run_n_exps"
 
-if [ $# -ne 8 ]
+if [ $# -ne 8 ] && [ $# -ne 9 ]
 then
-	echo "illegal number of params. help: $0 <exp-name> <env> <task> <algo> <exp_dir> <N-seeds> <reward> <steps>"
+	echo "illegal number of params. help: $0 <exp-name> <env> <task> <algo> <exp_dir> <N-seeds> <reward> <steps> [-novideo]"
 	exit -1
 fi
 
@@ -28,5 +29,5 @@ echo "[$debug_prefix] Running ${expname} (${n_seeds} seeds): ${env} ${task} ${al
 
 docker run --rm -it --name $expname -d \
                -u $(id -u):$(id -g) -v $(pwd):/src \
-               --gpus $gpus $image \
-               /bin/bash entrypoint.sh $env $task $algo $expdir $reward $steps $n_seeds
+               $image \
+               /bin/bash entrypoint.sh $env $task $algo $expdir $reward $steps $n_seeds $novideo
