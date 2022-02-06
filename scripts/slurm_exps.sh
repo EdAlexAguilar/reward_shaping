@@ -5,6 +5,9 @@
 #SBATCH --output=../logs/slurm-%j-%A-%a.out
 #SBATCH --error=../logs/slurm-%j-%A-%a.err
 
+module purge
+module load singularity
+
 source ./init_exp_list.sh   # load list of args
 
 echo "args: "  $args[$SLURM_ARRAY_TASK_ID]
