@@ -1,7 +1,7 @@
-env=$1
-task=$2
-algo=$3
-expdir=$4
+expdir=$1
+env=$2
+task=$3
+algo=$4
 reward=$5
 steps=$6
 n_seeds=$7

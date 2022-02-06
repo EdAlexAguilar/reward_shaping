@@ -30,4 +30,4 @@ echo "[$debug_prefix] Running ${expname} (${n_seeds} seeds): ${env} ${task} ${al
 docker run --rm -it --name $expname -d \
                -u $(id -u):$(id -g) -v $(pwd):/src \
                --gpus $gpus $image \
-               /bin/bash entrypoint.sh $env $task $algo $expdir $reward $steps $n_seeds $novideo
+               /bin/bash entrypoint.sh $expdir $env $task $algo $reward $steps $n_seeds $novideo
