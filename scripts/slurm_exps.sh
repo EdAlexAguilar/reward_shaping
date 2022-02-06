@@ -10,5 +10,5 @@ module load singularity
 
 source ./init_exp_list.sh   # load list of args
 
-echo "args: "  $args[$SLURM_ARRAY_TASK_ID]
+echo "args: "  ${args[$SLURM_ARRAY_TASK_ID]}
 echo ""
