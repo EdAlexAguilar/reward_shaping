@@ -15,11 +15,12 @@ image="${DIR}/reward_shaping.sif"
 source ${DIR}/scripts/init_exp_list.sh && echo "Loaded ${#args[@]} param configurations"
 
 aa=${args[$SLURM_ARRAY_TASK_ID]}
+expdir="exps_$(date '+%d%m%Y_%H%M%S')"
 
 echo "Dir: ${DIR}"
 echo "Image SIF: ${image}"
 echo "ARGS: ${aa}"
 
-echo singularity exec $image /bin/bash entrypoint.sh $aa
+echo singularity exec $image /bin/bash entrypoint.sh $expdir $aa
 
 
