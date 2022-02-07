@@ -3,7 +3,7 @@
 #SBATCH -J array
 #SBATCH -N 1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=2
+#SBATCH --cpus-per-task=3
 #SBATCH --mem=4GB
 #SBATCH --array=0-5
 #SBATCH --output=slurm-%j-%A-%a.out
@@ -18,7 +18,7 @@ image="${DIR}/reward_shaping.sif"
 # parse args
 source ${DIR}/scripts/init_exp_list.sh && echo "Loaded ${#args[@]} param configurations"
 
-aa=${args[$SLURM_ARRAY_TASK_ID]}
+aa=${args[$(($SLURM_ARRAY_TASK_ID % ${#args[@]}))]}
 expdir="exps_$(date '+%d%m%Y')"
 env=$(echo $aa | cut -d ' ' -f 1)
 task=$(echo $aa | cut -d ' ' -f 2)

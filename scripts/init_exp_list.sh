@@ -50,14 +50,4 @@ args=(
   "lunar_lander land sac ${logdir} 1 bhnr ${long_steps} -novideo"
   "lunar_lander land sac ${logdir} 1 morl_uni ${long_steps} -novideo"
   "lunar_lander land sac ${logdir} 1 morl_dec ${long_steps} -novideo"
-  ##
-  ## F1Tenth
-  ##
-  "f1tenth informatik ppo ${logdir} 1 default ${short_steps} -novideo"
-  "f1tenth informatik ppo ${logdir} 1 min_action ${short_steps} -novideo"
-  "f1tenth informatik ppo ${logdir} 1 hrs_pot ${short_steps} -novideo"
-  "f1tenth informatik ppo ${logdir} 1 tltl ${short_steps} -novideo"
-  "f1tenth informatik ppo ${logdir} 1 bhnr ${short_steps} -novideo"
-  "f1tenth informatik ppo ${logdir} 1 morl_uni ${short_steps} -novideo"
-  "f1tenth informatik ppo ${logdir} 1 morl_dec ${short_steps} -novideo"
 )
