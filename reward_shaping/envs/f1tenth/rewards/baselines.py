@@ -27,25 +27,26 @@ class F110EvalConfig(EvalConfig):
     @property
     def monitoring_variables(self):
         return ['time', 'collision', 'reverse', 'progress', 'velocity', 'steering', 'lane',
-                'comfortable_steering', 'comfortable_speed_limit', 'favourite_lane']
+                'comfortable_steering', 'comfortable_speed_limit', 'favourite_lane', 'lap']
 
     @property
     def monitoring_types(self):
-        return ['int', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float']
+        return ['int', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float']
 
     def get_monitored_state(self, state, done, info) -> Dict[str, Any]:
         # compute monitoring variables (all of them normalized in 0,1)
         monitored_state = {
             'time': info['time'],
-            'collision': state['collision'],  # already 0 or 1
-            'reverse': state['reverse'],  # already 0 or 1
+            'collision': 1.0 if state['collision'] > 0.0 else -1.0,
+            'reverse': 1.0 if state['reverse'] > 0.0 else -1.0,
             'progress': state['progress'],
             'velocity': state['velocity'],
             'steering': state['steering_cmd'],
             'lane': state['lane'],
             'comfortable_steering': info['comfortable_steering'],
             'comfortable_speed_limit': info['comfortable_speed_limit'],
-            'favourite_lane': info['favourite_lane']
+            'favourite_lane': info['favourite_lane'],
+            'lap': info['lap_count']
         }
         self._max_episode_len = info['max_steps']
         return monitored_state
@@ -60,7 +61,7 @@ class F110EvalConfig(EvalConfig):
                                      vars=self.monitoring_variables, types=self.monitoring_types,
                                      episode=episode)[0][1]
         #
-        target_spec = "eventually(progress >= 1.0)"
+        target_spec = "eventually(lap >= 1.0)"
         target_rho = monitor_episode(stl_spec=target_spec,
                                      vars=self.monitoring_variables, types=self.monitoring_types,
                                      episode=episode)[0][1]

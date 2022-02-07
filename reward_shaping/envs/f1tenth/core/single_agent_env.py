@@ -189,7 +189,7 @@ class SingleAgentRaceEnv(F110Env):
                    'lane': self._track.get_lane(np.array([old_obs['poses_x'][0], old_obs['poses_y'][0]])),
                    'dist_to_lane': self._track.get_signed_dist_to_lane(np.array([old_obs['poses_x'][0], old_obs['poses_y'][0]])),
                    'collision': old_obs['collisions'][0],
-                   'reverse': self.reverse}
+                   'reverse': 1.0 if self.reverse else -1.0}
         filtered_obs = {}
         for obs, value in all_obs.items():
             if obs not in self.observations_conf["types"]:
@@ -233,21 +233,27 @@ class SingleAgentRaceEnv(F110Env):
     def update_progress(self, obs):
         new_progress = obs['lap_counts'][0] + self._track.get_progress(
             np.array([obs['poses_x'][0], obs['poses_y'][0]])) - self.p0
+        if abs(new_progress - self.progress) > 0.5:
+            # to fix bug in overcoming the starting line, a diff in progress > 0.50 is not realistic
+            return
         self.reverse = new_progress < self.progress
         self.progress = new_progress
 
     def check_termination_conditions(self, obs, info):
         done = False
+        # always: termination for time-out or collision
         if self._step > self.termination_conf["max_steps"]:
-            done = True
-        if not self.eval and self.progress * self.track.track_length > info["progress_target_meters"]:
             done = True
         if self.termination_conf["on_collision"] and info["collision"]:
             done = True
-        if info["lap_count"] >= self.termination_conf["max_lap"]:
-            done = True
-        if self.termination_conf["on_reverse"] and info["reverse_direction"]:
-            done = True
+        # only for training: terminate when achieving target progress, max lap, or reverse direction
+        if not self.eval:
+            if self.progress * self.track.track_length > info["progress_target_meters"]:
+                done = True
+            if info["lap_count"] >= self.termination_conf["max_lap"]:
+                done = True
+            if self.termination_conf["on_reverse"] and info["reverse_direction"]:
+                done = True
         return done
 
     def step(self, action):

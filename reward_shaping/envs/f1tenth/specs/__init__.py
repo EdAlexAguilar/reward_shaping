@@ -27,7 +27,7 @@ def _build_no_reverse(_):
 def _build_complete_lap(_):
     """ Known bug: when crossing the starting line (ie, completing one lap), the progress step from 0.99 to 1.99 and then restart from 1.01.
     This depends on the centerline waypoints"""
-    return lambda state, info: 0.01 - (state["progress"] - 1.0)     # lap completion is when progress is close to 1.0
+    return lambda state, info: 1.0 if info["lap_count"] > 0 else -1.0
 
 
 def _build_speed_limit(_):

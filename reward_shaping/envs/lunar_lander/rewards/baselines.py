@@ -35,7 +35,7 @@ class LLEvalConfig(EvalConfig):
             'angle_limit': info['angle_limit'],
             'angle_speed_limit': info['angle_speed_limit'],
             'fuel': info['fuel'],  # in [0,1]
-            'collision': info['collision'],
+            'collision': 1.0 if info['collision'] > 0 else -1.0,
             'dist_target': target_dist,
             'halfwidth_landing_area': info['halfwidth_landing_area']
         }

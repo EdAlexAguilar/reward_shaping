@@ -41,21 +41,33 @@ def generic_env_test_wt_agent(env_name, model, task, reward_name):
         done = False
         t = 0
         rr = []
+        speeds = []
+        steers = []
+        frames = []
         while not done:
             t += 1
             action, _ = model.predict(obs, deterministic=True)
             obs, reward, done, info = env.step(action)
-            print(f"v: {obs['velocity']}, s: {obs['steering']}, reward: {reward}")
+            speeds.append(obs["speed_cmd"])
+            steers.append(obs["steering_cmd"])
             rr.append(reward)
             tot_reward += reward
-            #env.render()
+            frames.append(env.render(mode="rgb_array"))
         print(f"[{reward_name}] tot steps: {t}, tot reward: {tot_reward:.3f}")
         for k, v in info.items():
             if "counter" in k:
-                print(f"{k}: {v / t}")
+                print(f"{k}: {v}")
         import matplotlib.pyplot as plt
-        plt.plot(rr)
+        plt.plot(speeds, label="speed cmd")
+        plt.plot(steers, label="steer cmd")
+        plt.legend()
         plt.show()
+        # make video
+        #import imageio
+        #writer = imageio.get_writer(f'video.mp4', fps=100 // 5)
+        #for image in frames:
+        #    writer.append_data(image)
+        #writer.close()
     return True
 
 

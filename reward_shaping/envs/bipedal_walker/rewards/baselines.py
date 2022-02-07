@@ -27,7 +27,7 @@ class BWEvalConfig(EvalConfig):
         # compute monitoring variables (all of them normalized in 0,1)
         monitored_state = {
             'time': info['time'],
-            'collision': info['collision'],  # already 0 or 1
+            'collision': 1.0 if info['collision'] > 0 else -1.0,  # already 0 or 1
             'x': state['x'],   # already in 0 or 1
             'target_x': info['norm_target_x'],
             'vx': state['horizontal_speed'],
