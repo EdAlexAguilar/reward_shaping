@@ -36,8 +36,10 @@ def comfort_steering_potential(state, info):
 
 
 def comfort_lane_potential(state, info):
-    assert "lane" in state and "favourite_lane" in info
-    return 1.0 - abs(state["lane"] - info["favourite_lane"])
+    assert "dist_to_lane" in state and "favourite_lane" in info
+    target = -0.25   # we aim to drive at 10cm from centerline, empirically choosen (InformatikLectureHall)
+    dist_to_target = (state["dist_to_lane"] - target)**2
+    return 1.0 - clip_and_norm(dist_to_target, 0.0, 0.60**2)    # assume max dist to centerline is ~60cm
 
 
 def simple_base_reward(state, info):

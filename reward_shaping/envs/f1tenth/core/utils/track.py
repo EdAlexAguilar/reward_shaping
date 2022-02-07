@@ -63,16 +63,22 @@ class Track:
             progress *= self.track_length
         return progress
 
-    def get_lane(self, point: Tuple[float, float]):
-        """ get lane w.r.t. the centerline as 0 (right) or 1 (left)"""
+    def get_signed_dist_to_lane(self, point: Tuple[float, float]):
         n_points = self.centerline.shape[0]
         wp1 = self.get_id_closest_point2centerline(point)
         wp2 = self.get_id_closest_point2centerline(point, min_id=(wp1 + 1) % n_points)
         #
         x1, y1 = self.centerline[wp1][:2]
         x2, y2 = self.centerline[wp2][:2]
-        lane = ((x2 - x1) * (point[1] - y1) - (y2 - y1) * (point[0] - x1)) > 0
-        return int(lane)
+        # dist point to line (https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line#Line_defined_by_two_points)
+        signed_dist = ((x2 - x1) * (point[1] - y1) - (y2 - y1) * (point[0] - x1))
+        signed_dist /= ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
+        return signed_dist
+
+    def get_lane(self, point: Tuple[float, float]):
+        """ get lane w.r.t. the centerline as 0 (right) or 1 (left)"""
+        signed_dist = self.get_signed_dist_to_lane(point)
+        return int(signed_dist > 0)
 
     @staticmethod
     def from_track_name(track: str, reverse: bool = False):

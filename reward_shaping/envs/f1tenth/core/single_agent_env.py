@@ -6,6 +6,7 @@ import numpy as np
 
 import gym
 from numba import njit
+from pyglet.gl import GL_POINTS
 
 from f110_gym.envs import F110Env
 from f110_gym.envs.rendering import EnvRenderer
@@ -55,7 +56,7 @@ class SingleAgentRaceEnv(F110Env):
         #
         super(SingleAgentRaceEnv, self).__init__(map=self._track.filepath, map_ext=self._track.ext,
                                                  params=self.sim_params, num_agents=1, seed=seed)
-        self.add_render_callback(render_callback)
+        self.add_render_callback(self.render_callback)
         self._scan_size = self.sim.agents[0].scan_simulator.num_beams
         self._scan_range = self.sim.agents[0].scan_simulator.max_range
         # episode
@@ -65,9 +66,10 @@ class SingleAgentRaceEnv(F110Env):
         self.comf_steering = comfortable_steering
         self.favourite_lane = favourite_lane
         # rendering
-        self._gui = True
+        self._gui = gui
         self._render_freq = 10
         self._step = 0
+        self.drawn_waypoints = []
         # state
         self.p0 = 0.0
         self.progress = 0.0
@@ -139,7 +141,7 @@ class SingleAgentRaceEnv(F110Env):
     def process_obs_conf(self, obs_conf):
         default = {
             'types': ['scan', 'pose', 'velocity', 'lidar_occupancy', 'speed_cmd', 'steering_cmd', 'velocity',
-                      'progress', 'progress_meters', 'collision', 'reverse', 'lane'],
+                      'progress', 'progress_meters', 'collision', 'reverse', 'lane', 'dist_to_lane'],
             'max_range': 10.0, 'resolution': 0.25, 'frame_skip': 4, 'degree_fov': 360}
         return self._process_conf(default, obs_conf)
 
@@ -185,6 +187,7 @@ class SingleAgentRaceEnv(F110Env):
                    'progress': self.progress,
                    'progress_meters': self.progress * self.track.track_length,
                    'lane': self._track.get_lane(np.array([old_obs['poses_x'][0], old_obs['poses_y'][0]])),
+                   'dist_to_lane': self._track.get_signed_dist_to_lane(np.array([old_obs['poses_x'][0], old_obs['poses_y'][0]])),
                    'collision': old_obs['collisions'][0],
                    'reverse': self.reverse}
         filtered_obs = {}
@@ -329,19 +332,30 @@ class SingleAgentRaceEnv(F110Env):
             F110Env.renderer.close()
 
 
-def render_callback(env_renderer):
-    # custom extra drawing function
-    return
-    e = env_renderer
+    def render_callback(self, env_renderer):
+        # custom extra drawing function
+        e = env_renderer
 
-    # update camera to follow car
-    x = e.cars[0].vertices[::2]
-    y = e.cars[0].vertices[1::2]
-    top, bottom, left, right = max(y), min(y), min(x), max(x)
-    e.left = left - 400
-    e.right = right + 400
-    e.top = top + 400
-    e.bottom = bottom - 400
+        # update camera to follow car
+        x = e.cars[0].vertices[::2]
+        y = e.cars[0].vertices[1::2]
+        top, bottom, left, right = max(y), min(y), min(x), max(x)
+        e.left = left - 400
+        e.right = right + 400
+        e.top = top + 400
+        e.bottom = bottom - 400
+
+        #
+        points = np.vstack((self.track.centerline[:, 0], self.track.centerline[:, 1])).T
+        scaled_points = 50. * points
+
+        for i in range(points.shape[0]):
+            if len(self.drawn_waypoints) < points.shape[0]:
+                b = e.batch.add(1, GL_POINTS, None, ('v3f/stream', [scaled_points[i, 0], scaled_points[i, 1], 0.]),
+                                ('c3B/stream', [183, 193, 222]))
+                self.drawn_waypoints.append(b)
+            else:
+                self.drawn_waypoints[i].vertices = [scaled_points[i, 0], scaled_points[i, 1], 0.]
 
 
 if __name__ == "__main__":
