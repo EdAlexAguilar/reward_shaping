@@ -2,7 +2,9 @@
 
 #SBATCH -J array
 #SBATCH -N 1
-#SBATCH --array=1-6
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=4GB
+#SBATCH --array=0-5
 #SBATCH --output=slurm-%j-%A-%a.out
 #SBATCH --error=slurm-%j-%A-%a.err
 
@@ -25,13 +27,26 @@ reward=$(echo $aa | cut -d ' ' -f 5)
 steps=$(echo $aa | cut -d ' ' -f 6)
 novideo=$(echo $aa | cut -d ' ' -f 7)
 
+# pre
+echo "Configuration:"
+echo -e "\t datetime: $(date "+%d-%m-%Y, %H:%M:%S")"
+echo -e "\t dir: ${DIR}"
+echo -e "\t Singularity image: ${image}"
+echo -e "\t args: ${aa}"
+echo ""
+
 # run
-echo "Dir: ${DIR}"
-echo "Image SIF: ${image}"
-echo "ARGS: ${aa}"
+start_time=$(date +%s)
 
 singularity exec $image /bin/bash entrypoint.sh $expdir $env $task $algo $reward $steps $n_seeds $novideo > /dev/null
 
-echo "done with exit status $?"
+status=$?
+end_time=$(date +%s)
 
+# post
+elapsed_time=$(( end_time - start_time ))
+echo "Done. Informations:"
+echo -e "\t datetime: $(date "+%d-%m-%Y, %H:%M:%S")"
+echo -e "\t elapsed time (seconds): ${elapsed_time}"
+echo -e "\t exit status: ${status}"
 
