@@ -24,7 +24,7 @@ def make_env(env_name, task, reward, eval=False, logdir=None, seed=0):
     env = make_reward_wrap(env_name, env, env_params, reward)
     if env_name == "f1tenth":
         from reward_shaping.envs.f1tenth.core.wrappers.wrappers import FixResetWrapper
-        env = FixResetWrapper(env, mode="grid" if eval else "random")
+        env = FixResetWrapper(env, mode="random")   # here: eventually fix reset grid for eval
     else:
         env = FlattenObservation(env)
     check_env(env)
@@ -70,10 +70,13 @@ def make_base_env(env, env_params={}):
         env = RLTask(env=env, requirements=specs)
     elif env == "f1tenth":
         from reward_shaping.envs.f1tenth.core.single_agent_env import SingleAgentRaceEnv
+        from reward_shaping.envs.f1tenth.core.mutlitrack_env import ChangingTrackRaceEnv
         from reward_shaping.envs.f1tenth.core.wrappers.wrappers import FlattenAction, FrameSkip
         from gym.wrappers import RescaleAction
         from reward_shaping.envs.f1tenth.specs import get_all_specs
-        env = SingleAgentRaceEnv(**env_params)
+        #env = ChangingTrackRaceEnv(map_names=["InformatikLectureHall", "Spielberg"],
+        #                           order="sequential", every=10, **env_params)
+        env = SingleAgentRaceEnv(map_name="InformatikLectureHall", **env_params)
         specs = [(k, op, build_pred(env_params)) for k, (op, build_pred) in get_all_specs().items()]
         env = RLTask(env=env, requirements=specs)
         env = FrameSkip(env, skip=env_params['observations_conf']['frame_skip'])

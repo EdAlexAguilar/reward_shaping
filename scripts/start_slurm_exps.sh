@@ -2,7 +2,8 @@
 
 #SBATCH -J array
 #SBATCH -N 1
-#SBATCH --cpus-per-task=4
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=2
 #SBATCH --mem=4GB
 #SBATCH --array=0-5
 #SBATCH --output=slurm-%j-%A-%a.out

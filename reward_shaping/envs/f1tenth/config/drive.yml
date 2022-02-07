@@ -1,4 +1,3 @@
-map_name: Spielberg
 sim_params:
   mu: 0.2810
   C_Sf: 4.718

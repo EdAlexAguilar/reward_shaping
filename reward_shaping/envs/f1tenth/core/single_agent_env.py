@@ -42,7 +42,11 @@ class SingleAgentRaceEnv(F110Env):
                  comfortable_speed_limit: float = 7.0,
                  comfortable_steering: float = 0.4189, favourite_lane: int = 0,
                  eval: bool = False, seed: int = None):
-        self._track = Track.from_track_name(map_name)
+        # load track in both directions
+        self._tracks = [Track.from_track_name(map_name), Track.from_track_name(map_name, reverse=True)]
+        self._track_id = 0
+        self._track = self._tracks[self._track_id]
+        # parameters
         seed = np.random.randint(0, 1000000) if seed is None else seed
         self.sim_params = self.process_sim_conf(sim_params)
         self.actions_conf = self.process_action_conf(actions_conf)
@@ -61,7 +65,7 @@ class SingleAgentRaceEnv(F110Env):
         self.comf_steering = comfortable_steering
         self.favourite_lane = favourite_lane
         # rendering
-        self._gui = False 
+        self._gui = True
         self._render_freq = 10
         self._step = 0
         # state
@@ -270,6 +274,10 @@ class SingleAgentRaceEnv(F110Env):
                 - random: reset the agent position on a random waypoint
         """
         assert mode in ['grid', 'random']
+        # update track direction
+        self._track_id = (self._track_id + 1) % len(self._tracks)
+        self._track = self._tracks[self._track_id]
+        # sample starting position
         if mode == "grid":
             waypoint_id = 0
         elif mode == "random":
@@ -315,6 +323,10 @@ class SingleAgentRaceEnv(F110Env):
             image = image.transpose(Image.FLIP_TOP_BOTTOM)
             image = image.resize((400, 320), Image.ANTIALIAS)
             return np.array(image)
+
+    def close(self):
+        if F110Env.renderer is not None:
+            F110Env.renderer.close()
 
 
 def render_callback(env_renderer):

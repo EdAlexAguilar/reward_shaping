@@ -75,7 +75,7 @@ class Track:
         return int(lane)
 
     @staticmethod
-    def from_track_name(track: str):
+    def from_track_name(track: str, reverse: bool = False):
         try:
             track_dir = find_track_dir(track)
             # load track spec
@@ -88,6 +88,7 @@ class Track:
                                      transpose(Image.FLIP_TOP_BOTTOM)).astype(np.float64)
             # load centerline
             centerline = np.loadtxt(track_dir / f"{track}_centerline.csv", delimiter=',')
+            centerline = np.flip(centerline, axis=0) if reverse else centerline
         except Exception as ex:
             print(f"map {track} not found\n{ex}")
             exit(-1)
