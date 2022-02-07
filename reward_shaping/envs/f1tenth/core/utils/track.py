@@ -72,7 +72,7 @@ class Track:
         x2, y2 = self.centerline[wp2][:2]
         # dist point to line (https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line#Line_defined_by_two_points)
         signed_dist = ((x2 - x1) * (point[1] - y1) - (y2 - y1) * (point[0] - x1))
-        signed_dist /= ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
+        signed_dist /= ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5 + 0.0000001
         return signed_dist
 
     def get_lane(self, point: Tuple[float, float]):
