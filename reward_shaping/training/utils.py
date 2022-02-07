@@ -75,8 +75,8 @@ def make_base_env(env, env_params={}):
         from reward_shaping.envs.f1tenth.specs import get_all_specs
         env = SingleAgentRaceEnv(map_name="InformatikLectureHall", **env_params)
         specs = [(k, op, build_pred(env_params)) for k, (op, build_pred) in get_all_specs().items()]
-        env = RLTask(env=env, requirements=specs)
         env = FrameSkip(env, skip=env_params['observations_conf']['frame_skip'])
+        env = RLTask(env=env, requirements=specs)
         env = FlattenAction(env)
         env = RescaleAction(env, a=-1, b=+1)
     else:

@@ -48,7 +48,7 @@ class F110EvalConfig(EvalConfig):
             'favourite_lane': info['favourite_lane'],
             'lap': info['lap_count']
         }
-        self._max_episode_len = info['max_steps']
+        self._max_episode_len = info['max_steps'] // 5      # note: frame skip = 5
         return monitored_state
 
     def eval_episode(self, episode) -> float:
