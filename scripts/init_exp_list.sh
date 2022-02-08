@@ -1,6 +1,6 @@
 #!/bin/bash
 
-debug=1
+debug=0
 debug_steps=1000
 short_steps=2000000
 long_steps=3000000
