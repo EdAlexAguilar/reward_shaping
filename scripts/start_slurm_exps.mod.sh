@@ -41,7 +41,7 @@ echo ""
 # run
 start_time=$(date +%s)
 
-singularity exec $image /bin/bash entrypoint.sh $expdir $env $task $algo $reward $steps $n_seeds $novideo > /dev/null
+echo singularity exec $image /bin/bash entrypoint.sh $expdir $env $task $algo $reward $steps $n_seeds $novideo > /dev/null
 
 status=$?
 end_time=$(date +%s)
