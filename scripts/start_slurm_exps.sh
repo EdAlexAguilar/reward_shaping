@@ -1,10 +1,12 @@
 #!/bin/sh
 
 #SBATCH -J array
+#SBATCH -p vsc3plus_0064
+#SBATCH --qos vsc3plus_0064
 #SBATCH -N 1
-#SBATCH --ntasks=1
-#SBATCH --cpus-per-task=3
-#SBATCH --mem=4GB
+#SBATCH --ntasks-per-node 5 
+#SBATCH --ntasks-per-core 1 
+#SBATCH --cpus-per-task 4   
 #SBATCH --array=0-5
 #SBATCH --output=slurm-%j-%A-%a.out
 #SBATCH --error=slurm-%j-%A-%a.err
@@ -39,7 +41,7 @@ echo ""
 # run
 start_time=$(date +%s)
 
-singularity exec $image /bin/bash entrypoint.sh $expdir $env $task $algo $reward $steps $n_seeds $novideo > /dev/null
+echo singularity exec $image /bin/bash entrypoint.sh $expdir $env $task $algo $reward $steps $n_seeds $novideo > /dev/null
 
 status=$?
 end_time=$(date +%s)
