@@ -34,7 +34,7 @@ class RacecarSTLReward(TLRewardConfig):
         # compute monitoring variables (all of them normalized in 0,1)
         monitored_state = {
             'time': info['time'],
-            'collision': -1 if info['wall_collision'] else +1,
+            'collision': 1 if info['wall_collision'] else -1,
             'progress': info['lap'] + info['progress']
         }
         return monitored_state

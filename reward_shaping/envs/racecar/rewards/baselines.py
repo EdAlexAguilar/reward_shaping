@@ -42,10 +42,10 @@ class RacecarEvalConfig(EvalConfig):
             'progress': info['progress'],
             'velocity': state['velocity'][0],
             'steering': state['steering'],
-            #'lane': state['lane'],
+            # 'lane': state['lane'],
             'comfortable_steering': info['norm_comf_steering'],
             'speed_limit': info['norm_speed_limit'],
-            #'favourite_lane': info['favourite_lane'],
+            # 'favourite_lane': info['favourite_lane'],
             'lap': info['lap']
         }
         self._max_episode_len = info['max_steps'] // info['frame_skip']
@@ -69,7 +69,7 @@ class RacecarEvalConfig(EvalConfig):
         comfort_metrics = []
         comfort_speed = "(velocity <= speed_limit)"
         comfort_steer = "(abs(steering) <= comfortable_steering)"
-        #comfort_lane = "(lane == favourite_lane)"
+        # comfort_lane = "(lane == favourite_lane)"
         for comfort_spec in [comfort_speed, comfort_steer]:
             comfort_trace = monitor_episode(stl_spec=comfort_spec,
                                             vars=self.monitoring_variables, types=self.monitoring_types,
