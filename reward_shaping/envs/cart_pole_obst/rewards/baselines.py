@@ -93,7 +93,7 @@ class CPOEvalConfig(EvalConfig):
 
     def __init__(self, **kwargs):
         super(CPOEvalConfig, self).__init__(**kwargs)
-        self._max_episode_len = 0
+        self._max_episode_len = None
 
     @property
     def monitoring_variables(self) -> List[str]:

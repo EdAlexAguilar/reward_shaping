@@ -11,7 +11,7 @@ class BWEvalConfig(EvalConfig):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._max_episode_len = 0
+        self._max_episode_len = None
 
     @property
     def monitoring_variables(self):

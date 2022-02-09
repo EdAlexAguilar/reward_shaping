@@ -9,7 +9,7 @@ from reward_shaping.core.helper_fns import monitor_episode
 class LLEvalConfig(EvalConfig):
     def __init__(self, **kwargs):
         super(LLEvalConfig, self).__init__(**kwargs)
-        self._max_episode_len = 0
+        self._max_episode_len = None
 
     @property
     def monitoring_variables(self):
