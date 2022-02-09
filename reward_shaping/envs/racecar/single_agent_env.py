@@ -3,13 +3,12 @@ import pathlib
 from typing import Dict
 
 from gym.utils import seeding
-from numba import njit
 from racecar_gym import SingleAgentRaceEnv, SingleAgentScenario
 import gym
 import numpy as np
 
 from reward_shaping.envs.racecar.util.configurations import ObservationConfig, ActionConfig, SpecificationsConfig
-from reward_shaping.envs.racecar.util.controllers import PDController
+from reward_shaping.envs.racecar.util.controllers import PDController, SteeringController
 from reward_shaping.envs.racecar.util.utils import polar2cartesian
 
 
@@ -41,6 +40,7 @@ class CustomSingleAgentRaceEnv(SingleAgentRaceEnv):
         # define aux controllers
         # PD tuned following Zigler-Nichols method: Ku=0.80, Tu=0.40 -> Kp=0.8*Ku, Kd=0.1*Ku*Tu
         self.speed_controller = PDController(kp=0.64, kd=0.032)
+        self.steering_controller = SteeringController()
         # seeding
         seed = np.random.randint(0, 1000000) if seed is None else seed
         self.seed(seed)
@@ -90,7 +90,7 @@ class CustomSingleAgentRaceEnv(SingleAgentRaceEnv):
         target_speed = act_conf.min_speed + (act_conf.max_speed - act_conf.min_speed) * (action["speed"] + 1) / 2.0
         target_curvature = act_conf.min_curv + (act_conf.max_curv - act_conf.min_curv) * (action["curvature"] + 1) / 2.0
         original_action = {
-            "steering": self._control_curvature(act_conf.wheel_base, target_curvature),
+            "steering": self._control_curvature(target_curvature),
             "motor": self._control_speed(target_speed)
         }
         return original_action
@@ -104,17 +104,8 @@ class CustomSingleAgentRaceEnv(SingleAgentRaceEnv):
         motor_force = np.clip(motor_force, -1.0, +1.0)  # scale it in the original env range
         return motor_force
 
-    @staticmethod
-    #@njit(fastmath=False, cache=True)
-    def _control_curvature(wheel_base, target_curvature):
-        """ this is a naive method to compute steering angle from a target curvature """
-        steering = np.arctan(wheel_base * target_curvature)
-        min_steering, max_steering = -0.4189, +0.4189
-        steering = -1.0 + 2.0 * (steering - min_steering) / (max_steering - min_steering)  # rescale it in -1,+1
-        # sanity check
-        steering = -1 if steering < -1 else steering  # clip operation for numba
-        steering = +1 if steering > 1 else steering
-        return steering
+    def _control_curvature(self, target_curvature):
+        return self.steering_controller.control(self.action_conf.wheel_base, target_curvature)
 
     def _prepare_observation(self, obs: Dict, steering_cmd: np.ndarray, speed_cmd: np.ndarray):
         assert "lidar" in obs
@@ -136,16 +127,18 @@ class CustomSingleAgentRaceEnv(SingleAgentRaceEnv):
         self.speed_controller.reset()
         obs = super(CustomSingleAgentRaceEnv, self).reset(mode)
         obs = self._prepare_observation(obs, steering_cmd=np.array([0.0]), speed_cmd=np.array([0.0]))
+        self.time_step = 0
         return obs
 
     def render(self, mode: str = 'follow', info={}, **kwargs):
         super(CustomSingleAgentRaceEnv, self).render(mode, **kwargs)
 
+
 if __name__ == "__main__":
     from reward_shaping.training.utils import load_env_params
 
     params = load_env_params(env="racecar", task="drive")
-    env = CustomSingleAgentRaceEnv(**params, gui=True)
+    env = CustomSingleAgentRaceEnv(**params, gui=False)
     import time
 
     print(env.observation_space)

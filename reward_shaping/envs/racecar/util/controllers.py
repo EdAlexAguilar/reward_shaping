@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from numba import njit
+import numpy as np
 
 
 @dataclass
@@ -25,7 +26,7 @@ class PDController:
 
     def control(self, target_value, current_value, timestamp):
         ctrl, err = self.fast_ctrl(target_value, current_value, timestamp, self._err, self._time,
-                              self._gains.Kp, self._gains.Kd)
+                                   self._gains.Kp, self._gains.Kd)
         # update internal variables
         self._err = err
         self._time = timestamp
@@ -35,3 +36,17 @@ class PDController:
     def reset(self):
         self._err = 0.0
         self._time = 0.0
+
+
+class SteeringController:
+    @staticmethod
+    @njit(fastmath=False, cache=True)
+    def control(wheel_base, target_curvature):
+        """ this is a naive method to compute steering angle from a target curvature """
+        steering = np.arctan(wheel_base * target_curvature)
+        min_steering, max_steering = -0.4189, +0.4189
+        steering = -1.0 + 2.0 * (steering - min_steering) / (max_steering - min_steering)  # rescale it in -1,+1
+        # sanity check
+        steering = -1 if steering < -1 else steering  # clip operation for numba
+        steering = +1 if steering > 1 else steering
+        return steering
