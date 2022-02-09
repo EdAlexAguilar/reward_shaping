@@ -96,7 +96,7 @@ def make_base_env(env, env_params={}):
 
 
 def make_agent(env_name, env, reward, rl_algo, logdir=None):
-    policy = "MultiInputPolicy" if env_name == "f1tenth" else "MlpPolicy"
+    policy = "MultiInputPolicy" if env_name in ["f1tenth", "racecar"] else "MlpPolicy"
     # load model parameters
     algo = rl_algo.split("_", 1)[0]
     algo_config = pathlib.Path(f"{os.path.dirname(__file__)}/../envs/{env_name}/hparams") / f"{algo}.yml"

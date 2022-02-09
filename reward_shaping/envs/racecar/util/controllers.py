@@ -22,7 +22,11 @@ class PDController:
     def fast_ctrl(target_value, current_value, timestamp, pre_err, pre_time, kp, kd):
         err = target_value - current_value
         derr_dt = (err - pre_err) / (timestamp - pre_time)
-        return kp * err + kd * derr_dt, err
+        ctrl = kp * err + kd * derr_dt
+        # sanity check
+        ctrl = np.array([-1.0]) if ctrl < -1.0 else ctrl  # clip operation for numba
+        ctrl = np.array([+1.0]) if ctrl > 1.0 else ctrl
+        return ctrl, err
 
     def control(self, target_value, current_value, timestamp):
         ctrl, err = self.fast_ctrl(target_value, current_value, timestamp, self._err, self._time,
@@ -47,6 +51,6 @@ class SteeringController:
         min_steering, max_steering = -0.4189, +0.4189
         steering = -1.0 + 2.0 * (steering - min_steering) / (max_steering - min_steering)  # rescale it in -1,+1
         # sanity check
-        steering = -1 if steering < -1 else steering  # clip operation for numba
-        steering = +1 if steering > 1 else steering
+        steering = np.array([-1.0]) if steering < -1.0 else steering  # clip operation for numba
+        steering = np.array([1.0]) if steering > 1.0 else steering
         return steering

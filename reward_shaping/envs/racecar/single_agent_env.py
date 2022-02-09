@@ -100,8 +100,6 @@ class CustomSingleAgentRaceEnv(SingleAgentRaceEnv):
         current_speed = self.scenario.world.state()[self.agent_id]["velocity"][0]
         current_time = self.scenario.world.state()[self.agent_id]["time"]
         motor_force = self.speed_controller.control(target_speed, current_speed, current_time)
-        # sanity check
-        motor_force = np.clip(motor_force, -1.0, +1.0)  # scale it in the original env range
         return motor_force
 
     def _control_curvature(self, target_curvature):
