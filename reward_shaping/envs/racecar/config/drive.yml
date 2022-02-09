@@ -1,0 +1,15 @@
+scenario_filename: scenario.yml
+frame_skip: 5
+max_steps: 5000
+#
+l2d_max_range: 10.0
+l2d_res: 0.25
+#
+min_speed: 0.0
+max_speed: 3.0
+min_steering: -0.4189
+max_steering: +0.4189
+wheel_base: 0.3205
+#
+norm_speed_limit: 0.34    # speed [0,3] m/s normalized in [-1,+1], then 0.34 approx. 2 m/s
+norm_comf_steering: 0.25  # steer [-.42,+.42] rads norm. in [-1, +1], then +-0.25 approx. +-6 deg

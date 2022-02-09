@@ -24,7 +24,10 @@ def make_env(env_name, task, reward, eval=False, logdir=None, seed=0):
     env = make_reward_wrap(env_name, env, env_params, reward)
     if env_name == "f1tenth":
         from reward_shaping.envs.f1tenth.core.wrappers.wrappers import FixResetWrapper
-        env = FixResetWrapper(env, mode="grid")   # here: eventually fix reset grid for eval
+        env = FixResetWrapper(env, mode="grid")
+    elif env_name == "racecar":
+        from reward_shaping.envs.racecar.wrappers import FixResetWrapper
+        env = FixResetWrapper(env, mode="grid")
     else:
         env = FlattenObservation(env)
     check_env(env)
@@ -79,6 +82,14 @@ def make_base_env(env, env_params={}):
         env = RLTask(env=env, requirements=specs)
         env = FlattenAction(env)
         env = RescaleAction(env, a=-1, b=+1)
+    elif env == "racecar":
+        from reward_shaping.envs.racecar.single_agent_env import CustomSingleAgentRaceEnv
+        from reward_shaping.envs.racecar.specs import get_all_specs
+        from reward_shaping.envs.racecar.wrappers import FlattenAction
+        env = CustomSingleAgentRaceEnv(**env_params)
+        specs = [(k, op, build_pred(env_params)) for k, (op, build_pred) in get_all_specs().items()]
+        env = RLTask(env=env, requirements=specs)
+        env = FlattenAction(env)
     else:
         raise NotImplementedError(f"not implemented env for {env}")
     return env
@@ -134,6 +145,9 @@ def get_reward_conf(env_name, env_params, reward):
         reward_conf = get_reward(reward)(env_params=env_params)
     elif env_name == "f1tenth":
         from reward_shaping.envs.f1tenth import get_reward
+        reward_conf = get_reward(reward)(env_params=env_params)
+    elif env_name == "racecar":
+        from reward_shaping.envs.racecar import get_reward
         reward_conf = get_reward(reward)(env_params=env_params)
     else:
         raise NotImplementedError(f'{reward} not implemented for {env_name}')

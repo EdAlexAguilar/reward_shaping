@@ -22,3 +22,11 @@ class ObservationConfig:
         self.l2d_max_range = l2d_max_range
         self.l2d_res = l2d_res
         self.l2d_bins: int = int(2 * l2d_max_range / l2d_res)
+
+
+@dataclass
+class SpecificationsConfig:
+
+    def __init__(self, norm_speed_limit: float, norm_comf_steering: float):
+        self.norm_speed_limit = norm_speed_limit
+        self.norm_comf_steering = norm_comf_steering

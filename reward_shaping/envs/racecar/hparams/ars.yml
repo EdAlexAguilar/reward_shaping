@@ -1,0 +1,7 @@
+learning_rate: 0.02
+delta_std: 0.0075
+n_delta: 64
+n_top: 32
+alive_bonus_offset: -0.1
+policy_kwargs:
+  net_arch: [16]
