@@ -1,0 +1,10 @@
+scenario_filename: scenario.yml
+#
+l2d_max_range: 10.0
+l2d_res: 0.25
+#
+min_speed: 0.0
+max_speed: 3.0
+min_steering: -0.4189
+max_steering: +0.4189
+wheel_base: 0.3205
