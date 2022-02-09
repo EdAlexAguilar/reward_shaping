@@ -11,7 +11,7 @@ class RacecarMinActionReward(RewardFunction):
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
         assert all(abs(a) <= 1 for a in action)
-        if info["collision"] > 0:
+        if info["wall_collision"] > 0:
             reward = -1.0
         else:
             reward = 1 - (1 / len(action) * np.linalg.norm(action) ** 2)
