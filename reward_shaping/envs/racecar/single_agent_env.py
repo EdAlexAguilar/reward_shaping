@@ -23,6 +23,8 @@ class CustomSingleAgentRaceEnv(SingleAgentRaceEnv):
                  comf_dist_to_wall: float, tolerance_margin: float,
                  frame_skip: int, max_steps: int,
                  seed: int = None, eval: bool = False, gui: bool = False):
+        self.eval = eval
+        self.gui = gui or eval      # rendering for eval environments otherwise no pybullet gui
         # load scenario
         scenario = SingleAgentScenario.from_spec(
             path=pathlib.Path(f"{os.path.dirname(__file__)}/scenarios") / scenario_file,

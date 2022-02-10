@@ -44,7 +44,7 @@ class RacecarEvalConfig(EvalConfig):
             'steering': state['steering'],
             'comfortable_steering': info['norm_comf_steering'],
             'dist_to_margin': abs(state['dist_to_wall'] - info['comf_dist_to_wall']),
-            'tolerance_margin': info['tolerance_dist_to_wall'],
+            'tolerance_margin': info['tolerance_margin'],
             'speed_limit': info['norm_speed_limit'],
             # 'favourite_lane': info['favourite_lane'],
             'lap': info['lap']
