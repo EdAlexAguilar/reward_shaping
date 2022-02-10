@@ -46,7 +46,6 @@ class RacecarEvalConfig(EvalConfig):
             'dist_to_margin': abs(state['dist_to_wall'] - info['comf_dist_to_wall']),
             'tolerance_margin': info['tolerance_margin'],
             'speed_limit': info['norm_speed_limit'],
-            # 'favourite_lane': info['favourite_lane'],
             'lap': info['lap']
         }
         self._max_episode_len = info['max_steps'] // info['frame_skip']
@@ -62,7 +61,7 @@ class RacecarEvalConfig(EvalConfig):
                                      vars=self.monitoring_variables, types=self.monitoring_types,
                                      episode=episode)[0][1]
         #
-        target_spec = "eventually(lap >= 1.0)"
+        target_spec = "eventually(lap > 1.0)"
         target_rho = monitor_episode(stl_spec=target_spec,
                                      vars=self.monitoring_variables, types=self.monitoring_types,
                                      episode=episode)[0][1]

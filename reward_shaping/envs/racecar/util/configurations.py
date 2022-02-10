@@ -5,12 +5,14 @@ import numpy as np
 @dataclass
 class ActionConfig:
 
-    def __init__(self, min_speed: float, max_speed: float, min_steering: float, max_steering: float, wheel_base: float):
+    def __init__(self, min_speed: float, max_speed: float, min_steering: float, max_steering: float,
+                 wheel_base: float, control_curvature: bool):
         self.min_speed = min_speed
         self.max_speed = max_speed
         self.min_steering = min_steering
         self.max_steering = max_steering
         self.wheel_base = wheel_base
+        self.control_curvature = control_curvature
         self.min_curv: float = np.tan(self.min_steering) / wheel_base
         self.max_curv: float = np.tan(self.max_steering) / wheel_base
 

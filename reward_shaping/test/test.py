@@ -17,11 +17,11 @@ def generic_env_test(env_name, task, reward_name):
         done = False
         t = 0
         while not done:
-            t += 1
             action = env.action_space.sample()
             obs, reward, done, info = env.step(action)
-            print(reward)
-            tot_reward += reward
+            #print(reward)
+            tot_reward += (0.99**t) * reward
+            t += 1
             env.render()
         print(f"[{reward_name}] tot steps: {t}, tot reward: {tot_reward:.3f}")
     env.close()

@@ -64,7 +64,7 @@ class TestTrainingLoop(TestCase):
 
 class TestWithAgent(TestCase):
     def test_progress(self):
-        from stable_baselines3 import SAC
-        agent = SAC.load("/home/luigi/Development/reward_shaping/logs/racecar/model_racecar_1000000_steps.zip")
+        from stable_baselines3 import PPO
+        agent = PPO.load("/home/luigi/Development/reward_shaping/logs/racecar/drive_hrs_pot_ppo_Seed474197_1644498938/checkpoint/model_50000_steps.zip")
         generic_env_test_wt_agent(env_name, agent, task, 'default')
 

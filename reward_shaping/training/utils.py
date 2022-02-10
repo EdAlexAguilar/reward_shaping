@@ -7,6 +7,7 @@ from gym.wrappers import FlattenObservation
 from stable_baselines3.common.env_checker import check_env
 
 from reward_shaping.core.wrappers import RewardWrapper
+from reward_shaping.envs.racecar.wrappers.wrappers import FixSpeedControl
 from reward_shaping.monitor.task import RLTask
 
 
@@ -27,7 +28,7 @@ def make_env(env_name, task, reward, eval=False, logdir=None, seed=0):
         env = FixResetWrapper(env, mode="grid")
     elif env_name == "racecar":
         from reward_shaping.envs.racecar.wrappers import FixResetWrapper
-        env = FixResetWrapper(env, mode="grid")
+        env = FixResetWrapper(env, mode="grid" if eval else "random")
     else:
         env = FlattenObservation(env)
     check_env(env)
@@ -90,6 +91,7 @@ def make_base_env(env, env_params={}):
         env = ChangingTrackSingleAgentRaceEnv(**env_params)
         specs = [(k, op, build_pred(env_params)) for k, (op, build_pred) in get_all_specs().items()]
         env = RLTask(env=env, requirements=specs)
+        env = FixSpeedControl(env, fixed_speed=0.0)        # 0 in the normalized scale is half of max speed
         env = FlattenAction(env)
     else:
         raise NotImplementedError(f"not implemented env for {env}")

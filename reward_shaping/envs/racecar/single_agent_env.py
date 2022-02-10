@@ -18,23 +18,25 @@ class CustomSingleAgentRaceEnv(SingleAgentRaceEnv):
                 "render.view_modes": ["follow", "birds_eye", "lidar"]}
 
     def __init__(self, scenario_file: str, l2d_max_range: float, l2d_res: float,
-                 min_speed: float, max_speed: float, min_steering: float, max_steering: float, wheel_base: float,
+                 min_speed: float, max_speed: float, min_steering: float, max_steering: float,
+                 wheel_base: float, control_curvature: bool,
                  norm_speed_limit: float, norm_comf_steering: float, max_halflane: float,
                  comf_dist_to_wall: float, tolerance_margin: float,
                  frame_skip: int, max_steps: int,
                  seed: int = None, eval: bool = False, gui: bool = False):
         self.eval = eval
-        self.gui = gui or eval      # rendering for eval environments otherwise no pybullet gui
+        self.gui = gui
         # load scenario
         scenario = SingleAgentScenario.from_spec(
             path=pathlib.Path(f"{os.path.dirname(__file__)}/scenarios") / scenario_file,
-            rendering=gui
+            rendering=self.gui
         )
         super().__init__(scenario)
         # modify observation and action spaces
         self.obs_conf = ObservationConfig(l2d_max_range=l2d_max_range, l2d_res=l2d_res, max_halflane=max_halflane)
         self.action_conf = ActionConfig(min_speed=min_speed, max_speed=max_speed, min_steering=min_steering,
-                                        max_steering=max_steering, wheel_base=wheel_base)
+                                        max_steering=max_steering, wheel_base=wheel_base,
+                                        control_curvature=control_curvature)
         self.specs_conf = SpecificationsConfig(norm_speed_limit=norm_speed_limit, norm_comf_steering=norm_comf_steering,
                                                comf_dist_to_wall=comf_dist_to_wall, tolerance_margin=tolerance_margin)
         self.frame_skip = frame_skip
@@ -75,10 +77,17 @@ class CustomSingleAgentRaceEnv(SingleAgentRaceEnv):
     def _define_new_action_space(self):
         """ change the original action space to control curvature, speed """
         self.original_action_space = self.action_space
-        return gym.spaces.Dict({
-            "curvature": gym.spaces.Box(low=-1.0, high=+1.0, shape=(1,)),
-            "speed": gym.spaces.Box(low=-1.0, high=+1.0, shape=(1,))
-        })
+        if self.action_conf.control_curvature:
+            action_dict = {
+                "curvature": gym.spaces.Box(low=-1.0, high=+1.0, shape=(1,)),
+                "speed": gym.spaces.Box(low=-1.0, high=+1.0, shape=(1,))
+            }
+        else:
+            action_dict = {
+                "steering": gym.spaces.Box(low=-1.0, high=+1.0, shape=(1,)),
+                "speed": gym.spaces.Box(low=-1.0, high=+1.0, shape=(1,))
+            }
+        return gym.spaces.Dict(action_dict)
 
     def step(self, action: Dict):
         original_action = self._convert_to_original_action(action)
@@ -101,9 +110,13 @@ class CustomSingleAgentRaceEnv(SingleAgentRaceEnv):
         """ convert action in original action space by using aux controllers """
         act_conf = self.action_conf
         target_speed = act_conf.min_speed + (act_conf.max_speed - act_conf.min_speed) * (action["speed"] + 1) / 2.0
-        target_curvature = act_conf.min_curv + (act_conf.max_curv - act_conf.min_curv) * (action["curvature"] + 1) / 2.0
+        if act_conf.control_curvature:
+            target_curvature = act_conf.min_curv + (act_conf.max_curv - act_conf.min_curv) * (action["curvature"] + 1) / 2.0
+            target_steering = self._control_curvature(target_curvature)
+        else:
+            target_steering = action["steering"]
         original_action = {
-            "steering": self._control_curvature(target_curvature),
+            "steering": target_steering,
             "motor": self._control_speed(target_speed)
         }
         return original_action
@@ -169,26 +182,26 @@ if __name__ == "__main__":
     from stable_baselines3.common.env_checker import check_env
 
     params = {'scenario_file': 'austria.yml', 'frame_skip': 5, 'max_steps': 5000,
-              'l2d_max_range': 10.0, 'l2d_res': 0.25, 'max_halflane': 2.0, 'comf_dist_to_wall': 0.40,
-              'min_speed': 0.0, 'max_speed': 3.0, 'min_steering': -0.4189, 'max_steering': 0.4189,
-              'wheel_base': 0.3205, 'norm_speed_limit': 0.34, 'norm_comf_steering': 0.25}
-    env = CustomSingleAgentRaceEnv(**params, gui=True)
+              'l2d_max_range': 10.0, 'l2d_res': 0.25, 'max_halflane': 2.0,
+              'comf_dist_to_wall': 0.40, 'tolerance_margin': 0.05,
+              'min_speed': 0.5, 'max_speed': 3.0, 'min_steering': -0.4189, 'max_steering': 0.4189,
+              'wheel_base': 0.3205, 'control_curvature': False,
+              'norm_speed_limit': 0.34, 'norm_comf_steering': 0.25}
+    env = CustomSingleAgentRaceEnv(**params, gui=False)
     check_env(env)
 
     print(env.observation_space)
     print(env.action_space)
     for ep in range(10):
         done = False
-        obs = env.reset(mode='random')
+        obs = env.reset(mode='grid')
 
-        action = {"speed": np.array([-0.5]), "curvature": np.array([0.0])}
+        action = {"speed": np.array([-1.0]), "steering": np.array([0.0])}
         i = 0
         t0 = time.time()
         while not done and i < 1000:
             i += params['frame_skip']
             obs, reward, done, state = env.step(action)
-            print(obs["dist_to_wall"])
-            env.render(mode="human", view_mode="birds_eye")
             # time.sleep(0.01)
 
         print(time.time() - t0)
