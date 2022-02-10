@@ -1,5 +1,5 @@
 gamma: 0.99
-learning_rate: 0.00073
+learning_rate: 0.0003
 buffer_size: 300000
 learning_starts: 10000
 train_freq: 64

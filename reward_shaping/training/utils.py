@@ -50,7 +50,10 @@ def load_env_params(env, task, **kwargs):
 
 def load_eval_params(env, task):
     """ this can be use to pass additional parameters to constraint the evaluation episodes."""
-    return {'eval': True}
+    params = {'eval': True}
+    if env == "bipedal_walker":
+        params["max_steps"] = 1600
+    return params
 
 
 def make_base_env(env, env_params={}):
@@ -91,7 +94,7 @@ def make_base_env(env, env_params={}):
         env = ChangingTrackSingleAgentRaceEnv(**env_params)
         specs = [(k, op, build_pred(env_params)) for k, (op, build_pred) in get_all_specs().items()]
         env = RLTask(env=env, requirements=specs)
-        env = FixSpeedControl(env, fixed_speed=0.0)        # 0 in the normalized scale is half of max speed
+        env = FixSpeedControl(env, fixed_speed=0.0)  # 0 in the normalized scale is half of max speed
         env = FlattenAction(env)
     else:
         raise NotImplementedError(f"not implemented env for {env}")
