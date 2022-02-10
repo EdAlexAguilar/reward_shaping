@@ -9,7 +9,7 @@ class FixResetWrapper(gym.Wrapper):
     """Fix a reset mode to sample initial condition from starting grid or randomly over the track."""
 
     def __init__(self, env, mode):
-        assert mode in ['grid', 'random']
+        assert mode in ['grid', 'random', 'random_bidirectional']
         self._mode = mode
         super(FixResetWrapper, self).__init__(env)
 
@@ -97,3 +97,22 @@ class FrameStackOnChannel(gym.Wrapper):
         observation = self.env.reset(**kwargs)
         [self.frames.append(observation) for _ in range(self.num_stack)]
         return self._get_observation()
+
+
+class FixSpeedControl(gym.ActionWrapper):
+    """
+    reduce the original action space, and fix the speed command to a constant value
+    """
+
+    def __init__(self, env, fixed_speed: float = 2.0):
+        super(FixSpeedControl, self).__init__(env)
+        assert type(fixed_speed) == float
+        assert "speed" in self.action_space.spaces.keys(), "the action space does not have any 'speed' action"
+        self._fixed_speed = np.array([fixed_speed])
+        assert self.action_space["speed"].contains(self._fixed_speed), "the fixed speed is not in the original action space"
+        self.action_space = gym.spaces.Dict(
+            {a: space for a, space in self.action_space.spaces.items() if a != "speed"})
+
+    def action(self, action):
+        action["speed"] = self._fixed_speed
+        return action

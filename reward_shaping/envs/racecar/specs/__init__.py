@@ -25,23 +25,20 @@ def _build_no_reverse(_):
 
 
 def _build_complete_lap(_):
-    """ Known bug: when crossing the starting line (ie, completing one lap), the progress step from 0.99 to 1.99 and then restart from 1.01.
-    This depends on the centerline waypoints"""
-    return lambda state, info: 1.0 if info["lap"] > 0 else -1.0
+    return lambda state, info: 1.0 if info["lap"] > 1 else -1.0
 
 
 def _build_speed_limit(_):
-    # note: we are evaluating using privileged information of ground-truth velocity
-    return lambda state, info: info["norm_speed_limit"] - state["velocity"][0]
+    return lambda state, info: info["norm_speed_limit"] - state["speed"]
 
 
 def _build_comfortable_steering(_):
     return lambda state, info: info["norm_comf_steering"] - abs(state["steering"])
 
 
-#def _build_keep_right(_):
-#    lanes = {"right": 0, "left": 1}
-#    return lambda state, info: 1.0 if state["lane"] == lanes["right"] else -1
+def _build_keep_right(_):
+    """ req: abs(dist_to_wall - target_dist) <= tolerance_margin"""
+    return lambda state, info: info["tolerance_margin"] - abs(state["dist_to_wall"] - info["comf_dist_to_wall"])
 
 
 register_spec('s_coll', Operator.ENSURE, _build_no_collision)
@@ -49,4 +46,4 @@ register_spec('s_reverse', Operator.ENSURE, _build_no_reverse)
 register_spec("t_lap", Operator.ACHIEVE, _build_complete_lap)
 register_spec("c1_speed", Operator.ENCOURAGE, _build_speed_limit)
 register_spec("c2_steering", Operator.ENCOURAGE, _build_comfortable_steering)
-#register_spec("c3_keep_right_lane", Operator.ENCOURAGE, _build_keep_right)
+register_spec("c3_keep_right", Operator.ENCOURAGE, _build_keep_right)

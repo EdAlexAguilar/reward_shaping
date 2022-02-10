@@ -18,25 +18,25 @@ class TestRacecar(TestCase):
         result = generic_env_test(env_name, task, reward)
         self.assertTrue(result)
 
-    #def test_morl_uni(self):
-    #    reward = "morl_uni"
-    #    result = generic_env_test(env_name, task, reward)
-    #    self.assertTrue(result)
+    def test_morl_uni(self):
+        reward = "morl_uni"
+        result = generic_env_test(env_name, task, reward)
+        self.assertTrue(result)
 
-    #def test_morl_dec(self):
-    #    reward = "morl_dec"
-    #    result = generic_env_test(env_name, task, reward)
-    #    self.assertTrue(result)
+    def test_morl_dec(self):
+        reward = "morl_dec"
+        result = generic_env_test(env_name, task, reward)
+        self.assertTrue(result)
 
     def test_eval_reward(self):
         reward = "eval"
         result = generic_env_test(env_name, task, reward)
         self.assertTrue(result)
 
-    #def test_hrs_reward(self):
-    #    reward = "hrs_pot"
-    #    result = generic_env_test(env_name, task, reward)
-    #    self.assertTrue(result)
+    def test_hrs_reward(self):
+        reward = "hrs_pot"
+        result = generic_env_test(env_name, task, reward)
+        self.assertTrue(result)
 
     def test_bhnr_reward(self):
         reward = "bhnr"
@@ -61,4 +61,10 @@ class TestTrainingLoop(TestCase):
     def test_train_morl_dec(self):
         generic_training(env_name, task, 'morl_dec')
 
+
+class TestWithAgent(TestCase):
+    def test_progress(self):
+        from stable_baselines3 import PPO
+        agent = PPO.load("/home/luigi/Development/reward_shaping/logs/racecar/drive_hrs_pot_ppo_Seed474197_1644498938/checkpoint/model_50000_steps.zip")
+        generic_env_test_wt_agent(env_name, agent, task, 'default')
 

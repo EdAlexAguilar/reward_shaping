@@ -6,7 +6,7 @@ from reward_shaping.training.train import train
 
 
 def main(args):
-    video_every = (args.steps - 1) if args.env == "f1tenth" else int(1e5)  # f1tenth records only once at the end
+    video_every = (args.steps - 1) if args.env == "f1tenth" else int(args.steps / 10)  # f1tenth only once at the end
     train_params = {'steps': args.steps,
                     'video_every': video_every,  # note: causes trouble with containers, one can disable it wt -novideo
                     'n_recorded_episodes': 3,

@@ -17,11 +17,11 @@ def generic_env_test(env_name, task, reward_name):
         done = False
         t = 0
         while not done:
-            t += 1
             action = env.action_space.sample()
             obs, reward, done, info = env.step(action)
-            print(reward)
-            tot_reward += reward
+            #print(reward)
+            tot_reward += (0.99**t) * reward
+            t += 1
             env.render()
         print(f"[{reward_name}] tot steps: {t}, tot reward: {tot_reward:.3f}")
     env.close()
@@ -46,13 +46,15 @@ def generic_env_test_wt_agent(env_name, model, task, reward_name):
         frames = []
         while not done:
             t += 1
+            if t % 100 == 0:
+                print(t)
             action, _ = model.predict(obs, deterministic=True)
             obs, reward, done, info = env.step(action)
-            speeds.append(obs["speed_cmd"])
-            steers.append(obs["steering_cmd"])
+            speeds.append(obs["speed"])
+            steers.append(obs["steering"])
             rr.append(reward)
             tot_reward += reward
-            frames.append(env.render(mode="rgb_array"))
+            frames.append(env.render(mode="follow"))
         print(f"[{reward_name}] tot steps: {t}, tot reward: {tot_reward:.3f}")
         for k, v in info.items():
             if "counter" in k:
@@ -63,11 +65,11 @@ def generic_env_test_wt_agent(env_name, model, task, reward_name):
         plt.legend()
         plt.show()
         # make video
-        #import imageio
-        #writer = imageio.get_writer(f'video.mp4', fps=100 // 5)
-        #for image in frames:
-        #    writer.append_data(image)
-        #writer.close()
+        import imageio
+        writer = imageio.get_writer(f'video_racecar.mp4', fps=100 // 5)
+        for image in frames:
+            writer.append_data(image)
+        writer.close()
     return True
 
 

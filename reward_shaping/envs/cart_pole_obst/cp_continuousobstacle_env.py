@@ -15,7 +15,7 @@ from gym.utils import seeding
 
 
 class DrawText:
-    def __init__(self, label: pyglet.text.Label):
+    def __init__(self, label):
         self.label = label
 
     def render(self):
