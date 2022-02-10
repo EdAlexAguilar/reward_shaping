@@ -1,4 +1,5 @@
-scenario_filename: scenario.yml
+scenario_files:
+  - scenario.yml
 frame_skip: 5
 max_steps: 5000
 #

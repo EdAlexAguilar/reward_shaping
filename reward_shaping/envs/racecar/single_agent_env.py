@@ -15,14 +15,14 @@ from reward_shaping.envs.racecar.util.utils import polar2cartesian
 class CustomSingleAgentRaceEnv(SingleAgentRaceEnv):
     agent_id: str = 'A'
 
-    def __init__(self, scenario_filename: str, l2d_max_range: float, l2d_res: float,
+    def __init__(self, scenario_file: str, l2d_max_range: float, l2d_res: float,
                  min_speed: float, max_speed: float, min_steering: float, max_steering: float, wheel_base: float,
                  norm_speed_limit: float, norm_comf_steering: float,
                  frame_skip: int, max_steps: int,
                  seed: int = None, eval: bool = False, gui: bool = False):
         # load scenario
         scenario = SingleAgentScenario.from_spec(
-            path=pathlib.Path(f"{os.path.dirname(__file__)}/config") / scenario_filename,
+            path=pathlib.Path(f"{os.path.dirname(__file__)}/config") / scenario_file,
             rendering=gui
         )
         super().__init__(scenario)
@@ -53,12 +53,16 @@ class CustomSingleAgentRaceEnv(SingleAgentRaceEnv):
     def _define_new_observation_space(self):
         """ extend the original observation space with 2d-projection of lidar scan, steering and speed commands """
         observation_dict = {}
-        for k, space in self.observation_space.spaces.items():
-            observation_dict[k] = space
-        observation_dict["lidar_occupancy"] = gym.spaces.Box(low=0, high=255, dtype=np.uint8,
-                                                             shape=(1, self.obs_conf.l2d_bins, self.obs_conf.l2d_bins))
-        observation_dict["steering"] = gym.spaces.Box(low=-1, high=+1, shape=(1,))
-        observation_dict["speed"] = gym.spaces.Box(low=-1, high=+1, shape=(1,))
+        observation_dict = {
+            "lidar": self.observation_space.spaces["lidar"],
+            "lidar_occupancy": gym.spaces.Box(low=0, high=255, dtype=np.uint8,
+                                              shape=(1, self.obs_conf.l2d_bins, self.obs_conf.l2d_bins)),
+            "steering": gym.spaces.Box(low=-1, high=+1, shape=(1,)),  # note: they are already norm in +-1
+            "speed": gym.spaces.Box(low=-1, high=+1, shape=(1,)),
+            "wall_collision": gym.spaces.Box(low=0, high=+1, shape=(1,)),
+            "wrong_way": gym.spaces.Box(low=0, high=+1, shape=(1,)),
+            "progress": gym.spaces.Box(low=0.0, high=1.0, shape=(1,)),
+        }
         return gym.spaces.Dict(observation_dict)
 
     def _define_new_action_space(self):
@@ -80,8 +84,10 @@ class CustomSingleAgentRaceEnv(SingleAgentRaceEnv):
             reward += r
             if done: break
         # extend observation and infos
-        obs = self._prepare_observation(obs, original_action["steering"], action["speed"])
-        info = self._prepare_info(info, reward)
+        steering, speed = original_action["steering"], action["speed"]
+        state = self.scenario.world.state()[self.agent_id]
+        obs = self._prepare_observation(state, obs, steering, speed)
+        info = self._prepare_info(info, reward, done)
         return obs, reward, done, info
 
     def _convert_to_original_action(self, action):
@@ -105,37 +111,52 @@ class CustomSingleAgentRaceEnv(SingleAgentRaceEnv):
     def _control_curvature(self, target_curvature):
         return self.steering_controller.control(self.action_conf.wheel_base, target_curvature)
 
-    def _prepare_observation(self, obs: Dict, steering_cmd: np.ndarray, speed_cmd: np.ndarray):
+    def _prepare_observation(self, state: Dict, obs: Dict, steering_cmd: np.ndarray, speed_cmd: np.ndarray):
         assert "lidar" in obs
         scan, scan_angles = obs["lidar"], np.linspace(np.deg2rad(-135), np.deg2rad(135), len(obs["lidar"]))
-        obs["lidar_occupancy"] = polar2cartesian(scan, scan_angles, self.obs_conf.l2d_bins, self.obs_conf.l2d_res)
-        obs["steering"] = steering_cmd  # note: they are already normalized in -1, +1
-        obs["speed"] = speed_cmd
+        obs = {
+            "velocity": obs["velocity"],    # ground truth velocity (unnormalized)
+            "lidar": obs["lidar"],
+            "lidar_occupancy": polar2cartesian(scan, scan_angles, self.obs_conf.l2d_bins, self.obs_conf.l2d_res),
+            "steering": steering_cmd,  # note: they are already norm in +-1
+            "speed": speed_cmd,
+            "wall_collision": 1.0 if state["wall_collision"] else 0.0,
+            "wrong_way": 1.0 if state["wrong_way"] else 0.0,
+            "progress": state["progress"]
+        }
         return obs
 
-    def _prepare_info(self, info, reward):
+    def _prepare_info(self, info, default_reward, done):
+        # extend original info with more task-specific parameters
         info["norm_speed_limit"] = self.specs_conf.norm_speed_limit
         info["norm_comf_steering"] = self.specs_conf.norm_comf_steering
-        info["default_reward"] = reward
+        info["norm_max_speed"] = 1.0
+        info["norm_max_steering"] = 1.0
+        info["progress_target"] = 1.0
+        info["default_reward"] = default_reward
         info["max_steps"] = self.max_steps
         info["frame_skip"] = self.frame_skip
+        info["done"] = done
         return info
 
     def reset(self, mode: str = 'grid'):
         self.speed_controller.reset()
         obs = super(CustomSingleAgentRaceEnv, self).reset(mode)
-        obs = self._prepare_observation(obs, steering_cmd=np.array([0.0]), speed_cmd=np.array([0.0]))
+        state = self.scenario.world.state()[self.agent_id]
+        steering, speed = np.array([0.0]), np.array([0.0])
+        obs = self._prepare_observation(state, obs, steering, speed)
         self.time_step = 0
         return obs
 
     def render(self, mode: str = 'follow', info={}, **kwargs):
-        super(CustomSingleAgentRaceEnv, self).render(mode, **kwargs)
+        return super(CustomSingleAgentRaceEnv, self).render(mode, **kwargs)
 
 
 if __name__ == "__main__":
-    from reward_shaping.training.utils import load_env_params
-
-    params = load_env_params(env="racecar", task="drive")
+    params = {'scenario_file': 'scenario.yml', 'frame_skip': 5, 'max_steps': 5000,
+              'l2d_max_range': 10.0, 'l2d_res': 0.25,
+              'min_speed': 0.0, 'max_speed': 3.0, 'min_steering': -0.4189, 'max_steering': 0.4189,
+              'wheel_base': 0.3205, 'norm_speed_limit': 0.34, 'norm_comf_steering': 0.25}
     env = CustomSingleAgentRaceEnv(**params, gui=False)
     import time
 
@@ -145,7 +166,7 @@ if __name__ == "__main__":
         done = False
         obs = env.reset(mode='grid')
 
-        action = {"speed": -0.5, "curvature": 0.0}
+        action = {"speed": np.array([-0.5]), "curvature": np.array([0.0])}
         i = 0
         t0 = time.time()
         while not done and i < 1000:

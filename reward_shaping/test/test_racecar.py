@@ -62,3 +62,9 @@ class TestTrainingLoop(TestCase):
         generic_training(env_name, task, 'morl_dec')
 
 
+class TestWithAgent(TestCase):
+    def test_progress(self):
+        from stable_baselines3 import SAC
+        agent = SAC.load("/home/luigi/Development/reward_shaping/logs/racecar/model_racecar_1000000_steps.zip")
+        generic_env_test_wt_agent(env_name, agent, task, 'default')
+

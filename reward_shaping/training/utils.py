@@ -172,5 +172,7 @@ def make_reward_wrap(env_name, env, env_params, reward, logdir=None):
     if env_name == "f1tenth":
         from reward_shaping.envs.f1tenth.core.wrappers.wrappers import FilterObservationWrapper, NormalizeObservations
         env = FilterObservationWrapper(env, ["lidar_occupancy", "speed_cmd", "steering_cmd"])
-        #env = NormalizeObservations(env, ["speed_cmd", "steering_cmd"])
+    if env_name == "racecar":
+        from reward_shaping.envs.racecar.wrappers import FilterObservationWrapper
+        env = FilterObservationWrapper(env, ['lidar_occupancy', 'steering', 'speed'])
     return env
