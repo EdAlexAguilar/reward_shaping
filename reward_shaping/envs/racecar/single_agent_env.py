@@ -19,7 +19,8 @@ class CustomSingleAgentRaceEnv(SingleAgentRaceEnv):
 
     def __init__(self, scenario_file: str, l2d_max_range: float, l2d_res: float,
                  min_speed: float, max_speed: float, min_steering: float, max_steering: float, wheel_base: float,
-                 norm_speed_limit: float, norm_comf_steering: float, max_halflane: float, comf_dist_to_wall: float,
+                 norm_speed_limit: float, norm_comf_steering: float, max_halflane: float,
+                 comf_dist_to_wall: float, tolerance_margin: float,
                  frame_skip: int, max_steps: int,
                  seed: int = None, eval: bool = False, gui: bool = False):
         # load scenario
@@ -33,7 +34,7 @@ class CustomSingleAgentRaceEnv(SingleAgentRaceEnv):
         self.action_conf = ActionConfig(min_speed=min_speed, max_speed=max_speed, min_steering=min_steering,
                                         max_steering=max_steering, wheel_base=wheel_base)
         self.specs_conf = SpecificationsConfig(norm_speed_limit=norm_speed_limit, norm_comf_steering=norm_comf_steering,
-                                               comf_dist_to_wall=comf_dist_to_wall)
+                                               comf_dist_to_wall=comf_dist_to_wall, tolerance_margin=tolerance_margin)
         self.frame_skip = frame_skip
         self.max_steps = max_steps
         self.time_step = 0
@@ -136,6 +137,7 @@ class CustomSingleAgentRaceEnv(SingleAgentRaceEnv):
         info["norm_speed_limit"] = self.specs_conf.norm_speed_limit
         info["norm_comf_steering"] = self.specs_conf.norm_comf_steering
         info["comf_dist_to_wall"] = self.specs_conf.comf_dist_to_wall
+        info["tolerance_margin"] = self.specs_conf.tolerance_margin
         info["norm_max_speed"] = 1.0
         info["norm_max_steering"] = 1.0
         info["progress_target"] = 1.0

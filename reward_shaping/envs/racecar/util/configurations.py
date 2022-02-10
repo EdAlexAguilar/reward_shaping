@@ -28,7 +28,9 @@ class ObservationConfig:
 @dataclass
 class SpecificationsConfig:
 
-    def __init__(self, norm_speed_limit: float, norm_comf_steering: float, comf_dist_to_wall: float):
+    def __init__(self, norm_speed_limit: float, norm_comf_steering: float,
+                 comf_dist_to_wall: float, tolerance_margin: float):
         self.norm_speed_limit = norm_speed_limit
         self.norm_comf_steering = norm_comf_steering
         self.comf_dist_to_wall = comf_dist_to_wall
+        self.tolerance_margin = tolerance_margin
