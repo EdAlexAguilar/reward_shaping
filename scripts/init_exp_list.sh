@@ -53,11 +53,11 @@ args=(
   ##
   ## Racecar
   ##
-  "racecar drive sac ${logdir} 1 default ${long_steps}"
-  "racecar drive sac ${logdir} 1 min_action ${long_steps}"
-  "racecar drive sac ${logdir} 1 hrs_pot ${long_steps}"
-  "racecar drive sac ${logdir} 1 tltl ${long_steps}"
-  "racecar drive sac ${logdir} 1 bhnr ${long_steps}"
-  "racecar drive sac ${logdir} 1 morl_uni ${long_steps}"
-  "racecar drive sac ${logdir} 1 morl_dec ${long_steps}"
+  "racecar drive sac ${logdir} 1 default ${short_steps}"
+  "racecar drive sac ${logdir} 1 min_action ${short_steps}"
+  "racecar drive sac ${logdir} 1 hrs_pot ${short_steps}"
+  "racecar drive sac ${logdir} 1 tltl ${short_steps}"
+  "racecar drive sac ${logdir} 1 bhnr ${short_steps}"
+  "racecar drive sac ${logdir} 1 morl_uni ${short_steps}"
+  "racecar drive sac ${logdir} 1 morl_dec ${short_steps}"
 )
