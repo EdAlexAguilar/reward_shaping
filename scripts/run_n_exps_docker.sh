@@ -11,7 +11,7 @@ steps=$8
 novideo=$9
 
 image=luigiberducci/reward_shaping:latest
-gpus=all
+gpus="--gpus all"
 
 debug_prefix="run_n_exps"
 
@@ -29,5 +29,5 @@ echo "[$debug_prefix] Running ${expname} (${n_seeds} seeds): ${env} ${task} ${al
 
 docker run --rm -it --name $expname -d \
                -u $(id -u):$(id -g) -v $(pwd):/src \
-               --gpus $gpus $image \
+               $gpus $image \
                /bin/bash entrypoint.sh $expdir $env $task $algo $reward $steps $n_seeds $novideo
