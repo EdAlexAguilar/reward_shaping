@@ -34,11 +34,10 @@ def comfort_steering_potential(state, info):
     return 1.0 - clip_and_norm(abs(state["steering"][0]), info["norm_comf_steering"], info["norm_max_steering"])
 
 
-# def comfort_lane_potential(state, info):
-#    assert "dist_to_lane" in state and "favourite_lane" in info
-#    target = -0.25   # we aim to drive at 10cm from centerline, empirically choosen (InformatikLectureHall)
-#    dist_to_target = (state["dist_to_lane"] - target)**2
-#    return 1.0 - clip_and_norm(dist_to_target, 0.0, 0.60**2)    # assume max dist to centerline is ~60cm
+def comfort_keep_right_potential(state, info):
+    assert "dist_to_wall" in state and "comf_dist_to_wall" in info and "tolerance_margin" in info
+    error_ref_dist = abs(state["dist_to_wall"][0] - info["comf_dist_to_wall"])
+    return 1.0 - clip_and_norm(error_ref_dist, info["tolerance_margin"], 1.0)  # assume max cross-track error is 1.0 m
 
 
 def simple_base_reward(state, info):
@@ -62,11 +61,11 @@ class RacecarHierarchicalPotentialShaping(RewardFunction):
     def _comfort_potential(self, state, info):
         comfort_speed = comfort_speed_potential(state, info)
         comfort_steering = comfort_steering_potential(state, info)
-        # comfort_lane = comfort_lane_potential(state, info)
+        comfort_keep_right = comfort_keep_right_potential(state, info)
         # hierarchical weights
         safety_w = safety_collision_potential(state, info) * safety_reverse_potential(state, info)
         target_w = target_potential(state, info)
-        return safety_w * target_w * (comfort_speed + comfort_steering)
+        return safety_w * target_w * (comfort_speed + comfort_steering + comfort_keep_right)
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
         # base reward
@@ -98,11 +97,12 @@ class RacecarScalarizedMultiObjectivization(RewardFunction):
         shaping_comf_speed = gamma * comfort_speed_potential(next_state, info) - comfort_speed_potential(state, info)
         shaping_comf_steer = gamma * comfort_steering_potential(next_state, info) - comfort_steering_potential(state,
                                                                                                                info)
-        # shaping_comf_lane = gamma * comfort_lane_potential(next_state, info) - comfort_lane_potential(state, info)
+        shaping_comf_right = gamma * comfort_keep_right_potential(next_state, info) - comfort_keep_right_potential(state, info)
         # linear scalarization of the multi-objectivized requirements
         reward = base_reward
         for w, f in zip(self._weights,
-                        [shaping_coll, shaping_reverse, shaping_target, shaping_comf_speed, shaping_comf_steer]):
+                        [shaping_coll, shaping_reverse, shaping_target,
+                         shaping_comf_speed, shaping_comf_steer, shaping_comf_right]):
             reward += w * f
         return reward
 

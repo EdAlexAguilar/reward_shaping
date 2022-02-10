@@ -18,15 +18,17 @@ class ActionConfig:
 @dataclass
 class ObservationConfig:
 
-    def __init__(self, l2d_max_range: float, l2d_res: float):
+    def __init__(self, l2d_max_range: float, l2d_res: float, max_halflane: float):
         self.l2d_max_range = l2d_max_range
         self.l2d_res = l2d_res
+        self.max_halflane = max_halflane
         self.l2d_bins: int = int(2 * l2d_max_range / l2d_res)
 
 
 @dataclass
 class SpecificationsConfig:
 
-    def __init__(self, norm_speed_limit: float, norm_comf_steering: float):
+    def __init__(self, norm_speed_limit: float, norm_comf_steering: float, comf_dist_to_wall: float):
         self.norm_speed_limit = norm_speed_limit
         self.norm_comf_steering = norm_comf_steering
+        self.comf_dist_to_wall = comf_dist_to_wall

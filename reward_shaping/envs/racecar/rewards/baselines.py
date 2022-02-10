@@ -27,11 +27,11 @@ class RacecarEvalConfig(EvalConfig):
     @property
     def monitoring_variables(self):
         return ['time', 'collision', 'reverse', 'progress', 'velocity', 'steering',
-                'comfortable_steering', 'speed_limit', 'lap']
+                'comfortable_steering', 'dist_to_margin', 'tolerance_margin', 'speed_limit', 'lap']
 
     @property
     def monitoring_types(self):
-        return ['int', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float']
+        return ['int', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float']
 
     def get_monitored_state(self, state, done, info) -> Dict[str, Any]:
         # compute monitoring variables (all of them normalized in 0,1)
@@ -42,8 +42,9 @@ class RacecarEvalConfig(EvalConfig):
             'progress': info['progress'],
             'velocity': state['velocity'][0],
             'steering': state['steering'],
-            # 'lane': state['lane'],
             'comfortable_steering': info['norm_comf_steering'],
+            'dist_to_margin': abs(state['dist_to_wall'] - info['comf_dist_to_wall']),
+            'tolerance_margin': info['tolerance_dist_to_wall'],
             'speed_limit': info['norm_speed_limit'],
             # 'favourite_lane': info['favourite_lane'],
             'lap': info['lap']
@@ -69,8 +70,8 @@ class RacecarEvalConfig(EvalConfig):
         comfort_metrics = []
         comfort_speed = "(velocity <= speed_limit)"
         comfort_steer = "(abs(steering) <= comfortable_steering)"
-        # comfort_lane = "(lane == favourite_lane)"
-        for comfort_spec in [comfort_speed, comfort_steer]:
+        comfort_dist_to_wall = "(dist_to_margin <= tolerance_margin)"
+        for comfort_spec in [comfort_speed, comfort_steer, comfort_dist_to_wall]:
             comfort_trace = monitor_episode(stl_spec=comfort_spec,
                                             vars=self.monitoring_variables, types=self.monitoring_types,
                                             episode=episode)
