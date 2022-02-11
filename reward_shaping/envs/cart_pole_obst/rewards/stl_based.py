@@ -9,14 +9,14 @@ def _get_cpo_default_monitoring_variables():
     return ['time',
             'x', 'x_limit', 'x_target', 'x_target_tol',
             'theta', 'theta_limit', 'theta_target', 'theta_target_tol',
-            'collision', 'dist_target_x', 'dist_target_theta']
+            'collision', 'dist_target_x', 'dist_target_theta', 'dist_pole_target', 'dist_target_tol']
 
 
 def _get_cpo_default_monitoring_types():
     return ['int',
             'float', 'float', 'float', 'float',
             'float', 'float', 'float', 'float',
-            'float', 'float', 'float']
+            'float', 'float', 'float', 'float', 'float']
 
 
 def _get_cpo_default_monitoring_procedure(state, done, info):
@@ -25,6 +25,9 @@ def _get_cpo_default_monitoring_procedure(state, done, info):
     theta_norm = state['theta'] / info['theta_limit']
     theta_target_norm = np.clip(info['theta_target'], -info['theta_limit'], info['theta_limit']) / info[
         'theta_limit']
+    pole_x, pole_y = state['x'] + info['pole_length'] * np.sin(state['theta']), info['axle_y'] + info['pole_length'] * np.cos(state['theta'])
+    goal_x, goal_y = info['x_target'], info['axle_y'] + info['pole_length']
+    dist_to_target_conf = np.linalg.norm([goal_x - pole_x, goal_y - pole_y])
     # compute monitoring variables
     monitored_state = {
         'time': info['time'],
@@ -40,6 +43,8 @@ def _get_cpo_default_monitoring_procedure(state, done, info):
         'collision': 1.0 if info['collision'] else 0.0,
         'dist_target_x': abs(x_norm - x_target_norm),
         'dist_target_theta': abs(theta_norm - theta_target_norm),
+        'dist_pole_target': dist_to_target_conf,
+        'dist_target_tol': info["dist_target_tol"],
     }
     return monitored_state
 
@@ -48,7 +53,7 @@ class CPOSTLReward(TLRewardConfig):
     _no_falldown = "always(abs(theta) <= theta_limit)"
     _no_outside = "always(abs(x) <= x_limit)"
     _no_collision = "always(collision <= 0.0)"
-    _reach_origin = "eventually(always((dist_target_x <= x_target_tol) and (abs(theta) <= theta_target_tol)))"
+    _reach_origin = "eventually(always(dist_pole_target <= dist_target_tol))"
 
     @property
     def spec(self) -> str:

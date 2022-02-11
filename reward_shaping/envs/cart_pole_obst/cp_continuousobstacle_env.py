@@ -94,7 +94,8 @@ class CartPoleContObsEnv(gym.Env):
     }
 
     def __init__(self, task, x_limit=2.5, theta_limit=90, max_steps=200, x_target=0.0, x_target_tol=0.0,
-                 theta_target=0.0, theta_target_tol=24.0, cart_min_initial_offset=1.2, cart_max_initial_offset=2.0,
+                 theta_target=0.0, theta_target_tol=24.0, dist_target_tol=0.1,
+                 cart_min_initial_offset=1.2, cart_max_initial_offset=2.0,
                  obstacle_min_w=0.5, obstacle_max_w=0.5, obstacle_min_h=0.5, obstacle_max_h=0.5, obstacle_min_dist=0.1,
                  obstacle_max_dist=0.2, feasible_height=0.97, prob_sampling_feasible=0.5, terminate_on_collision=True,
                  terminate_on_battery=False, randomize_side=True, eval=False, seed=None):
@@ -153,6 +154,7 @@ class CartPoleContObsEnv(gym.Env):
         self.x_target_tol = x_target_tol
         self.theta_target = np.deg2rad(theta_target)
         self.theta_target_tol = np.deg2rad(theta_target_tol)
+        self.dist_target_tol = dist_target_tol
 
         self.np_random = None
         self.viewer = None
@@ -241,7 +243,7 @@ class CartPoleContObsEnv(gym.Env):
         info = {'time': self.step_count, 'tau': self.tau,
                 'max_steps': self.max_episode_steps,
                 'x_limit': self.x_threshold, 'theta_limit': self.theta_threshold_radians,
-                'x_target': self.x_target, 'x_target_tol': self.x_target_tol,
+                'x_target': self.x_target, 'x_target_tol': self.x_target_tol, 'dist_target_tol': self.dist_target_tol,
                 'theta_target': self.theta_target, 'theta_target_tol': self.theta_target_tol,
                 'pole_length': self.pole_length, 'axle_y': self.axle_y,
                 'is_feasible': self.is_feasible, 'feasible_height': self.feasible_height,

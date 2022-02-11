@@ -32,11 +32,10 @@ def _build_no_collision(_):
 
 
 def _build_reach_target(env_params):
-    # normalization of robustnesss does not play a big role here because we care only about the sign (sat/unsat)
-    # to eventually increment/reset the target counter
-    dist_x = lambda state, info: info['x_target_tol'] - abs(state["x"] - env_params['x_target'])
-    dist_theta = lambda state, info: info['theta_target_tol'] - abs(state['theta'])
-    return lambda state, info: min(dist_x(state, info), dist_theta(state, info))
+    pole_x = lambda state, info: state['x'] + info['pole_length'] * np.sin(state['theta'])
+    pole_y = lambda state, info: info['axle_y'] + info['pole_length'] * np.cos(state['theta'])
+    return lambda state, info: info['dist_target_tol'] - np.linalg.norm(
+        [info['x_target'] - pole_x(state, info), (info['axle_y'] + info['pole_length']) - pole_y(state, info)])
 
 
 def _build_balance(env_params):

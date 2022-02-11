@@ -48,10 +48,10 @@ def simple_base_reward(state, info):
     sparse reward which returns +1 when the target configuration has been reached,
     otherwise 0.
     """
-    assert all([s in state for s in ["x", "theta"]])
-    assert all([i in info for i in ["x_target", "x_target_tol", "theta_target_tol"]])
-    check_goal = abs(state['x'] - info['x_target']) <= info['x_target_tol'] and \
-                 abs(state['theta']) <= info["theta_target_tol"]
+    pole_x = state["x"] + info['pole_length'] * np.sin(state["theta"])
+    pole_y = info['axle_y'] + info['pole_length'] * np.cos(state["theta"])
+    goal_x, goal_y = info['x_target'], info['axle_y'] + info['pole_length']
+    check_goal = np.linalg.norm([goal_x - pole_x, goal_y - pole_y]) <= info["dist_target_tol"]
     return 1.0 if check_goal else 0.0
 
 

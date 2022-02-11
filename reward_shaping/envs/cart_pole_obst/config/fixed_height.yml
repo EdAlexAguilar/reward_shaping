@@ -11,6 +11,7 @@ x_target: 0.0   # target area defined as x_target+-x_target_tol
 x_target_tol: 0.25
 theta_target: 0.0 # target angle defined as theta_target+-theta_target_tol
 theta_target_tol: 24
+dist_target_tol: 0.25   # this is a threshold used to define the dist between the pole and the goal conf (x=0,theta=0)
 # initial conditions
 cart_min_initial_offset: 1.2
 cart_max_initial_offset: 2.0
