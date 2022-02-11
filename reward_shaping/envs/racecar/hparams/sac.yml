@@ -1,4 +1,4 @@
-learning_rate: 0.0003
+learning_rate: 0.0001
 buffer_size: 1000000
 learning_starts: 100
 batch_size: 256
@@ -10,10 +10,10 @@ optimize_memory_usage: False
 ent_coef: 'auto'
 target_update_interval: 1
 target_entropy: 'auto'
-use_sde: False
+use_sde: True
 sde_sample_freq: -1
 use_sde_at_warmup: False
 policy_kwargs:
   net_arch:
-    qf: [256, 256]
-    pi: [256, 256]
+    qf: [64, 64]
+    pi: [64, 64]
