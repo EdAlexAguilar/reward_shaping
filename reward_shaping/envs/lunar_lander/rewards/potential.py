@@ -34,7 +34,7 @@ def comfort_angvel_potential(state, info):
 
 def simple_base_reward(state, info):
     dist_x = info["halfwidth_landing_area"] - abs(state["x"])
-    dist_y = 0.0001 - abs(state["y"])
+    dist_y = info["landing_height"] - abs(state["y"])
     return 1.0 if min(dist_x, dist_y) >= 0 else 0.0
 
 

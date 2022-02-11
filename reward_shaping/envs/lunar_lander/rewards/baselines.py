@@ -13,22 +13,22 @@ class LLEvalConfig(EvalConfig):
 
     @property
     def monitoring_variables(self):
-        return ['time', 'x', 'x_limit',
+        return ['time', 'x', 'y', 'x_limit',
                 'angle', 'angle_speed', 'angle_limit', 'angle_speed_limit',
-                'fuel', 'collision', 'dist_target', 'halfwidth_landing_area']
+                'fuel', 'collision', 'halfwidth_landing_area', 'landing_height']
 
     @property
     def monitoring_types(self):
-        return ['int', 'float', 'float',
+        return ['int', 'float', 'float', 'float',
                 'float', 'float', 'float', 'float',
                 'float', 'float', 'float', 'float']
 
     def get_monitored_state(self, state, done, info) -> Dict[str, Any]:
-        target_dist = np.linalg.norm([state["x"], state["y"]])
         # compute monitoring variables
         monitored_state = {
             'time': info['time'],
             'x': state['x'],  # already normalized in +-1
+            'y': state['y'],
             'x_limit': info['x_limit'],
             'angle': state['angle'],  # already normalized in +-1
             'angle_speed': state['angle_speed'],  # already normalized in +-1
@@ -36,8 +36,8 @@ class LLEvalConfig(EvalConfig):
             'angle_speed_limit': info['angle_speed_limit'],
             'fuel': info['fuel'],  # in [0,1]
             'collision': 1.0 if info['collision'] > 0 else -1.0,
-            'dist_target': target_dist,
-            'halfwidth_landing_area': info['halfwidth_landing_area']
+            'halfwidth_landing_area': info['halfwidth_landing_area'],
+            'landing_height': info['landing_height']
         }
         self._max_episode_len = info["max_steps"]
         return monitored_state
@@ -51,7 +51,7 @@ class LLEvalConfig(EvalConfig):
         safety_rho = monitor_episode(stl_spec=safety_spec, vars=self.monitoring_variables,
                                      types=self.monitoring_types, episode=episode)[0][1]
         #
-        target_spec = "eventually(always(dist_target <= halfwidth_landing_area))"
+        target_spec = "eventually(always((abs(x) <= halfwidth_landing_area) and (abs(y) <= landing_height)))"
         target_rho = monitor_episode(stl_spec=target_spec, vars=self.monitoring_variables,
                                      types=self.monitoring_types, episode=episode)[0][1]
         #

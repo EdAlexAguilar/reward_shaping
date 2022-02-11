@@ -53,6 +53,8 @@ def load_eval_params(env, task):
     params = {'eval': True}
     if env == "bipedal_walker":
         params["max_steps"] = 1600
+    if env == "lunar_lander":
+        params["terminate_if_notawake"] = False
     return params
 
 

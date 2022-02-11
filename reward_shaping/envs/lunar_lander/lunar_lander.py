@@ -85,8 +85,8 @@ class LunarLander(gym.Env, EzPickle):
     continuous = False
 
     def __init__(self, task='land', FPS=50, initial_x_offset=2.0, fuel_usage=0.005,
-                 x_target=0.0, y_target=0.0, halfwidth_landing_area=1.0,
-                 angle_limit=1, angle_speed_limit=0.5, max_steps=300,
+                 x_target=0.0, y_target=0.0, halfwidth_landing_area=1.0, landing_height=0.01,
+                 angle_limit=1, angle_speed_limit=0.5, max_steps=300, terminate_if_notawake=True,
                  obstacle_lowleft_x=10.0, obstacle_lowleft_y=7.0, obstacle_width=2.0, obstacle_height=0.5,
                  eval=False, seed=0):
         EzPickle.__init__(self)
@@ -95,8 +95,10 @@ class LunarLander(gym.Env, EzPickle):
         self.initial_x_offset = initial_x_offset
         self.x_target, self.y_target = x_target, y_target
         self.halfwidth_landing_area = halfwidth_landing_area
+        self.landing_height = landing_height
         self.discrete_fuel_usage = fuel_usage
         self.max_episode_steps = max_steps
+        self.terminate_if_notawake = terminate_if_notawake
 
         self.seed(seed)
         self.viewer = None
@@ -406,7 +408,7 @@ class LunarLander(gym.Env, EzPickle):
         if self.game_over or abs(state["x"]) >= 1.0 or self.fuel <= 0:
             done = True
             reward = -100
-        if not self.lander.awake:
+        if self.terminate_if_notawake and not self.lander.awake:
             done = True
             reward = +100
 
@@ -425,6 +427,7 @@ class LunarLander(gym.Env, EzPickle):
                 "fuel": self.fuel,
                 "half_width": VIEWPORT_W / SCALE / 2,
                 "halfwidth_landing_area": self.halfwidth_landing_area,
+                "landing_height": self.landing_height,
                 "collision": self.game_over,
                 "default_reward": reward,
                 "done": done}
