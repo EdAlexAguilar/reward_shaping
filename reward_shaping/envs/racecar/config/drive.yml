@@ -1,7 +1,7 @@
 scenario_files:
   - treitlstrasse_v3.yml
 frame_skip: 5
-max_steps: 2000
+max_steps: 3000
 #
 l2d_max_range: 10.0
 l2d_res: 0.25
