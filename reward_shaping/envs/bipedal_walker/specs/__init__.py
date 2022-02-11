@@ -18,7 +18,7 @@ def register_spec(name, operator, build_predicate):
 
 def _build_no_collision(env_params):
     assert 'dist_hull_limit' in env_params
-    return lambda state, info: -1.0 if state['collision'] > 0 else min(state['lidar']) - env_params['dist_hull_limit']
+    return lambda state, info: -1.0 if state['collision'] > 0 else +1
 
 def _build_achieve_goal(env_params):
     return lambda state, info: info["position_x"] - info["target_x"]
