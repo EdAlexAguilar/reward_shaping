@@ -25,7 +25,7 @@ def _build_no_reverse(_):
 
 
 def _build_complete_lap(_):
-    return lambda state, info: 1.0 - state['progress']
+    return lambda state, info: state['progress'] - 1.0
 
 
 def _build_speed_limit(_):
