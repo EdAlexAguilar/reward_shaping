@@ -7,7 +7,7 @@ from gym.wrappers import FlattenObservation
 from stable_baselines3.common.env_checker import check_env
 
 from reward_shaping.core.wrappers import RewardWrapper
-from reward_shaping.envs.racecar.wrappers.wrappers import FixSpeedControl
+from reward_shaping.envs.racecar.wrappers.wrappers import FixSpeedControl, FrameStackOnChannel
 from reward_shaping.monitor.task import RLTask
 
 
@@ -183,4 +183,5 @@ def make_reward_wrap(env_name, env, env_params, reward, logdir=None):
     if env_name == "racecar":
         from reward_shaping.envs.racecar.wrappers import FilterObservationWrapper
         env = FilterObservationWrapper(env, ['lidar_occupancy', 'steering', 'speed', 'dist_to_wall'])
+        env = FrameStackOnChannel(env, num_stack=3)
     return env

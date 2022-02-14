@@ -11,4 +11,4 @@ git+https://github.com/nickovic/rtamt.git
 networkx
 tensorboard
 yamldataclassconfig
--e git+https://github.com/axelbr/racecar_gym.git#egg=racecar_gym
+-e git+https://github.com/luigiberducci/racecar_gym.git#egg=racecar_gym

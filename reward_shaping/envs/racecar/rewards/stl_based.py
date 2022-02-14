@@ -35,6 +35,6 @@ class RacecarSTLReward(TLRewardConfig):
         monitored_state = {
             'time': info['time'],
             'collision': 1 if info['wall_collision'] else -1,
-            'progress': info['lap'] + info['progress']
+            'progress': info['progress']
         }
         return monitored_state

@@ -45,10 +45,6 @@ class CustomSingleAgentRaceEnv(SingleAgentRaceEnv):
         #
         self.observation_space = self._define_new_observation_space()
         self.action_space = self._define_new_action_space()
-        # define aux controllers
-        # PD tuned following Zigler-Nichols method: Ku=0.80, Tu=0.40 -> Kp=0.8*Ku, Kd=0.1*Ku*Tu
-        self.speed_controller = PDController(kp=0.64, kd=0.032)
-        self.steering_controller = SteeringController()
         # seeding
         seed = np.random.randint(0, 1000000) if seed is None else seed
         self.seed(seed)
@@ -76,16 +72,31 @@ class CustomSingleAgentRaceEnv(SingleAgentRaceEnv):
 
     def _define_new_action_space(self):
         """ change the original action space to control curvature, speed """
+        assert 'speed' in self.action_space.spaces, "speed is not in the racecar action space"
+        assert 'steering' in self.action_space.spaces, "steering is not in the racecar action space"
+        # check validity ranges
+        if "speed" in self._scenario.agent._vehicle.actuators:
+            actuator_max_vel = self._scenario.agent._vehicle.actuators["speed"]._config.max_velocity
+            assert self.action_conf.min_speed >= 0.0, "min speed must be >= 0"
+            assert self.action_conf.max_speed <= actuator_max_vel, f"max speed must be <= {actuator_max_vel}"
+            assert self.action_conf.min_speed < self.action_conf.max_speed, "min speed must be < max speed"
+        if "steering" in self._scenario.agent._vehicle.actuators:
+            mins, maxs = - self._scenario.agent._vehicle.actuators["steering"]._config.max_steering_angle, \
+                         + self._scenario.agent._vehicle.actuators["steering"]._config.max_steering_angle,
+            assert self.action_conf.min_steering >= mins, f"min steering must be >= {mins}"
+            assert self.action_conf.max_steering <= maxs, f"max steering must be >= {maxs}"
+            assert self.action_conf.min_steering < self.action_conf.max_steering, "invalid min/max steering"
+        # define new action space
         self.original_action_space = self.action_space
         if self.action_conf.control_curvature:
             action_dict = {
-                "curvature": gym.spaces.Box(low=-1.0, high=+1.0, shape=(1,)),
-                "speed": gym.spaces.Box(low=-1.0, high=+1.0, shape=(1,))
+                "curvature": gym.spaces.Box(low=-1.0, high=+1.0, shape=(1,), dtype=np.float32),
+                "speed": gym.spaces.Box(low=-1.0, high=+1.0, shape=(1,), dtype=np.float32)
             }
         else:
             action_dict = {
-                "steering": gym.spaces.Box(low=-1.0, high=+1.0, shape=(1,)),
-                "speed": gym.spaces.Box(low=-1.0, high=+1.0, shape=(1,))
+                "steering": gym.spaces.Box(low=-1.0, high=+1.0, shape=(1,), dtype=np.float32),
+                "speed": gym.spaces.Box(low=-1.0, high=+1.0, shape=(1,), dtype=np.float32)
             }
         return gym.spaces.Dict(action_dict)
 
@@ -100,7 +111,7 @@ class CustomSingleAgentRaceEnv(SingleAgentRaceEnv):
             reward += r
             if done: break
         # extend observation and infos
-        steering, speed = original_action["steering"], action["speed"]
+        steering, speed = original_action["steering"], original_action["speed"]
         state = self.scenario.world.state()[self.agent_id]
         obs = self._prepare_observation(state, obs, steering, speed)
         info = self._prepare_info(info, reward, done)
@@ -108,28 +119,28 @@ class CustomSingleAgentRaceEnv(SingleAgentRaceEnv):
 
     def _convert_to_original_action(self, action):
         """ convert action in original action space by using aux controllers """
-        act_conf = self.action_conf
-        target_speed = act_conf.min_speed + (act_conf.max_speed - act_conf.min_speed) * (action["speed"] + 1) / 2.0
-        if act_conf.control_curvature:
-            target_curvature = act_conf.min_curv + (act_conf.max_curv - act_conf.min_curv) * (action["curvature"] + 1) / 2.0
-            target_steering = self._control_curvature(target_curvature)
+        # reconstruct speed and steering angle in original ranges
+        if self.action_conf.control_curvature:
+            curvature = self.action_conf.min_curv + (action["curvature"] + 1.0) / 2.0 * (
+                    self.action_conf.max_curv - self.action_conf.min_curv)
+            steering = np.arctan(self.action_conf.wheel_base * curvature)  # compute steering from curvature
+            speed = self.action_conf.min_speed + (action["speed"] + 1.0) / 2.0 * (
+                    self.action_conf.max_speed - self.action_conf.min_speed)
         else:
-            target_steering = action["steering"]
+            steering = self.action_conf.min_steering + (action["steering"] + 1.0) / 2.0 * (
+                    self.action_conf.max_steering - self.action_conf.min_steering)
+            speed = self.action_conf.min_speed + (action["speed"] + 1.0) / 2.0 * (
+                    self.action_conf.max_speed - self.action_conf.min_speed)
+        # normalize the commands to -1..+1 w.r.t. the original range
+        minsteer, maxsteer = - self._scenario.agent._vehicle.actuators["steering"]._config.max_steering_angle, \
+                             + self._scenario.agent._vehicle.actuators["steering"]._config.max_steering_angle
+        minspeed, maxspeed = 0.0, self._scenario.agent._vehicle.actuators["speed"]._config.max_velocity
+        # define new action
         original_action = {
-            "steering": target_steering,
-            "motor": self._control_speed(target_speed)
+            "steering": -1 + 2 * (steering - minsteer) / (maxsteer - minsteer),
+            "speed": -1 + 2 * (speed - minspeed) / (maxspeed - minspeed)
         }
         return original_action
-
-    def _control_speed(self, target_speed):
-        """ this is a simple PID controller to compute the motor force to reach the target speed """
-        current_speed = self.scenario.world.state()[self.agent_id]["velocity"][0]
-        current_time = self.scenario.world.state()[self.agent_id]["time"]
-        motor_force = self.speed_controller.control(target_speed, current_speed, current_time)
-        return motor_force
-
-    def _control_curvature(self, target_curvature):
-        return self.steering_controller.control(self.action_conf.wheel_base, target_curvature)
 
     def _prepare_observation(self, state: Dict, obs: Dict, steering_cmd: np.ndarray, speed_cmd: np.ndarray):
         assert "lidar" in obs
@@ -143,7 +154,7 @@ class CustomSingleAgentRaceEnv(SingleAgentRaceEnv):
             "dist_to_wall": np.array([dist_to_wall(scan, self.obs_conf.max_halflane)]),
             "wall_collision": np.array(1.0 if state["wall_collision"] else 0.0),
             "wrong_way": np.array(1.0 if state["wrong_way"] else 0.0),
-            "progress": np.array(state["progress"])
+            "progress": np.array((state["lap"] - 1) + state["progress"])
         }
         return obs
 
@@ -163,10 +174,9 @@ class CustomSingleAgentRaceEnv(SingleAgentRaceEnv):
         return info
 
     def reset(self, mode: str = 'grid'):
-        self.speed_controller.reset()
         obs = super(CustomSingleAgentRaceEnv, self).reset(mode)
         state = self.scenario.world.state()[self.agent_id]
-        steering, speed = np.array([0.0]), np.array([0.0])
+        steering, speed = np.array([0.0], dtype=np.float32), np.array([0.0], dtype=np.float32)
         obs = self._prepare_observation(state, obs, steering, speed)
         self.time_step = 0
         return obs

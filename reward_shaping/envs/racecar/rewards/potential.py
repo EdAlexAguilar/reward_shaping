@@ -61,11 +61,12 @@ class RacecarHierarchicalPotentialShaping(RewardFunction):
     def _comfort_potential(self, state, info):
         comfort_speed = comfort_speed_potential(state, info)
         comfort_steering = comfort_steering_potential(state, info)
-        comfort_keep_right = comfort_keep_right_potential(state, info)
+        #comfort_keep_right = comfort_keep_right_potential(state, info)
         # hierarchical weights
         safety_w = safety_collision_potential(state, info) * safety_reverse_potential(state, info)
         target_w = target_potential(state, info)
-        return safety_w * target_w * (comfort_speed + comfort_steering + comfort_keep_right)
+        #return safety_w * target_w * (comfort_speed + comfort_steering + comfort_keep_right)
+        return safety_w * target_w * (comfort_speed + comfort_steering)
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
         # base reward

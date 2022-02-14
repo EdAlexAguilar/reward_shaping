@@ -46,7 +46,7 @@ class TestRacecar(TestCase):
 
 class TestTrainingLoop(TestCase):
 
-    def test_train_sparse(self):
+    def test_train_default(self):
         generic_training(env_name, task, 'default')
 
     def test_train_tltl(self):

@@ -7,7 +7,7 @@ l2d_max_range: 10.0
 l2d_res: 0.25
 max_halflane: 1.5     # max half-width of the track in meters, it is used for clipping the estimated dist_to_wall
 #
-min_speed: 0.0
+min_speed: 0.5
 max_speed: 3.0
 min_steering: -0.4189
 max_steering: +0.4189
