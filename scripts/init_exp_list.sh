@@ -53,10 +53,10 @@ args=(
   ##
   ## Racecar
   ##
-  "racecar drive ppo ${logdir} 1 default ${short_steps}"
-  "racecar drive ppo ${logdir} 1 min_action ${short_steps}"
-  "racecar drive ppo ${logdir} 1 hrs_pot ${short_steps}"
-  "racecar drive sac ${logdir} 1 default ${short_steps}"
-  "racecar drive sac ${logdir} 1 min_action ${short_steps}"
-  "racecar drive sac ${logdir} 1 hrs_pot ${short_steps}"
+  "racecar drive ppo ${logdir} 1 default 500000"
+  "racecar drive ppo ${logdir} 1 min_action 500000"
+  "racecar drive ppo ${logdir} 1 hrs_pot 500000"
+  "racecar drive sac ${logdir} 1 default 500000"
+  "racecar drive sac ${logdir} 1 min_action 500000"
+  "racecar drive sac ${logdir} 1 hrs_pot 500000"
 )
