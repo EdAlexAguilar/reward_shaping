@@ -2,13 +2,17 @@ import argparse
 import pathlib
 import time
 import warnings
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Callable, Tuple
 
+import matplotlib.axes
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
 from plotting.custom_evaluations import get_custom_evaluation
+
+
+FIGSIZE = (15, 4)
 
 COLORS = {
     'default': '#377eb8',
@@ -19,7 +23,7 @@ COLORS = {
     'hrs_pot': '#e41a1c'
 }
 
-LABELS = {
+REWARD_LABELS = {
     'default': 'Default',
     'tltl': 'TLTL',
     'bhnr': 'BHNR',
@@ -28,7 +32,7 @@ LABELS = {
     'hrs_pot': 'Hier. Shaping'
 }
 
-ENV_TITLES = {
+ENV_LABELS = {
     "cart_pole_obst_fixed_height": "Cartpole+Obstacle",
     "bipedal_walker_forward": "Bipedal Walker",
     "bipedal_walker_hardcore": "Bipedal Walker (Hardcore)",
@@ -65,13 +69,18 @@ def parse_reward(filepath: str):
     raise ValueError(f"reward not found in {filepath}")
 
 
-def get_evaluations(logdir: pathlib.Path, regex: str) -> List[Dict[str, np.ndarray]]:
+def get_evaluations(logdir: pathlib.Path, regex: str, gby: Callable) -> Dict[str, List[Dict[str, Any]]]:
     """ look for evaluations.npz in the subdirectories and return is content """
-    evaluations = []
+    evaluations = {}
     for eval_file in get_files(logdir, regex):
         data = dict(np.load(eval_file))
         data["filepath"] = str(eval_file)
-        evaluations.append(data)
+        # group-by
+        group = gby(str(eval_file))
+        if group in evaluations:
+            evaluations[group].append(data)
+        else:
+            evaluations[group] = [data]
     if len(evaluations) == 0:
         warnings.warn(f"cannot find any file for `{logdir}/{regex}/evaluations.npz`", UserWarning)
     return evaluations
@@ -99,10 +108,11 @@ def aggregate_evaluations(evaluations: List[Dict[str, np.ndarray]], params: Dict
             'std': aggregated['std'].values}
 
 
-def plot_data(data: Dict[str, np.ndarray], ax: plt.Axes, color=None, label=None, **kwargs):
+def plot_data(data: Dict[str, np.ndarray], ax: plt.Axes, title="", color=None, label=None, **kwargs):
     assert all([key in data for key in ['x', 'mean', 'std']]), f'x, mean, std not found in data (keys: {data.keys()})'
     ax.plot(data['x'], data['mean'], color=color, label=label, **kwargs)
     ax.fill_between(data['x'], data['mean'] - data['std'], data['mean'] + data['std'], alpha=0.25, color=color)
+    ax.set_title(title)
 
 
 def plot_file_info(args):
@@ -125,17 +135,31 @@ def extend_with_custom_evaluation(evaluations, y):
     return evaluations
 
 
-def plot_secondaries(title, xlabel, ylabel, hlines, minx, maxx):
+def make_gby_extractor(gby: str) -> Tuple[Callable, Dict[str, str]]:
+    if gby is None:
+        fn = lambda filepath: "all"
+        titles = ["all"]
+    elif gby == "env":
+        fn = lambda filepath: '_'.join(parse_env_task(filepath))
+        titles = ENV_LABELS
+    elif gby == "reward":
+        fn = lambda filepath: parse_reward(filepath)
+        titles = REWARD_LABELS
+    else:
+        raise NotImplementedError(f"gby function not found {gby}")
+    return fn, titles
+
+
+def plot_secondaries(ax, xlabel, ylabel, hlines, minx, maxx):
     # draw horizonal lines
     for value in hlines:
-        plt.hlines(value, minx, maxx,
-                   color='k', alpha=1.0,
-                   linestyles='dashed', label=HLINES[value])
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-    plt.xlim(minx, maxx)
-    plt.ylim(0.0, 2.0)
-    plt.title(title)
+        ax.hlines(value, minx, maxx,
+                  color='k', alpha=1.0,
+                  linestyles='dashed', label=HLINES[value])
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_xlim(minx, maxx)
+    ax.set_ylim(0.0, 2.0)
 
 
 def main(args):
@@ -144,29 +168,40 @@ def main(args):
         plot_file_info(args)
         exit(0)
     # prepare plot
-    fig, ax = plt.subplots(nrows=1, ncols=1)
+    gby_fn, titles = make_gby_extractor(args.gby)
+    fig, axes = plt.subplots(nrows=1, ncols=len(titles), figsize=FIGSIZE)
+    axes = [axes] if isinstance(axes, plt.Axes) else axes  # when 1 col then not list returned
     xlabel, ylabel = args.x.capitalize(), args.y.capitalize()
-    minx, maxx = np.Inf, -np.Inf
+    minxs, maxxs = [np.Inf] * len(axes), [-np.Inf] * len(axes)
     # plot data
     for regex in args.regex:
-        evaluations = get_evaluations(args.logdir, regex)
-        if not evaluations:
+        evaluations_grouped = get_evaluations(args.logdir, regex, gby=gby_fn)
+        if not evaluations_grouped:
             continue
-        if any([args.y not in evaluation.keys() for evaluation in evaluations]):
-            evaluations = extend_with_custom_evaluation(evaluations, args.y)
-        data = aggregate_evaluations(evaluations, params={'x': args.x, 'y': args.y, 'binning': args.binning})
-        # assume all evaluations have same env and reward
-        reward = parse_reward(evaluations[0]["filepath"])
-        env_name, task_name = parse_env_task(evaluations[0]["filepath"])
-        title = ENV_TITLES[env_name + "_" + task_name]
-        color, label = COLORS[reward], LABELS[reward]
-        plot_data(data, ax, label=label, color=color)
-        # update min/max x
-        minx = min(minx, min(data["x"]))
-        maxx = max(maxx, max(data["x"]))
-    plot_secondaries(title, xlabel, ylabel, args.hlines, minx, maxx)
+        for i, (gby, evaluations) in enumerate(evaluations_grouped.items()):
+            if any([args.y not in evaluation.keys() for evaluation in evaluations]):
+                evaluations = extend_with_custom_evaluation(evaluations, args.y)
+            data = aggregate_evaluations(evaluations, params={'x': args.x, 'y': args.y, 'binning': args.binning})
+            # assume all evaluations have same env and reward
+            reward = parse_reward(evaluations[0]["filepath"])
+            title = titles[gby]
+            i = list(titles.keys()).index(gby)
+            ax = axes[i]
+            color, label = COLORS[reward], REWARD_LABELS[reward]
+            plot_data(data, ax, title=title, label=label, color=color)
+            # update min/max x
+            minxs[i] = min(minxs[i], min(data["x"]))
+            maxxs[i] = max(maxxs[i], max(data["x"]))
+    # add secodnary stuff
+    for i, ax in enumerate(axes):
+        if i == 0:
+            plot_secondaries(ax, xlabel="", ylabel=ylabel, hlines=args.hlines, minx=minxs[i], maxx=maxxs[i])
+        else:
+            plot_secondaries(ax, xlabel="", ylabel="", hlines=args.hlines, minx=minxs[i], maxx=maxxs[i])
     if args.legend:
-        plt.legend()
+        handles, labels = axes[0].get_legend_handles_labels()
+        fig.legend(handles, labels, loc="lower center", ncol=len(handles), framealpha=1.0)
+        fig.tight_layout()
     # save
     if args.save:
         plot_dir = args.logdir / "plots"
@@ -183,6 +218,7 @@ if __name__ == "__main__":
     parser.add_argument("--regex", type=str, default="**", nargs="+",
                         help="for each regex, group data for `{logdir}/{regex}/evaluations*.npz`")
     parser.add_argument("--binning", type=int, default=15000)
+    parser.add_argument("--gby", choices=["env", "reward"], default=None)
     parser.add_argument("--x", type=str, default="timesteps")
     parser.add_argument("--y", type=str, default="results")
     parser.add_argument("--hlines", type=float, nargs='*', default=[], help="horizontal lines in plot, eg. y=0")

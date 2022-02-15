@@ -181,6 +181,6 @@ def make_reward_wrap(env_name, env, env_params, reward, logdir=None):
         env = FilterObservationWrapper(env, ["lidar_occupancy", "speed_cmd", "steering_cmd"])
     if env_name == "racecar":
         from reward_shaping.envs.racecar.wrappers import FilterObservationWrapper
-        env = FilterObservationWrapper(env, ['lidar_occupancy', 'steering', 'speed'])
-        env = FrameStackOnChannel(env, num_stack=3)
+        env = FilterObservationWrapper(env, ['lidar_occupancy', 'steering', 'speed', 'dist_to_wall'])
+        env = FrameStackOnChannel(env, num_stack=5)
     return env
