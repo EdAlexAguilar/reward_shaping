@@ -1,9 +1,9 @@
 gamma: 0.99
 learning_rate: 0.0003
-buffer_size: 50000
+buffer_size: 1000000
 learning_starts: 100
 train_freq: 1
-batch_size: 64
+batch_size: 256
 tau: 0.005
 ent_coef: 'auto'
 target_update_interval: 1

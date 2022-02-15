@@ -52,7 +52,7 @@ def load_eval_params(env, task):
     """ this can be use to pass additional parameters to constraint the evaluation episodes."""
     params = {'eval': True}
     if env == "bipedal_walker":
-        params["max_steps"] = 1600
+        params["max_steps"] = 1000
     if env == "lunar_lander":
         params["terminate_if_notawake"] = False
     return params
