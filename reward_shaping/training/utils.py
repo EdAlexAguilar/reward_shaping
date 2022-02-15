@@ -96,7 +96,6 @@ def make_base_env(env, env_params={}):
         env = ChangingTrackSingleAgentRaceEnv(**env_params)
         specs = [(k, op, build_pred(env_params)) for k, (op, build_pred) in get_all_specs().items()]
         env = RLTask(env=env, requirements=specs)
-        env = FixSpeedControl(env, fixed_speed=0.0)  # 0 in the normalized scale is half of max speed
         env = FlattenAction(env)
     else:
         raise NotImplementedError(f"not implemented env for {env}")
@@ -182,6 +181,6 @@ def make_reward_wrap(env_name, env, env_params, reward, logdir=None):
         env = FilterObservationWrapper(env, ["lidar_occupancy", "speed_cmd", "steering_cmd"])
     if env_name == "racecar":
         from reward_shaping.envs.racecar.wrappers import FilterObservationWrapper
-        env = FilterObservationWrapper(env, ['lidar_occupancy', 'steering', 'speed', 'dist_to_wall'])
+        env = FilterObservationWrapper(env, ['lidar_occupancy', 'steering', 'speed'])
         env = FrameStackOnChannel(env, num_stack=3)
     return env
