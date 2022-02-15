@@ -39,7 +39,7 @@ class RacecarEvalConfig(EvalConfig):
             'time': info['time'],
             'collision': 1.0 if info['wall_collision'] else -1.0,
             'reverse': 1.0 if info['wrong_way'] else -1.0,
-            'progress': info['progress'],
+            'progress': state['progress'],
             'velocity': state['velocity'][0],
             'steering': state['steering'],
             'comfortable_steering': info['norm_comf_steering'],
@@ -61,7 +61,7 @@ class RacecarEvalConfig(EvalConfig):
                                      vars=self.monitoring_variables, types=self.monitoring_types,
                                      episode=episode)[0][1]
         #
-        target_spec = "eventually(lap > 1.0)"
+        target_spec = "eventually(progress > 1.0)"
         target_rho = monitor_episode(stl_spec=target_spec,
                                      vars=self.monitoring_variables, types=self.monitoring_types,
                                      episode=episode)[0][1]

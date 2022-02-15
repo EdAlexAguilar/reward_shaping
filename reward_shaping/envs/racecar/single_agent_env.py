@@ -42,6 +42,7 @@ class CustomSingleAgentRaceEnv(SingleAgentRaceEnv):
         self.frame_skip = frame_skip
         self.max_steps = max_steps
         self.time_step = 0
+        self.progress_t0 = 0.0
         #
         self.observation_space = self._define_new_observation_space()
         self.action_space = self._define_new_action_space()
@@ -154,7 +155,7 @@ class CustomSingleAgentRaceEnv(SingleAgentRaceEnv):
             "dist_to_wall": np.array([dist_to_wall(scan, self.obs_conf.max_halflane)]),
             "wall_collision": np.array(1.0 if state["wall_collision"] else 0.0),
             "wrong_way": np.array(1.0 if state["wrong_way"] else 0.0),
-            "progress": np.array((state["lap"] - 1) + state["progress"])
+            "progress": np.array(((state["lap"] - 1) + state["progress"]) - self.progress_t0)
         }
         return obs
 
@@ -177,6 +178,7 @@ class CustomSingleAgentRaceEnv(SingleAgentRaceEnv):
         obs = super(CustomSingleAgentRaceEnv, self).reset(mode)
         state = self.scenario.world.state()[self.agent_id]
         steering, speed = np.array([0.0], dtype=np.float32), np.array([0.0], dtype=np.float32)
+        self.progress_t0 = state["progress"]
         obs = self._prepare_observation(state, obs, steering, speed)
         self.time_step = 0
         return obs
