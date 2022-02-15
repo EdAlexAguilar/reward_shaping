@@ -10,6 +10,34 @@ import pandas as pd
 
 from plotting.custom_evaluations import get_custom_evaluation
 
+COLORS = {
+    'default': '#377eb8',
+    'tltl': '#4daf4a',
+    'bhnr': '#984ea3',
+    'morl_uni': '#a65628',
+    'morl_dec': '#ff7f00',
+    'hrs_pot': '#e41a1c'
+}
+
+LABELS = {
+    'default': 'Default',
+    'tltl': 'TLTL',
+    'bhnr': 'BHNR',
+    'morl_uni': 'MORL (unif.)',
+    'morl_dec': 'MORL (decr.)',
+    'hrs_pot': 'Hier. Shaping'
+}
+
+ENV_TITLES = {
+    "cart_pole_obst_fixed_height": "Cartpole+Obstacle",
+    "bipedal_walker_forward": "Bipedal Walker",
+    "bipedal_walker_hardcore": "Bipedal Walker (Hardcore)",
+    "lunar_lander_land": "Lunar Lander",
+}
+HLINES = {
+    1.5: "Safety+Target"
+}
+
 
 def get_files(logdir, regex):
     return logdir.glob(f"{regex}/evaluations*.npz")
@@ -28,6 +56,13 @@ def parse_env_task(filepath: str):
     if not env or not task:
         raise ValueError(f"not able to parse env/task in {filepath}")
     return env, task
+
+
+def parse_reward(filepath: str):
+    for reward in ["default", "tltl", "bhnr", "morl_uni", "morl_dec", "hrs_pot"]:
+        if reward in filepath:
+            return reward
+    raise ValueError(f"reward not found in {filepath}")
 
 
 def get_evaluations(logdir: pathlib.Path, regex: str) -> List[Dict[str, np.ndarray]]:
@@ -64,11 +99,10 @@ def aggregate_evaluations(evaluations: List[Dict[str, np.ndarray]], params: Dict
             'std': aggregated['std'].values}
 
 
-def plot_data(data: Dict[str, np.ndarray], ax: plt.Axes, **kwargs):
+def plot_data(data: Dict[str, np.ndarray], ax: plt.Axes, color=None, label=None, **kwargs):
     assert all([key in data for key in ['x', 'mean', 'std']]), f'x, mean, std not found in data (keys: {data.keys()})'
-    ax.plot(data['x'], data['mean'], **kwargs)
-    ax.fill_between(data['x'], data['mean'] - data['std'], data['mean'] + data['std'], alpha=0.5)
-    ax.set_ylim(0.0, 2.0)
+    ax.plot(data['x'], data['mean'], color=color, label=label, **kwargs)
+    ax.fill_between(data['x'], data['mean'] - data['std'], data['mean'] + data['std'], alpha=0.25, color=color)
 
 
 def plot_file_info(args):
@@ -91,6 +125,19 @@ def extend_with_custom_evaluation(evaluations, y):
     return evaluations
 
 
+def plot_secondaries(title, xlabel, ylabel, hlines, minx, maxx):
+    # draw horizonal lines
+    for value in hlines:
+        plt.hlines(value, minx, maxx,
+                   color='k', alpha=1.0,
+                   linestyles='dashed', label=HLINES[value])
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.xlim(minx, maxx)
+    plt.ylim(0.0, 2.0)
+    plt.title(title)
+
+
 def main(args):
     # only print info on files
     if args.info:
@@ -98,6 +145,8 @@ def main(args):
         exit(0)
     # prepare plot
     fig, ax = plt.subplots(nrows=1, ncols=1)
+    xlabel, ylabel = args.x.capitalize(), args.y.capitalize()
+    minx, maxx = np.Inf, -np.Inf
     # plot data
     for regex in args.regex:
         evaluations = get_evaluations(args.logdir, regex)
@@ -106,8 +155,19 @@ def main(args):
         if any([args.y not in evaluation.keys() for evaluation in evaluations]):
             evaluations = extend_with_custom_evaluation(evaluations, args.y)
         data = aggregate_evaluations(evaluations, params={'x': args.x, 'y': args.y, 'binning': args.binning})
-        plot_data(data, ax, label=regex)
-    plt.legend()
+        # assume all evaluations have same env and reward
+        reward = parse_reward(evaluations[0]["filepath"])
+        env_name, task_name = parse_env_task(evaluations[0]["filepath"])
+        title = ENV_TITLES[env_name + "_" + task_name]
+        color, label = COLORS[reward], LABELS[reward]
+        plot_data(data, ax, label=label, color=color)
+        # update min/max x
+        minx = min(minx, min(data["x"]))
+        maxx = max(maxx, max(data["x"]))
+    plot_secondaries(title, xlabel, ylabel, args.hlines, minx, maxx)
+    if args.legend:
+        plt.legend()
+    # save
     if args.save:
         plot_dir = args.logdir / "plots"
         plot_dir.mkdir(exist_ok=True, parents=True)
@@ -125,7 +185,9 @@ if __name__ == "__main__":
     parser.add_argument("--binning", type=int, default=15000)
     parser.add_argument("--x", type=str, default="timesteps")
     parser.add_argument("--y", type=str, default="results")
+    parser.add_argument("--hlines", type=float, nargs='*', default=[], help="horizontal lines in plot, eg. y=0")
     parser.add_argument("-save", action="store_true")
+    parser.add_argument("-legend", action="store_true")
     parser.add_argument("-info", action="store_true")
     args = parser.parse_args()
     main(args)
