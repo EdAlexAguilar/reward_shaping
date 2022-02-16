@@ -1,11 +1,11 @@
-learning_rate: 0.00003
-n_steps: 512
-batch_size: 128
-n_epochs: 20
+learning_rate: 0.000073
+n_steps: 4084
+batch_size: 2048
+n_epochs: 10
 gamma: 0.99
 gae_lambda: 0.95
 clip_range: 0.2
-ent_coef: 0.001
+ent_coef: 0.005
 vf_coef: 0.5
 max_grad_norm: 0.5
 use_sde: True
