@@ -41,8 +41,8 @@ def comfort_keep_right_potential(state, info):
 
 
 def simple_base_reward(state, info):
-    assert "progress" in state and "progress_target" in info
-    base_reward = 1.0 if state["progress"] >= info["progress_target"] else 0.0
+    assert "lap" in info
+    base_reward = 1.0 if info["lap"] - 1 >= 0.001 else 0.0
     return base_reward
 
 

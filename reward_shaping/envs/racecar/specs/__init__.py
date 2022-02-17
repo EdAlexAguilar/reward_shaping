@@ -25,7 +25,7 @@ def _build_no_reverse(_):
 
 
 def _build_complete_lap(_):
-    return lambda state, info: state['progress'] - 1.0
+    return lambda state, info: info['lap'] - 1.0 - 0.0001  # lap start from 1, then we ask that (lap-1)>=epsilon
 
 
 def _build_speed_limit(_):
