@@ -5,10 +5,9 @@ import gym
 import numpy as np
 from racecar_gym.envs.util.subprocess_env import SubprocessEnv
 from stable_baselines3.common.env_checker import check_env
-from stable_baselines3.common.vec_env import SubprocVecEnv, DummyVecEnv
 
 from reward_shaping.envs.racecar.single_agent_env import CustomSingleAgentRaceEnv
-from reward_shaping.envs.racecar.wrappers import FixResetWrapper
+from reward_shaping.envs.wrappers import FixResetWrapper
 from reward_shaping.training.utils import load_env_params
 
 

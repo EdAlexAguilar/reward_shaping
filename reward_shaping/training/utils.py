@@ -1,13 +1,12 @@
 import os
 import pathlib
 
-import matplotlib.pyplot as plt
 import yaml
 from gym.wrappers import FlattenObservation
 from stable_baselines3.common.env_checker import check_env
 
 from reward_shaping.core.wrappers import RewardWrapper
-from reward_shaping.envs.racecar.wrappers.wrappers import FixSpeedControl, FrameStackOnChannel
+from reward_shaping.envs.wrappers import FrameStackOnChannel
 from reward_shaping.monitor.task import RLTask
 
 
@@ -27,7 +26,7 @@ def make_env(env_name, task, reward, eval=False, logdir=None, seed=0):
         from reward_shaping.envs.f1tenth.core.wrappers.wrappers import FixResetWrapper
         env = FixResetWrapper(env, mode="grid")
     elif env_name == "racecar":
-        from reward_shaping.envs.racecar.wrappers import FixResetWrapper
+        from reward_shaping.envs.wrappers import FixResetWrapper
         env = FixResetWrapper(env, mode="grid" if eval else "random")
     else:
         env = FlattenObservation(env)
@@ -52,7 +51,7 @@ def load_eval_params(env, task):
     """ this can be use to pass additional parameters to constraint the evaluation episodes."""
     params = {'eval': True}
     if env == "bipedal_walker":
-        params["max_steps"] = 1000
+        params["max_steps"] = 1600
     if env == "lunar_lander":
         params["terminate_if_notawake"] = False
     return params
@@ -89,10 +88,9 @@ def make_base_env(env, env_params={}):
         env = FlattenAction(env)
         env = RescaleAction(env, a=-1, b=+1)
     elif env == "racecar":
-        from reward_shaping.envs.racecar.single_agent_env import CustomSingleAgentRaceEnv
         from reward_shaping.envs.racecar.vectorized_single_agent_env import ChangingTrackSingleAgentRaceEnv
         from reward_shaping.envs.racecar.specs import get_all_specs
-        from reward_shaping.envs.racecar.wrappers import FlattenAction
+        from reward_shaping.envs.wrappers import FlattenAction
         env = ChangingTrackSingleAgentRaceEnv(**env_params)
         specs = [(k, op, build_pred(env_params)) for k, (op, build_pred) in get_all_specs().items()]
         env = RLTask(env=env, requirements=specs)
@@ -176,11 +174,15 @@ def make_reward_wrap(env_name, env, env_params, reward, logdir=None):
     else:
         reward_fn = reward_conf
         env = RewardWrapper(env, reward_fn=reward_fn)
+    if env_name == "bipedal_walker":
+        from reward_shaping.envs.wrappers import FilterObservationWrapper
+        fields = [k for k in env.observation_space.spaces.keys() if k != "x"]
+        env = FilterObservationWrapper(env, fields)
     if env_name == "f1tenth":
-        from reward_shaping.envs.f1tenth.core.wrappers.wrappers import FilterObservationWrapper, NormalizeObservations
+        from reward_shaping.envs.wrappers import FilterObservationWrapper
         env = FilterObservationWrapper(env, ["lidar_occupancy", "speed_cmd", "steering_cmd"])
     if env_name == "racecar":
-        from reward_shaping.envs.racecar.wrappers import FilterObservationWrapper
+        from reward_shaping.envs.wrappers import FilterObservationWrapper
         env = FilterObservationWrapper(env, ['lidar_occupancy', 'steering', 'speed', 'dist_to_wall'])
         env = FrameStackOnChannel(env, num_stack=5)
     return env

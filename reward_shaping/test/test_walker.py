@@ -83,11 +83,11 @@ class TestWithAgent(TestCase):
         from stable_baselines3 import SAC
         task = "hardcore"
         checkpoint_paths = {
-            "default": "/home/luigi/Desktop/logs_iros22/bipedal_walker/hardcore/hardcore_default_sac_Seed144214_1644350360/checkpoint/model_600000_steps.zip",
-            "tltl": "/home/luigi/Desktop/logs_iros22/bipedal_walker/hardcore/hardcore_tltl_sac_Seed204494_1644350360/checkpoint/model_600000_steps.zip",
-            "morl_uni": "/home/luigi/Desktop/logs_iros22/bipedal_walker/hardcore/hardcore_morl_uni_sac_Seed133842_1644350360/checkpoint/model_600000_steps.zip",
-            "morl_dec": "/home/luigi/Desktop/logs_iros22/bipedal_walker/hardcore/hardcore_morl_dec_sac_Seed100327_1644341625/checkpoint/model_600000_steps.zip",
-            "hrs_pos": "/home/luigi/Desktop/logs_iros22/bipedal_walker/hardcore/hardcore_hrs_pot_sac_Seed139486_1644350360/checkpoint/model_600000_steps.zip"
+            #"default": "/d_drive/reward_shaping_logs/iros22/bipedal_walker_15022022/hardcore/hardcore_default_sac_Seed750538_1644956389/checkpoint/model_1500000_steps.zip",
+            #"tltl": "/home/luigi/Desktop/logs_iros22/bipedal_walker/hardcore/hardcore_tltl_sac_Seed204494_1644350360/checkpoint/model_600000_steps.zip",
+            #"morl_uni": "/home/luigi/Desktop/logs_iros22/bipedal_walker/hardcore/hardcore_morl_uni_sac_Seed133842_1644350360/checkpoint/model_600000_steps.zip",
+            #"morl_dec": "/home/luigi/Desktop/logs_iros22/bipedal_walker/hardcore/hardcore_morl_dec_sac_Seed100327_1644341625/checkpoint/model_600000_steps.zip",
+            "hrs_pos": "/d_drive/reward_shaping_logs/iros22/bipedal_walker_15022022/hardcore/hardcore_hrs_pot_sac_Seed566507_1644956388/checkpoint/model_1500000_steps.zip"
         }
         for reward, checkpoint_path in checkpoint_paths.items():
             print(f"training reward: {reward}")
