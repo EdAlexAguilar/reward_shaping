@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 
 from plotting.custom_evaluations import get_custom_evaluation
-
+from plotting.utils import get_files, parse_env_task, parse_reward
 
 FIGSIZE = (15, 4)
 
@@ -43,36 +43,13 @@ HLINES = {
 }
 
 
-def get_files(logdir, regex):
-    return logdir.glob(f"{regex}/evaluations*.npz")
-
-
-def parse_env_task(filepath: str):
-    env, task = None, None
-    for env_name in ["cart_pole_obst", "bipedal_walker", "lunar_lander", "racecar"]:
-        if env_name in filepath:
-            env = env_name
-            break
-    for task_name in ["fixed_height", "forward", "hardcore", "land", "drive"]:
-        if task_name in filepath:
-            task = task_name
-            break
-    if not env or not task:
-        raise ValueError(f"not able to parse env/task in {filepath}")
-    return env, task
-
-
-def parse_reward(filepath: str):
-    for reward in ["default", "tltl", "bhnr", "morl_uni", "morl_dec", "hrs_pot"]:
-        if reward in filepath:
-            return reward
-    raise ValueError(f"reward not found in {filepath}")
+file_regex="evaluations*.npz"
 
 
 def get_evaluations(logdir: pathlib.Path, regex: str, gby: Callable) -> Dict[str, List[Dict[str, Any]]]:
     """ look for evaluations.npz in the subdirectories and return is content """
     evaluations = {}
-    for eval_file in get_files(logdir, regex):
+    for eval_file in get_files(logdir, regex, fileregex=file_regex):
         data = dict(np.load(eval_file))
         data["filepath"] = str(eval_file)
         # group-by
@@ -117,7 +94,7 @@ def plot_data(data: Dict[str, np.ndarray], ax: plt.Axes, title="", color=None, l
 
 def plot_file_info(args):
     for regex in args.regex:
-        files = [f for f in get_files(args.logdir, regex)]
+        files = [f for f in get_files(args.logdir, regex, fileregex=file_regex)]
         print(f"regex: {regex}, nr files: {len(files)}")
         for f in files:
             data = dict(np.load(f))
