@@ -6,8 +6,8 @@ from reward_shaping.core.reward import RewardFunction
 from reward_shaping.core.utils import clip_and_norm
 from reward_shaping.envs.bipedal_walker.specs import get_all_specs
 
-
 gamma = 1.0
+
 
 def safety_collision_potential(state, info):
     assert "collision" in state
@@ -81,6 +81,27 @@ class BWHierarchicalPotentialShaping(RewardFunction):
         return base_reward + shaping_safety + shaping_target + shaping_comfort
 
 
+class BWHierarchicalPotentialShapingNoComfort(RewardFunction):
+
+    @staticmethod
+    def _safety_potential(state, info):
+        return safety_collision_potential(state, info)
+
+    def _target_potential(self, state, info):
+        safety_w = safety_collision_potential(state, info)
+        return safety_w * dist_to_target(state, info)
+
+    def __call__(self, state, action=None, next_state=None, info=None) -> float:
+        # base reward
+        base_reward = simple_base_reward(next_state, info)
+        # shaping
+        if info["done"]:
+            return base_reward
+        shaping_safety = gamma * self._safety_potential(next_state, info) - self._safety_potential(state, info)
+        shaping_target = gamma * self._target_potential(next_state, info) - self._target_potential(state, info)
+        return base_reward + shaping_safety + shaping_target
+
+
 class BWScalarizedMultiObjectivization(RewardFunction):
 
     def __init__(self, weights: List[float], **kwargs):
@@ -98,7 +119,8 @@ class BWScalarizedMultiObjectivization(RewardFunction):
         shaping_comf_vx = gamma * comfort_vx_potential(next_state, info) - comfort_vx_potential(state, info)
         shaping_comf_vy = gamma * comfort_vy_potential(next_state, info) - comfort_vy_potential(state, info)
         shaping_comf_ang = gamma * comfort_angle_potential(next_state, info) - comfort_angle_potential(state, info)
-        shaping_comf_angvel = gamma * comfort_ang_vel_potential(next_state, info) - comfort_ang_vel_potential(state, info)
+        shaping_comf_angvel = gamma * comfort_ang_vel_potential(next_state, info) - comfort_ang_vel_potential(state,
+                                                                                                              info)
         # linear scalarization of the multi-objectivized requirements
         reward = base_reward
         for w, f in zip(self._weights,
@@ -123,6 +145,7 @@ class BWDecreasingScalarizedMultiObjectivization(BWScalarizedMultiObjectivizatio
         - the sum of target weights is ~ 0.50/1.75
         - the sum of comfort weights is ~ 0.25/1.75
     """
+
     def __init__(self, **kwargs):
         weights = np.array([1.0, 0.5, 0.25, 0.25, 0.25, 0.25])
         weights /= np.sum(weights)

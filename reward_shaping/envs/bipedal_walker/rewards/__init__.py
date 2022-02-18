@@ -1,7 +1,8 @@
 from reward_shaping.core.helper_fns import DefaultReward
 from reward_shaping.envs.bipedal_walker.rewards.baselines import BWEvalConfig
 from reward_shaping.envs.bipedal_walker.rewards.potential import BWHierarchicalPotentialShaping, \
-    BWUniformScalarizedMultiObjectivization, BWDecreasingScalarizedMultiObjectivization
+    BWUniformScalarizedMultiObjectivization, BWDecreasingScalarizedMultiObjectivization, \
+    BWHierarchicalPotentialShapingNoComfort
 from reward_shaping.envs.bipedal_walker.rewards.stl_based import BWSTLReward
 
 _registry = {}
@@ -33,6 +34,8 @@ register_reward('morl_dec', reward=BWDecreasingScalarizedMultiObjectivization)
 
 # Hierarchical Potential Shaping
 register_reward('hrs_pot', reward=BWHierarchicalPotentialShaping)
+register_reward('hrs_pot_nocomf', reward=BWHierarchicalPotentialShapingNoComfort)
+
 
 # Evaluation
 register_reward('eval', reward=BWEvalConfig)
