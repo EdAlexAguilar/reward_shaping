@@ -13,6 +13,15 @@ from plotting.custom_evaluations import get_custom_evaluation
 from plotting.utils import get_files, parse_env_task, parse_reward
 
 FIGSIZE = (15, 4)
+LARGESIZE, MEDIUMSIZE, SMALLSIZE = 16, 12, 10
+
+plt.rcParams.update({'font.size': LARGESIZE})
+plt.rcParams.update({'axes.titlesize': LARGESIZE})
+plt.rcParams.update({'axes.labelsize': MEDIUMSIZE})
+plt.rcParams.update({'xtick.labelsize': SMALLSIZE})
+plt.rcParams.update({'ytick.labelsize': SMALLSIZE})
+plt.rcParams.update({'legend.fontsize': MEDIUMSIZE})
+plt.rcParams.update({'figure.titlesize': LARGESIZE})
 
 COLORS = {
     'default': '#377eb8',
@@ -29,21 +38,22 @@ REWARD_LABELS = {
     'bhnr': 'BHNR',
     'morl_uni': 'MORL (unif.)',
     'morl_dec': 'MORL (decr.)',
-    'hrs_pot': 'Hier. Shaping'
+    'hrs_pot': 'HPRS (ours)'
 }
 
 ENV_LABELS = {
-    "cart_pole_obst_fixed_height": "Cartpole+Obstacle",
+    "cart_pole_obst_fixed_height": "Cartpole",
+    "lunar_lander_land": "Lunar Lander",
     "bipedal_walker_forward": "Bipedal Walker",
     "bipedal_walker_hardcore": "Bipedal Walker (Hardcore)",
-    "lunar_lander_land": "Lunar Lander",
 }
 HLINES = {
     1.5: "Safety+Target"
 }
 
+file_regex = "evaluations*.npz"
 
-file_regex="evaluations*.npz"
+
 
 
 def get_evaluations(logdir: pathlib.Path, regex: str, gby: Callable) -> Dict[str, List[Dict[str, Any]]]:
@@ -85,10 +95,14 @@ def aggregate_evaluations(evaluations: List[Dict[str, np.ndarray]], params: Dict
             'std': aggregated['std'].values}
 
 
-def plot_data(data: Dict[str, np.ndarray], ax: plt.Axes, title="", color=None, label=None, **kwargs):
+def plot_data(data: Dict[str, np.ndarray], ax: plt.Axes, clipminy: float, clipmaxy: float,
+              title="",
+              color=None, label=None, **kwargs):
     assert all([key in data for key in ['x', 'mean', 'std']]), f'x, mean, std not found in data (keys: {data.keys()})'
     ax.plot(data['x'], data['mean'], color=color, label=label, **kwargs)
-    ax.fill_between(data['x'], data['mean'] - data['std'], data['mean'] + data['std'], alpha=0.25, color=color)
+    data_minus_std = np.clip(data['mean'] - data['std'], clipminy, clipmaxy)
+    data_plus_std = np.clip(data['mean'] + data['std'], clipminy, clipmaxy)
+    ax.fill_between(data['x'], data_minus_std, data_plus_std, alpha=0.25, color=color)
     ax.set_title(title)
 
 
@@ -115,7 +129,7 @@ def extend_with_custom_evaluation(evaluations, y):
 def make_gby_extractor(gby: str) -> Tuple[Callable, Dict[str, str]]:
     if gby is None:
         fn = lambda filepath: "all"
-        titles = ["all"]
+        titles = {"all": ""}
     elif gby == "env":
         fn = lambda filepath: '_'.join(parse_env_task(filepath))
         titles = ENV_LABELS
@@ -127,16 +141,23 @@ def make_gby_extractor(gby: str) -> Tuple[Callable, Dict[str, str]]:
     return fn, titles
 
 
-def plot_secondaries(ax, xlabel, ylabel, hlines, minx, maxx):
+def plot_secondaries(ax, xlabel, ylabel, hlines, minx, maxx, miny, maxy, show_yticks: bool = True):
     # draw horizonal lines
     for value in hlines:
         ax.hlines(value, minx, maxx,
                   color='k', alpha=1.0,
                   linestyles='dashed', label=HLINES[value])
-    ax.set_xlabel(xlabel)
+    ax.set_xlabel(xlabel, horizontalalignment='right', x=0.85)
     ax.set_ylabel(ylabel)
     ax.set_xlim(minx, maxx)
-    ax.set_ylim(0.0, 2.0)
+    ax.set_ylim(miny, maxy)
+    # ticks
+    round_maxx = 3e6 if maxx > 2e6 else 2e6
+    ax.set_xticks(np.linspace(minx, round_maxx, 5))
+    if show_yticks:
+        ax.set_yticks(np.linspace(miny, maxy, 5))
+    else:
+        ax.set_yticks([])
 
 
 def main(args):
@@ -165,16 +186,23 @@ def main(args):
             i = list(titles.keys()).index(gby)
             ax = axes[i]
             color, label = COLORS[reward], REWARD_LABELS[reward]
-            plot_data(data, ax, title=title, label=label, color=color)
+            plot_data(data, ax, clipminy=args.clipminy, clipmaxy=args.clipmaxy, title=title, label=label, color=color)
             # update min/max x
             minxs[i] = min(minxs[i], min(data["x"]))
             maxxs[i] = max(maxxs[i], max(data["x"]))
     # add secodnary stuff
     for i, ax in enumerate(axes):
+        if minxs[i] == np.Inf or maxxs[i] == -np.Inf:
+            continue
         if i == 0:
-            plot_secondaries(ax, xlabel="", ylabel=ylabel, hlines=args.hlines, minx=minxs[i], maxx=maxxs[i])
+            plot_secondaries(ax, xlabel="", ylabel=ylabel, hlines=args.hlines,
+                             minx=minxs[i], maxx=maxxs[i], miny=args.miny, maxy=args.maxy, show_yticks=True)
+        elif i == len(axes) - 1:
+            plot_secondaries(ax, xlabel="Steps", ylabel="", hlines=args.hlines,
+                             minx=minxs[i], maxx=maxxs[i], miny=args.miny, maxy=args.maxy, show_yticks=False)
         else:
-            plot_secondaries(ax, xlabel="", ylabel="", hlines=args.hlines, minx=minxs[i], maxx=maxxs[i])
+            plot_secondaries(ax, xlabel="", ylabel="", hlines=args.hlines,
+                             minx=minxs[i], maxx=maxxs[i], miny=args.miny, maxy=args.maxy, show_yticks=False)
     if args.legend:
         handles, labels = axes[0].get_legend_handles_labels()
         fig.legend(handles, labels, loc="lower center", ncol=len(handles), framealpha=1.0)
@@ -199,6 +227,10 @@ if __name__ == "__main__":
     parser.add_argument("--x", type=str, default="timesteps")
     parser.add_argument("--y", type=str, default="results")
     parser.add_argument("--hlines", type=float, nargs='*', default=[], help="horizontal lines in plot, eg. y=0")
+    parser.add_argument("--miny", type=float, default=0.0, help="y lower limit")
+    parser.add_argument("--maxy", type=float, default=2.0, help="y higher limit")
+    parser.add_argument("--clipminy", type=float, default=0.0, help="clip y below this value")
+    parser.add_argument("--clipmaxy", type=float, default=np.Inf, help="clip y data above this value")
     parser.add_argument("-save", action="store_true")
     parser.add_argument("-legend", action="store_true")
     parser.add_argument("-info", action="store_true")

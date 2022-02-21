@@ -19,7 +19,7 @@ def evaluate_policy_with_monitors(
         return_episode_rewards: bool = False,
         warn: bool = True,
         list_of_metrics: List[str] = None,
-) -> Union[Tuple[float, float, Dict[str, float]], Tuple[List[float], List[int], Dict[str, int]]]:
+) :
     """
     This function extends the original stable_baselines3.common.evaluation.evaluate_policy
     to also return a dictionary of metrics for logging purposes.

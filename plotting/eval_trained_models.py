@@ -10,6 +10,7 @@ from stable_baselines3 import SAC
 from stable_baselines3.common.evaluation import evaluate_policy
 
 from plotting.utils import get_files, parse_reward, parse_env_task
+from reward_shaping.training.custom_evaluation import evaluate_policy_with_monitors
 from reward_shaping.training.utils import make_env
 
 file_regex = "*model*steps.zip"
@@ -82,22 +83,32 @@ def main(args):
                         results[env_name][task_name][reward_name] = {}
                     print(f"[simulation] env: {env_name}, task: {task_name}, reward: {reward_name}")
                     env, env_params = make_env(env_name, task_name, 'eval', eval=True, logdir=None, seed=0)
+                    list_of_metrics = [f"{req}_counter" for req in env.req_labels]
+                    # init results
                     results[env_name][task_name][reward_name]["rewards"] = []
                     results[env_name][task_name][reward_name]["ep_lengths"] = []
+                    for metric in list_of_metrics:
+                        results[env_name][task_name][reward_name][metric] = []
                     for i, cpfile in enumerate(envs_task_rew_files[env_name][task_name][reward_name]):
                         model = SAC.load(str(cpfile))
-                        rewards, eplens = evaluate_policy(model, env, n_eval_episodes=args.n_episodes,
-                                                          deterministic=True, render=args.render,
-                                                          return_episode_rewards=True)
+                        rewards, eplens, metrics = evaluate_policy_with_monitors(model, env,
+                                                                                   n_eval_episodes=args.n_episodes,
+                                                                                   deterministic=True,
+                                                                                   render=args.render,
+                                                                                   return_episode_rewards=True,
+                                                                                   list_of_metrics=list_of_metrics)
                         # concatenate evaluations (json does not recognize np datatype, convert to python int and float)
                         results[env_name][task_name][reward_name]["rewards"] += [float(r) for r in rewards]
                         results[env_name][task_name][reward_name]["ep_lengths"] += [int(l) for l in eplens]
+                        for metric in list_of_metrics:
+                            results[env_name][task_name][reward_name][metric] += [int(l) for l in metrics[metric]]
                         print(f"\tcheckpoint {i + 1}: nr episodes: {len(rewards)}, " \
                               f"mean reward: {np.mean(rewards):.5f}, mean lengths: {np.mean(eplens):.5f}")
                     env.close()
         # save
-        with open(f"offline_evaluation_episodes{args.n_episodes}_{time.time()}.json", "w+") as f:
-            json.dump(results, f)
+        if args.save:
+            with open(f"offline_evaluation_episodes{args.n_episodes}_{time.time()}.json", "w+") as f:
+                json.dump(results, f)
         # print
         for env_name in results:
             for task_name in results[env_name]:
@@ -110,6 +121,15 @@ def main(args):
                     for metric, succrate in zip(["safety", "safety+target", "safety+target+comfort"],
                                                 [safety_sr, safety_target_sr, safety_target_comfort_sr]):
                         print(f"\t{metric}: {succrate}")
+                    # plot individual requirements
+                    print()
+                    print("[comfort reqs]")
+                    for metric, vals in results[env_name][task_name][reward_name].items():
+                        if not metric.startswith("c"):
+                            continue
+                        res = np.array(vals) / np.array(results[env_name][task_name][reward_name]["ep_lengths"])
+                        mu, std = np.mean(res), np.std(res)
+                        print(f"\t{metric}: {mu} +- {std}")
 
 
 if __name__ == "__main__":
