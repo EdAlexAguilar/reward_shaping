@@ -3,7 +3,7 @@ from typing import Dict, Any
 import numpy as np
 
 from reward_shaping.core.configs import EvalConfig
-from reward_shaping.core.helper_fns import monitor_episode
+from reward_shaping.core.helper_fns import monitor_stl_episode
 from reward_shaping.core.reward import RewardFunction
 
 
@@ -57,23 +57,23 @@ class RacecarEvalConfig(EvalConfig):
         episode = {k: list(l)[i_init:] for k, l in episode.items()}
         #
         safety_spec = "always((collision<=0) and (reverse <= 0))"
-        safety_rho = monitor_episode(stl_spec=safety_spec,
-                                     vars=self.monitoring_variables, types=self.monitoring_types,
-                                     episode=episode)[0][1]
+        safety_rho = monitor_stl_episode(stl_spec=safety_spec,
+                                         vars=self.monitoring_variables, types=self.monitoring_types,
+                                         episode=episode)[0][1]
         #
         target_spec = "eventually(progress > 1.0)"
-        target_rho = monitor_episode(stl_spec=target_spec,
-                                     vars=self.monitoring_variables, types=self.monitoring_types,
-                                     episode=episode)[0][1]
+        target_rho = monitor_stl_episode(stl_spec=target_spec,
+                                         vars=self.monitoring_variables, types=self.monitoring_types,
+                                         episode=episode)[0][1]
         #
         comfort_metrics = []
         comfort_speed = "(velocity <= speed_limit)"
         comfort_steer = "(abs(steering) <= comfortable_steering)"
         comfort_dist_to_wall = "(dist_to_margin <= tolerance_margin)"
         for comfort_spec in [comfort_speed, comfort_steer, comfort_dist_to_wall]:
-            comfort_trace = monitor_episode(stl_spec=comfort_spec,
-                                            vars=self.monitoring_variables, types=self.monitoring_types,
-                                            episode=episode)
+            comfort_trace = monitor_stl_episode(stl_spec=comfort_spec,
+                                                vars=self.monitoring_variables, types=self.monitoring_types,
+                                                episode=episode)
             comfort_trace = comfort_trace + [[-1, -1] for _ in
                                              range((self._max_episode_len - len(comfort_trace)))]
             comfort_mean = np.mean([float(rob >= 0) for t, rob in comfort_trace])

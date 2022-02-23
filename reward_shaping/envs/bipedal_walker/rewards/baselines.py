@@ -3,8 +3,7 @@ from typing import Dict, Any
 import numpy as np
 
 from reward_shaping.core.configs import EvalConfig
-from reward_shaping.core.helper_fns import monitor_episode
-
+from reward_shaping.core.helper_fns import monitor_stl_episode
 
 
 class BWEvalConfig(EvalConfig):
@@ -21,14 +20,15 @@ class BWEvalConfig(EvalConfig):
 
     @property
     def monitoring_types(self):
-        return ['int', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float']
+        return ['int', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
+                'float']
 
     def get_monitored_state(self, state, done, info) -> Dict[str, Any]:
         # compute monitoring variables (all of them normalized in 0,1)
         monitored_state = {
             'time': info['time'],
             'collision': 1.0 if info['collision'] > 0 else -1.0,  # already 0 or 1
-            'x': state['x'],   # already in 0 or 1
+            'x': state['x'],  # already in 0 or 1
             'target_x': info['norm_target_x'],
             'vx': state['horizontal_speed'],
             'vx_target': info['speed_x_target'],
@@ -48,14 +48,14 @@ class BWEvalConfig(EvalConfig):
         episode = {k: list(l)[i_init:] for k, l in episode.items()}
         #
         safety_spec = "always(collision<=0)"
-        safety_rho = monitor_episode(stl_spec=safety_spec,
-                                     vars=self.monitoring_variables, types=self.monitoring_types,
-                                     episode=episode)[0][1]
+        safety_rho = monitor_stl_episode(stl_spec=safety_spec,
+                                         vars=self.monitoring_variables, types=self.monitoring_types,
+                                         episode=episode)[0][1]
         #
         target_spec = "eventually(x>=target_x)"
-        target_rho = monitor_episode(stl_spec=target_spec,
-                                     vars=self.monitoring_variables, types=self.monitoring_types,
-                                     episode=episode)[0][1]
+        target_rho = monitor_stl_episode(stl_spec=target_spec,
+                                         vars=self.monitoring_variables, types=self.monitoring_types,
+                                         episode=episode)[0][1]
         #
         comfort_vel_spec = "(vx>=vx_target)"
         comfort_ang_spec = "(abs(phi)<=phi_limit)"
@@ -63,9 +63,9 @@ class BWEvalConfig(EvalConfig):
         comfort_angvel_spec = "(abs(phidot)<=phidot_limit)"
         comfort_metrics = []
         for comfort_spec in [comfort_vel_spec, comfort_ang_spec, comfort_vy_spec, comfort_angvel_spec]:
-            comfort_trace = monitor_episode(stl_spec=comfort_spec,
-                                            vars=self.monitoring_variables, types=self.monitoring_types,
-                                            episode=episode)
+            comfort_trace = monitor_stl_episode(stl_spec=comfort_spec,
+                                                vars=self.monitoring_variables, types=self.monitoring_types,
+                                                episode=episode)
             comfort_trace = comfort_trace + [[-1, -1] for _ in
                                              range((self._max_episode_len - len(comfort_trace)))]
             comfort_mean = np.mean([float(rob >= 0) for t, rob in comfort_trace])

@@ -3,7 +3,7 @@ from typing import Dict, Any
 import numpy as np
 
 from reward_shaping.core.configs import EvalConfig
-from reward_shaping.core.helper_fns import monitor_episode
+from reward_shaping.core.helper_fns import monitor_stl_episode
 
 
 class LLEvalConfig(EvalConfig):
@@ -48,19 +48,19 @@ class LLEvalConfig(EvalConfig):
         episode = {k: list(l)[i_init:] for k, l in episode.items()}
         #
         safety_spec = "always((collision <= 0.0) and (abs(x) <= x_limit))"
-        safety_rho = monitor_episode(stl_spec=safety_spec, vars=self.monitoring_variables,
-                                     types=self.monitoring_types, episode=episode)[0][1]
+        safety_rho = monitor_stl_episode(stl_spec=safety_spec, vars=self.monitoring_variables,
+                                         types=self.monitoring_types, episode=episode)[0][1]
         #
         target_spec = "eventually(always((abs(x) <= halfwidth_landing_area) and (abs(y) <= landing_height)))"
-        target_rho = monitor_episode(stl_spec=target_spec, vars=self.monitoring_variables,
-                                     types=self.monitoring_types, episode=episode)[0][1]
+        target_rho = monitor_stl_episode(stl_spec=target_spec, vars=self.monitoring_variables,
+                                         types=self.monitoring_types, episode=episode)[0][1]
         #
         comfort_ang_spec = "(abs(angle) <= angle_limit)"
         comfort_angspeed_spec = "(abs(angle_speed) <= angle_speed_limit)"
         comfort_metrics = []
         for comfort_spec in [comfort_ang_spec, comfort_angspeed_spec]:
-            comfort_trace = monitor_episode(stl_spec=comfort_spec, vars=self.monitoring_variables,
-                                            types=self.monitoring_types, episode=episode)
+            comfort_trace = monitor_stl_episode(stl_spec=comfort_spec, vars=self.monitoring_variables,
+                                                types=self.monitoring_types, episode=episode)
             comfort_trace = comfort_trace + [[-1, -1] for _ in range(self._max_episode_len - len(comfort_trace))]
             comfort_mean = np.mean([float(rob >= 0) for t, rob in comfort_trace])
             comfort_metrics.append(comfort_mean)

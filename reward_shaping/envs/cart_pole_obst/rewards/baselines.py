@@ -3,7 +3,7 @@ from typing import List
 import numpy as np
 
 from reward_shaping.core.configs import EvalConfig
-from reward_shaping.core.helper_fns import monitor_episode
+from reward_shaping.core.helper_fns import monitor_stl_episode
 from reward_shaping.core.reward import RewardFunction
 
 
@@ -133,17 +133,17 @@ class CPOEvalConfig(EvalConfig):
         episode = {k: list(l)[i_init:] for k, l in episode.items()}
         #
         safety_spec = "always((abs(theta) <= theta_limit) and (abs(x) <= x_limit) and (collision <= 0.0))"
-        safety_rho = monitor_episode(stl_spec=safety_spec,
-                                     vars=self.monitoring_variables, types=self.monitoring_types,
-                                     episode=episode)[0][1]
+        safety_rho = monitor_stl_episode(stl_spec=safety_spec,
+                                         vars=self.monitoring_variables, types=self.monitoring_types,
+                                         episode=episode)[0][1]
         target_spec = "eventually(always(dist_target_x <= x_target_tol))"
-        target_rho = monitor_episode(stl_spec=target_spec,
-                                     vars=self.monitoring_variables, types=self.monitoring_types,
-                                     episode=episode)[0][1]
+        target_rho = monitor_stl_episode(stl_spec=target_spec,
+                                         vars=self.monitoring_variables, types=self.monitoring_types,
+                                         episode=episode)[0][1]
         comfort_spec = "dist_target_theta <= theta_target_tol"
-        comfort_trace = monitor_episode(stl_spec=comfort_spec,
-                                        vars=self.monitoring_variables, types=self.monitoring_types,
-                                        episode=episode)
+        comfort_trace = monitor_stl_episode(stl_spec=comfort_spec,
+                                            vars=self.monitoring_variables, types=self.monitoring_types,
+                                            episode=episode)
         comfort_trace = comfort_trace + [[-1, -1] for _ in range((self._max_episode_len - len(comfort_trace)))]
         comfort_mean = np.mean([float(rob >= 0) for t, rob in comfort_trace])
         #

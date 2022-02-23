@@ -2,9 +2,9 @@ from collections import deque
 from typing import Any, Callable, List
 
 import gym
+import numpy as np
 
 from reward_shaping.core.configs import TLRewardConfig, EvalConfig
-from reward_shaping.core.helper_fns import monitor_episode
 from reward_shaping.core.reward import RewardFunction
 
 
@@ -82,13 +82,23 @@ class TLRewardWrapper(CollectionWrapper):
     @param: eval_at_end: boolean indicating if evaluating only on terminal states or at each step
     """
 
-    def __init__(self, env: gym.Env, tl_conf: TLRewardConfig, window_len: int = None, eval_at_end=True):
+    def __init__(self, env: gym.Env, tl_conf: TLRewardConfig, semantics: str = "stl", window_len: int = None,
+                 eval_at_end=True):
         super(TLRewardWrapper, self).__init__(env, tl_conf.monitoring_variables, tl_conf.get_monitored_state,
                                               window_len)
         self._tl_conf = tl_conf  # tl-spec configuration
         self._eval_at_end = eval_at_end
         self._reward = 0.0
         self._return = 0.0
+        # initialize monitor fn
+        if semantics == "stl":
+            from reward_shaping.core.helper_fns import monitor_stl_episode
+            self._monitor = monitor_stl_episode
+        elif semantics == "filtering":
+            from reward_shaping.core.helper_fns import monitor_mtl_filtering_episode
+            self._monitor = monitor_mtl_filtering_episode
+        else:
+            raise NotImplementedError(f"semantics {semantics} not implemented. available semantics: 'stl', 'filtering'")
 
     def reset(self, **kwargs):
         self._reward = 0.0
@@ -99,8 +109,8 @@ class TLRewardWrapper(CollectionWrapper):
     def _compute_episode_robustness(self, done):
         reward = 0.0
         if len(self._episode['time']) > 1 and (not self._eval_at_end or done):
-            reward = monitor_episode(self._tl_conf.spec, self._tl_conf.monitoring_variables,
-                                     self._tl_conf.monitoring_types, self._episode)[0][1]
+            reward = self._monitor(self._tl_conf.spec, self._tl_conf.monitoring_variables,
+                                   self._tl_conf.monitoring_types, self._episode)[0][1]
         return reward
 
     def get_monitored_episode(self):
