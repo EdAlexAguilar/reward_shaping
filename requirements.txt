@@ -1,14 +1,14 @@
-gym[box2d]
+gym[box2d]<0.22.0
 pyglet
 h5py
 matplotlib
 numpy
 stable-baselines3[extra]
-sb3-contrib
+#sb3-contrib
 moviepy
 PyYAML
-git+https://github.com/nickovic/rtamt.git
-networkx
+git+https://github.com/nickovic/rtamt.git@a16db77b61028f774d81457ff22e666229a5432c
+#networkx
 tensorboard
 yamldataclassconfig
--e git+https://github.com/luigiberducci/racecar_gym.git#egg=racecar_gym
+#-e git+https://github.com/luigiberducci/racecar_gym.git#egg=racecar_gym

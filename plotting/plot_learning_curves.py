@@ -54,12 +54,12 @@ HLINES = {
 file_regex = "evaluations*.npz"
 
 
-
-
 def get_evaluations(logdir: pathlib.Path, regex: str, gby: Callable) -> Dict[str, List[Dict[str, Any]]]:
     """ look for evaluations.npz in the subdirectories and return is content """
     evaluations = {}
     for eval_file in get_files(logdir, regex, fileregex=file_regex):
+        if "skip" in str(eval_file):
+            continue
         data = dict(np.load(eval_file))
         data["filepath"] = str(eval_file)
         # group-by
@@ -108,7 +108,7 @@ def plot_data(data: Dict[str, np.ndarray], ax: plt.Axes, clipminy: float, clipma
 
 def plot_file_info(args):
     for regex in args.regex:
-        files = [f for f in get_files(args.logdir, regex, fileregex=file_regex)]
+        files = [f for f in get_files(args.logdir, regex, fileregex=file_regex) if "skip" not in str(f)]
         print(f"regex: {regex}, nr files: {len(files)}")
         for f in files:
             data = dict(np.load(f))

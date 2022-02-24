@@ -15,6 +15,9 @@ class WeightedEvalFunction(EvaluationFunction):
     safety_prefix = "s"
     target_prefix = "t_"    # be careful: also "timesteps" starts with "t"
     comfort_prefix = "c"
+    max_steps = {"cart_pole_obst": 401,
+                 "bipedal_walker": 1600,
+                 "lunar_lander": 600}
 
     def __init__(self, name: str, safety_w: float, target_w: float, comfort_w: float):
         self.name = name
@@ -34,7 +37,7 @@ class WeightedEvalFunction(EvaluationFunction):
         target_aggregated = np.prod(np.array([data[t] > 0 for t in targets]), axis=0)
         assert target_aggregated.shape == data[targets[0]].shape, "unexpected shape of target aggregation"
         # comfort valuation as average (mean) of individual comfort satisfaction (k/max_steps)
-        comfort_aggregated = np.mean(np.array([data[c] / data["ep_lengths"] for c in comforts]), axis=0)
+        comfort_aggregated = np.mean(np.array([data[c] / self.max_steps[env_name] for c in comforts]), axis=0)
         assert comfort_aggregated.shape == data[comforts[0]].shape, "unexpected shape of comfort aggregation"
         # compute weighted results
         result = self.weights["safety"] * safety_aggregated + \
@@ -47,6 +50,9 @@ class TargetSafetyAndComfortEvalFunction(EvaluationFunction):
     safety_prefix = "s"
     target_prefix = "t_"    # be careful: also "timesteps" starts with "t"
     comfort_prefix = "c"
+    max_steps = {"cart_pole_obst": 401,
+                 "bipedal_walker": 1600,
+                 "lunar_lander": 600}
 
     def __init__(self, name: str):
         self.name = name
@@ -64,7 +70,7 @@ class TargetSafetyAndComfortEvalFunction(EvaluationFunction):
         target_aggregated = np.prod(np.array([data[t] > 0 for t in targets]), axis=0)
         assert target_aggregated.shape == data[targets[0]].shape, "unexpected shape of target aggregation"
         # comfort valuation as average (mean) of individual comfort satisfaction (k/max_steps)
-        comfort_aggregated = np.mean(np.array([data[c] / data["ep_lengths"] for c in comforts]), axis=0)
+        comfort_aggregated = np.mean(np.array([data[c] / self.max_steps[env_name] for c in comforts]), axis=0)
         assert comfort_aggregated.shape == data[comforts[0]].shape, "unexpected shape of comfort aggregation"
         # compute weighted results
         result = safety_aggregated * target_aggregated + 0.5 * comfort_aggregated
