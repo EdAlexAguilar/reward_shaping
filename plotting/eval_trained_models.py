@@ -19,7 +19,7 @@ file_regex = "*model*steps.zip"
 def plot_file_info(args):
     for regex in args.regex:
         # filter files
-        filter = lambda f: args.min_steps <= int(re.findall(r'\d+', f.stem)[-1]) <= args.max_steps
+        filter = lambda f: "skip" not in str(f) and args.min_steps <= int(re.findall(r'\d+', f.stem)[-1]) <= args.max_steps
         files = [f for f in get_files(args.logdir, regex, fileregex=file_regex) if filter(f)]
         envs_task_rew_files = group_checkpoints_per_env_task_reward(files)
         # print statistics
@@ -65,7 +65,7 @@ def main(args):
         return
     # collect checkpoints
     for regex in args.regex:
-        filter = lambda f: args.min_steps <= int(re.findall(r'\d+', f.stem)[-1]) <= args.max_steps
+        filter = lambda f: "skip" not in str(f) and args.min_steps <= int(re.findall(r'\d+', f.stem)[-1]) <= args.max_steps
         files = [f for f in get_files(args.logdir, regex, fileregex=file_regex) if filter(f)]
         print(f"regex: {regex}, nr files: {len(files)}")
         envs_task_rew_files = group_checkpoints_per_env_task_reward(files)

@@ -13,7 +13,7 @@ from plotting.custom_evaluations import get_custom_evaluation
 from plotting.utils import get_files, parse_env_task, parse_reward
 
 FIGSIZE = (15, 4)
-LARGESIZE, MEDIUMSIZE, SMALLSIZE = 16, 12, 10
+LARGESIZE, MEDIUMSIZE, SMALLSIZE = 16, 13, 10
 
 plt.rcParams.update({'font.size': LARGESIZE})
 plt.rcParams.update({'axes.titlesize': LARGESIZE})

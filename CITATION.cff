@@ -1,0 +1,57 @@
+cff-version: 1.2.0
+title: Hierarchical Potential-based Reward Shaping from Task Specifications
+message: If you use this software, please cite it using the metadata from this file.
+authors:
+  - given-names: Luigi
+    family-names: Berducci
+    email: luigi.berducci@tuwien.ac.at
+    affiliation: TU Wien
+    orcid: 'https://orcid.org/0000-0002-3497-6007'
+  - given-names: Edgar
+    family-names: Aguilar
+    email: edgar.aguilar@ait.ac.at
+    affiliation: AIT Austrian Institute for Technology Gmbh
+    orcid: 'https://orcid.org/0000-0002-1177-9246'
+  - given-names: Radu
+    family-names: Grosu
+    email: radu.grosu@tuwien.ac.at
+    orcid: 'https://orcid.org/0000-0001-5715-2142'
+    affiliation: TU Wien
+  - given-names: Dejan
+    family-names: Nickovic
+    email: dejan.nickovic@ait.ac.at
+    affiliation: AIT Austrian Institute for Technology Gmbh
+    orcid: 'https://orcid.org/0000-0001-5468-0396'
+
+preferred-citation:
+  type: article
+  authors:
+      - given-names: Luigi
+        family-names: Berducci
+        email: luigi.berducci@tuwien.ac.at
+        affiliation: TU Wien
+        orcid: 'https://orcid.org/0000-0002-3497-6007'
+      - given-names: Edgar
+        family-names: Aguilar
+        email: edgar.aguilar@ait.ac.at
+        affiliation: AIT Austrian Institute for Technology Gmbh
+        orcid: 'https://orcid.org/0000-0002-1177-9246'
+      - given-names: Radu
+        family-names: Grosu
+        email: radu.grosu@tuwien.ac.at
+        orcid: 'https://orcid.org/0000-0001-5715-2142'
+        affiliation: TU Wien
+      - given-names: Dejan
+        family-names: Nickovic
+        email: dejan.nickovic@ait.ac.at
+        affiliation: AIT Austrian Institute for Technology Gmbh
+        orcid: 'https://orcid.org/0000-0001-5468-0396'
+  url: "https://arxiv.org/abs/2110.02792"
+  journal: 'arXiv'
+  year: 2022
+  title: "Hierarchical Potential-based Reward Shaping from Task Specifications"
+identifiers:
+  - type: url
+    value: "https://arxiv.org/abs/2110.02792"
+    description: arXiv
+repository-code: 'https://github.com/EdAlexAguilar/reward_shaping'
