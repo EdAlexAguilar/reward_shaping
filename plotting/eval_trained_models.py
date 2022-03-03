@@ -2,12 +2,11 @@ import argparse
 import json
 import pathlib
 import warnings
-from typing import Dict, Tuple, List, Callable, Any
+from typing import Dict, Tuple, List
 import re
 
 import numpy as np
 from stable_baselines3 import SAC
-from stable_baselines3.common.evaluation import evaluate_policy
 
 from plotting.utils import get_files, parse_reward, parse_env_task
 from reward_shaping.training.custom_evaluation import evaluate_policy_with_monitors
@@ -19,7 +18,8 @@ file_regex = "*model*steps.zip"
 def plot_file_info(args):
     for regex in args.regex:
         # filter files
-        filter = lambda f: "skip" not in str(f) and args.min_steps <= int(re.findall(r'\d+', f.stem)[-1]) <= args.max_steps
+        filter = lambda f: "skip" not in str(f) and args.min_steps <= int(
+            re.findall(r'\d+', f.stem)[-1]) <= args.max_steps
         files = [f for f in get_files(args.logdir, regex, fileregex=file_regex) if filter(f)]
         envs_task_rew_files = group_checkpoints_per_env_task_reward(files)
         # print statistics
@@ -65,7 +65,8 @@ def main(args):
         return
     # collect checkpoints
     for regex in args.regex:
-        filter = lambda f: "skip" not in str(f) and args.min_steps <= int(re.findall(r'\d+', f.stem)[-1]) <= args.max_steps
+        filter = lambda f: "skip" not in str(f) and args.min_steps <= int(
+            re.findall(r'\d+', f.stem)[-1]) <= args.max_steps
         files = [f for f in get_files(args.logdir, regex, fileregex=file_regex) if filter(f)]
         print(f"regex: {regex}, nr files: {len(files)}")
         envs_task_rew_files = group_checkpoints_per_env_task_reward(files)
@@ -92,11 +93,11 @@ def main(args):
                     for i, cpfile in enumerate(envs_task_rew_files[env_name][task_name][reward_name]):
                         model = SAC.load(str(cpfile))
                         rewards, eplens, metrics = evaluate_policy_with_monitors(model, env,
-                                                                                   n_eval_episodes=args.n_episodes,
-                                                                                   deterministic=True,
-                                                                                   render=args.render,
-                                                                                   return_episode_rewards=True,
-                                                                                   list_of_metrics=list_of_metrics)
+                                                                                 n_eval_episodes=args.n_episodes,
+                                                                                 deterministic=True,
+                                                                                 render=args.render,
+                                                                                 return_episode_rewards=True,
+                                                                                 list_of_metrics=list_of_metrics)
                         # concatenate evaluations (json does not recognize np datatype, convert to python int and float)
                         results[env_name][task_name][reward_name]["rewards"] += [float(r) for r in rewards]
                         results[env_name][task_name][reward_name]["ep_lengths"] += [int(l) for l in eplens]
