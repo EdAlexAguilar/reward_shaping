@@ -6,12 +6,10 @@ from typing import Dict, Tuple, List
 import re
 
 import numpy as np
-import yaml
 from gym.wrappers.monitoring.video_recorder import VideoRecorder
 from stable_baselines3 import SAC
 
 from plotting.utils import get_files, parse_reward, parse_env_task
-from reward_shaping.training.custom_evaluation import evaluate_policy_with_monitors
 from reward_shaping.training.utils import make_env
 
 file_regex = "*model*steps.zip"
