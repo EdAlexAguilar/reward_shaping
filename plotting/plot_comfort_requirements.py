@@ -28,7 +28,7 @@ MARGIN = 0.25  # percentage
 BACKWARD_HISTORY = 0.30
 FORWARD_HISTORY = 0.10
 
-COLORS = ['#e41a1c', '#4daf4a', '#377eb8', '#984ea3', '#a65628', ]
+COLORS = ['k', 'k', '#e41a1c', '#4daf4a', '#377eb8', '#984ea3', '#a65628', ]
 LINEWIDTH = 5.0
 
 FIGSIZE = (20, 5)
@@ -79,15 +79,23 @@ def produce_animation(trace: np.ndarray, curve: str, var: str, color="k", save: 
             ax.plot(x, yy, label=curve, color=color, linewidth=LINEWIDTH)
         ax.hlines(limits[var][0], xmin=0, xmax=1000, linewidth=LINEWIDTH)
         ax.hlines(limits[var][1], xmin=0, xmax=1000, linewidth=LINEWIDTH)
+        within_margin = [limits[var][0] <= y <= limits[var][1] for y in yy]
+        outside_margin = [not(limits[var][0] <= y <= limits[var][1]) for y in yy]
+        above_max = [y > limits[var][1] for y in yy]
+        below_min = [y < limits[var][0] for y in yy]
+        ax.fill_between(x, limits[var][0], limits[var][1], where=within_margin, color="#83c255", alpha=0.3)
+        ax.fill_between(x, limits[var][0], limits[var][1], where=outside_margin, color="red", alpha=0.3)
+        ax.fill_between(x, limits[var][0], yy, where=below_min, color="red", alpha=0.3)
+        ax.fill_between(x, limits[var][1], yy, where=above_max, color="red", alpha=0.3)
         ax.set_xlim([max(0, t - backward_margin), min(t + forward_margin, n_frames)])
         ax.set_ylim([limits[var][0] - margin, limits[var][1] + margin])
-        #ax.set_xlabel("Step", horizontalalignment='right', x=1.0)
-        #ax.set_ylabel(labels[var])
+        # ax.set_xlabel("Step", horizontalalignment='right', x=1.0)
+        # ax.set_ylabel(labels[var])
 
-    anim = FuncAnimation(fig, animate, frames=n_frames, interval=10, repeat=False)
+    anim = FuncAnimation(fig, animate, frames=n_frames, repeat=False)
     if save:
         file = pathlib.Path(outfile)
-        writergif = animation.PillowWriter(fps=100)
+        writergif = animation.FFMpegWriter(fps=50)
         anim.save(file, writer=writergif)
     else:
         plt.show()
@@ -102,12 +110,15 @@ def main(args):
     assert len(curves) == len(args.logfiles), "nr logfile != nr curve names"
 
     for i, (trace, curve) in enumerate(zip(traces, curves)):
-        print(curve)
+        t0 = time.time()
+        print(f"[{curve}] starting")
         for j, var in enumerate(show_labels):
             print(f"\t{var}")
             outfile = f"comfort_plot_{curve}_{labels[var]}_{int(time.time())}.gif"
             color = COLORS[i]
             produce_animation(trace, curve, var, color=color, save=args.save, outfile=outfile)
+        tf = time.time()
+        print(f"[{curve}] done in: {tf - t0:.2f} seconds")
 
 
 if __name__ == "__main__":
