@@ -29,7 +29,7 @@ def record_rollout(model, env, outfile, deterministic=True, render=False):
         recorder.capture_frame()
         if render:
             env.render()
-    #np.savez(outfile, observations=observations, infos=infos, rewards=rewards)
+    np.savez(outfile, observations=observations, infos=infos, rewards=rewards)
     return steps, rtg
 
 
