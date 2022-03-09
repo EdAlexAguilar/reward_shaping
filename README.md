@@ -57,6 +57,14 @@ docker run --name exp_cpole --rm -it \
 
 ## Play with trained agents
 
-TODO: prepare directory with:
-- 1 checkpoint HPRS for each environment
-- script to run trained agent for a certain number of episodes and collect statistics
+The directory `checkpoint` contains a collection of trained agents for various environments.
+
+We provide the script `eval_trained_models.py` for playing with those.
+To run:
+```
+python eval_trained_models.py --checkpoint checkpoints/bipedal_walker_hardcore_hrs.zip --n_episodes 10
+```
+
+This command will evaluate the given model for `10` episodes, 
+and report mean and std dev of the Policy Assessment Metric described in the paper.
+
