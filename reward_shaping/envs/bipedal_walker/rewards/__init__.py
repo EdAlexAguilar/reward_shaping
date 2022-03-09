@@ -33,8 +33,8 @@ register_reward('morl_uni', reward=BWUniformScalarizedMultiObjectivization)
 register_reward('morl_dec', reward=BWDecreasingScalarizedMultiObjectivization)
 
 # Hierarchical Potential Shaping
-register_reward('hrs_pot', reward=BWHierarchicalPotentialShaping)
-register_reward('hrs_pot_nocomf', reward=BWHierarchicalPotentialShapingNoComfort)
+register_reward('hprs', reward=BWHierarchicalPotentialShaping)
+register_reward('hprs_nocomf', reward=BWHierarchicalPotentialShapingNoComfort)
 
 
 # Evaluation

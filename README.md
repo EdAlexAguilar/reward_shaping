@@ -1,9 +1,13 @@
-# Hierarchical Reward Shaping
-Reward Shaping Experiments with Temporal Logic for Hierarchical Objectives
+# Hierarchical Potential-based Reward Shaping
+Experiments on automatic reward shaping from formal task specifications.
 
 To install the dependencies:
 
 ```pip install -r requirements.txt```
+
+We also provide a Dockerfile to run the code in a container. To build the image:
+
+```docker build -t reward_shaping .```
 
 We assume you run the code from the project directory and that it is included in the `PYTHONPATH`.
 
