@@ -19,6 +19,7 @@ If you find this code useful, please reference in your paper:
 
 ## Installation 
 
+We tested this implementation with `Python3.8` under `Ubuntu 20.04`.
 To install the dependencies:
 
 ```pip install -r requirements.txt```
