@@ -4,7 +4,7 @@ Experiments on automatic reward shaping from formal task specifications.
 
 [![Watch the video](docs/HPRS.png)](https://youtu.be/PWJxZEhlUj4)
 
-Preprint available at [this link](https://arxiv.org/abs/2110.02792).
+Preprint available at [this link](https://arxiv.org/abs/2110.02792)
 
 If you find this code useful, please reference in your paper:
 
