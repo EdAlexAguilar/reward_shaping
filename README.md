@@ -58,7 +58,11 @@ docker run --name exp_cpole --rm -it \
 
 ## Play with trained agents
 
-The directory `checkpoint` contains a collection of trained agents for various environments.
+The directory `checkpoints` contains a collection of trained agents for various environments.
+For each environment, we report an agent trained with our `hprs` and an agent trained with the `default` shaped reward.
+The performance of the various agents are comparable,
+even if `hprs` is an automatic shaping methodology, while `default` is in most of the environment
+the result of an engineered shaping.
 
 We provide the script `eval_trained_models.py` for playing with those.
 To run:
