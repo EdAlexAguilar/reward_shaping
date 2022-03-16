@@ -9,11 +9,12 @@ Preprint available at [this link](https://arxiv.org/abs/2110.02792)
 If you find this code useful, please reference in your paper:
 
 ```
-@misc{berducci2022,
+@article{berducci2021hierarchical,
   title={Hierarchical Potential-based Reward Shaping from Task Specifications},
   author={Berducci, Luigi and Aguilar, Edgar A and Ni{\v{c}}kovi{\'c}, Dejan and Grosu, Radu},
-  journal={arXiv preprint arXiv:2110.02792},
-  year={2022}
+  journal={arXiv e-prints},
+  pages={arXiv--2110},
+  year={2021}
 }
 ```
 
