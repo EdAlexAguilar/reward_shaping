@@ -21,7 +21,7 @@ def main(args):
 
 
 if __name__ == "__main__":
-    envs = ['cart_pole_obst', 'bipedal_walker', 'lunar_lander', 'f1tenth', 'racecar']
+    envs = ['cart_pole_obst', 'bipedal_walker', 'lunar_lander']
     parser = parser.ArgumentParser()
     parser.add_argument("--env", type=str, required=True, choices=envs)
     parser.add_argument("--task", type=str, required=True, help="task executed for the env")

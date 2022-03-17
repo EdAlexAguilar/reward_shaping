@@ -22,14 +22,7 @@ def make_env(env_name, task, reward, eval=False, logdir=None, seed=0):
     env = make_base_env(env_name, env_params)
     # set reward
     env = make_reward_wrap(env_name, env, env_params, reward)
-    if env_name == "f1tenth":
-        from reward_shaping.envs.f1tenth.core.wrappers.wrappers import FixResetWrapper
-        env = FixResetWrapper(env, mode="grid")
-    elif env_name == "racecar":
-        from reward_shaping.envs.wrappers import FixResetWrapper
-        env = FixResetWrapper(env, mode="grid" if eval else "random")
-    else:
-        env = FlattenObservation(env)
+    env = FlattenObservation(env)
     check_env(env)
     return env, env_params
 
@@ -76,32 +69,13 @@ def make_base_env(env, env_params={}):
         env = LunarLanderContinuous(**env_params)
         specs = [(k, op, build_pred(env_params)) for k, (op, build_pred) in get_all_specs().items()]
         env = RLTask(env=env, requirements=specs)
-    elif env == "f1tenth":
-        from reward_shaping.envs.f1tenth.core.single_agent_env import SingleAgentRaceEnv
-        from reward_shaping.envs.f1tenth.core.wrappers.wrappers import FlattenAction, FrameSkip
-        from gym.wrappers import RescaleAction
-        from reward_shaping.envs.f1tenth.specs import get_all_specs
-        env = SingleAgentRaceEnv(map_name="InformatikLectureHall", **env_params)
-        specs = [(k, op, build_pred(env_params)) for k, (op, build_pred) in get_all_specs().items()]
-        env = FrameSkip(env, skip=env_params['observations_conf']['frame_skip'])
-        env = RLTask(env=env, requirements=specs)
-        env = FlattenAction(env)
-        env = RescaleAction(env, a=-1, b=+1)
-    elif env == "racecar":
-        from reward_shaping.envs.racecar.vectorized_single_agent_env import ChangingTrackSingleAgentRaceEnv
-        from reward_shaping.envs.racecar.specs import get_all_specs
-        from reward_shaping.envs.wrappers import FlattenAction
-        env = ChangingTrackSingleAgentRaceEnv(**env_params)
-        specs = [(k, op, build_pred(env_params)) for k, (op, build_pred) in get_all_specs().items()]
-        env = RLTask(env=env, requirements=specs)
-        env = FlattenAction(env)
     else:
         raise NotImplementedError(f"not implemented env for {env}")
     return env
 
 
 def make_agent(env_name, env, reward, rl_algo, logdir=None):
-    policy = "MultiInputPolicy" if env_name in ["f1tenth", "racecar"] else "MlpPolicy"
+    policy = "MlpPolicy"
     # load model parameters
     algo = rl_algo.split("_", 1)[0]
     algo_config = pathlib.Path(f"{os.path.dirname(__file__)}/../envs/{env_name}/hparams") / f"{algo}.yml"
@@ -123,9 +97,6 @@ def make_agent(env_name, env, reward, rl_algo, logdir=None):
     elif algo == "ddpg":
         from stable_baselines3 import DDPG
         model = DDPG(policy, env, verbose=1, tensorboard_log=logdir, **algo_params)
-    elif algo == "ars":
-        from sb3_contrib import ARS
-        model = ARS(policy, env, verbose=1, tensorboard_log=logdir, **algo_params)
     elif algo == "td3":
         from stable_baselines3 import TD3
         model = TD3(policy, env, verbose=1, tensorboard_log=logdir, **algo_params)
@@ -147,12 +118,6 @@ def get_reward_conf(env_name, env_params, reward):
         reward_conf = get_reward(reward)(env_params=env_params)
     elif env_name == "lunar_lander":
         from reward_shaping.envs.lunar_lander import get_reward
-        reward_conf = get_reward(reward)(env_params=env_params)
-    elif env_name == "f1tenth":
-        from reward_shaping.envs.f1tenth import get_reward
-        reward_conf = get_reward(reward)(env_params=env_params)
-    elif env_name == "racecar":
-        from reward_shaping.envs.racecar import get_reward
         reward_conf = get_reward(reward)(env_params=env_params)
     else:
         raise NotImplementedError(f'{reward} not implemented for {env_name}')
@@ -178,11 +143,4 @@ def make_reward_wrap(env_name, env, env_params, reward, logdir=None):
         from reward_shaping.envs.wrappers import FilterObservationWrapper
         fields = [k for k in env.observation_space.spaces.keys() if k != "x"]
         env = FilterObservationWrapper(env, fields)
-    if env_name == "f1tenth":
-        from reward_shaping.envs.wrappers import FilterObservationWrapper
-        env = FilterObservationWrapper(env, ["lidar_occupancy", "speed_cmd", "steering_cmd"])
-    if env_name == "racecar":
-        from reward_shaping.envs.wrappers import FilterObservationWrapper
-        env = FilterObservationWrapper(env, ['lidar_occupancy', 'steering', 'speed', 'dist_to_wall'])
-        env = FrameStackOnChannel(env, num_stack=5)
     return env
