@@ -22,9 +22,8 @@ class RacecarEnv(ChangingTrackSingleAgentRaceEnv):
                  eval: bool = False,
                  seed: int = 0):
         # make race environment
-        rendering = render or eval
         scenarios = [SingleAgentScenario.from_spec(path=str(f"{os.path.dirname(__file__)}/config/{sf}"),
-                                                   rendering=rendering) for sf in scenario_files]
+                                                   rendering=render) for sf in scenario_files]
         super(RacecarEnv, self).__init__(scenarios=scenarios, order=order)
 
         # extend observation space (we need them to compute the potential, the agent do not directly observe them)
@@ -91,6 +90,13 @@ class RacecarEnv(ChangingTrackSingleAgentRaceEnv):
         lap_completion = info["progress"] >= self._target_progress
         timeout = self._steps >= self._max_steps
         return bool(done or collision or lap_completion or timeout)
+
+    def render(self, mode):
+        view_mode = "follow"
+        screen = super(RacecarEnv, self).render(mode=view_mode)
+        if mode == "rgb_array":
+            return screen
+
 
 
 if __name__ == "__main__":

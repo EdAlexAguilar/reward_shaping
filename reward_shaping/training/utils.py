@@ -156,9 +156,10 @@ def make_reward_wrap(env_name, env, env_params, reward, logdir=None):
         fields = [k for k in env.observation_space.spaces.keys() if k != "x"]
         env = FilterObservationWrapper(env, fields)
     if env_name == "racecar":
-        from reward_shaping.envs.wrappers import FilterObservationWrapper, NormalizeObservationWithMinMax
+        from reward_shaping.envs.wrappers import FilterObservationWrapper, NormalizeObservationWithMinMax, FrameSkip
         fields = ["lidar_64", "velocity_x"]
         env = FilterObservationWrapper(env, fields)
         env = NormalizeObservationWithMinMax(env, {"lidar_64": (0.0, 15.0),     # norm lidar rays from 0, 15 meters
                                                    "velocity_x": (0.0, 3.5)})   # norm valocity from 0, 3.5 m/s
+        env = FrameSkip(env, skip=10)       # skip 10 frames means control at 10 Hz
     return env

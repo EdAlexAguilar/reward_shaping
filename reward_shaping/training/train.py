@@ -31,7 +31,7 @@ def get_callbacks(env, logdir, checkpointdir, train_params, novideo):
     eval_cb = CustomEvalCallback(env, eval_freq=train_params['eval_every'],
                                  n_eval_episodes=train_params['n_eval_episodes'],
                                  log_path=logdir,
-                                 deterministic=True, render=True)
+                                 deterministic=True, render=False)
     checkpoint_cb = CheckpointCallback(save_freq=train_params['checkpoint_every'], save_path=checkpointdir,
                                        name_prefix='model')
     callbacks = [eval_cb, checkpoint_cb]

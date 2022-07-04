@@ -4,6 +4,7 @@ from typing import Dict, Tuple
 import gym
 from gym.wrappers import LazyFrames
 import numpy as np
+from stable_baselines3.common.type_aliases import GymObs
 
 
 class FixResetWrapper(gym.Wrapper):
@@ -154,3 +155,32 @@ class NormalizeObservationWithMinMax(gym.ObservationWrapper):
             new_obs = (new_obs - min_value) / (max_value - min_value)  # norm in 0,1
             observation[obs_name] = -1 + 2 * new_obs  # finally, map it to -1..+1
         return observation
+
+
+class FrameSkip(gym.Wrapper):
+    """
+    Adapted from https://github.com/DLR-RM/stable-baselines3/blob/master/stable_baselines3/common/atari_wrappers.py
+    """
+
+    def __init__(self, env: gym.Env, skip: int = 4):
+        gym.Wrapper.__init__(self, env)
+        self._skip = skip
+
+    def step(self, action: int) -> GymObs:
+        """
+        Step the environment with the given action
+        Repeat action, sum reward, and max over last observations.
+        :param action: the action
+        :return: observation, reward, done, information
+        """
+        total_reward = 0.0
+        done = None
+        for i in range(self._skip):
+            obs, reward, done, info = self.env.step(action)
+            total_reward += reward
+            if done:
+                break
+        return obs, total_reward, done, info
+
+    def reset(self, **kwargs) -> GymObs:
+        return self.env.reset(**kwargs)
