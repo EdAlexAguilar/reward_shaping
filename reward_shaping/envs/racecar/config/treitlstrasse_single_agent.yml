@@ -4,7 +4,7 @@ agents:
   - id: A
     vehicle:
       name: racecar
-      sensors: [ lidar, pose, velocity, acceleration ]
+      sensors: [ lidar_64, velocity ]
       actuators: [ speed, steering ]
     task:   # not used but required to use default constructor racecar_gym
       task_name: maximize_progress

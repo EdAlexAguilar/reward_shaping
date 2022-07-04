@@ -31,6 +31,8 @@ class RacecarEnv(ChangingTrackSingleAgentRaceEnv):
         self.observation_space["progress"] = Box(low=0.0, high=1.0, dtype=np.float32, shape=(1,))
         self.observation_space["dist2obst"] = Box(low=0.0, high=1.0, dtype=np.float32, shape=(1,))
         self.observation_space["collision"] = Box(low=0.0, high=1.0, dtype=np.float32, shape=(1,))
+        minvel, maxvel = self.observation_space["velocity"].low[0], self.observation_space["velocity"].high[0]
+        self.observation_space["velocity_x"] = Box(low=minvel, high=maxvel, shape=(1,))
 
         # spec params
         self._target_progress = target_progress
@@ -72,6 +74,7 @@ class RacecarEnv(ChangingTrackSingleAgentRaceEnv):
         obs["collision"] = float(info["wall_collision"])
         obs["progress"] = progress
         obs["dist2obst"] = info["obstacle"]
+        obs["velocity_x"] = obs["velocity"][0]
         return obs
 
     def _extend_info(self, reward, done, info):

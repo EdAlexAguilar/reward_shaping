@@ -1,4 +1,5 @@
 import collections
+from typing import Dict, Tuple
 
 import gym
 from gym.wrappers import LazyFrames
@@ -96,7 +97,7 @@ class FrameStackOnChannel(gym.Wrapper):
 
     def _get_observation(self):
         assert all([len(frames) == self.num_stack for k, frames in self.frames.items()]), self.frames
-        #return {k: LazyFrames(list(self.frames[k]), self.lz4_compress) for k in self.frames}
+        # return {k: LazyFrames(list(self.frames[k]), self.lz4_compress) for k in self.frames}
         return {k: np.array(self.frames[k], dtype=np.float32) for k in self.frames}
 
     def step(self, action):
@@ -130,3 +131,26 @@ class FixSpeedControl(gym.ActionWrapper):
     def action(self, action):
         action["speed"] = self._fixed_speed
         return action
+
+
+class NormalizeObservationWithMinMax(gym.ObservationWrapper):
+    """
+    Normalize Box observations with respect to given min and max values.
+    The observations to be normalized are given as a dictionary: obs_name -> (minvalue, maxvalue)
+
+    The values are clipped w.r.t. min/max values to avoid unexpected values (e.g., <-1 or >1)
+    """
+
+    def __init__(self, env, map_name2values: Dict[str, Tuple[float, float]]):
+        super(NormalizeObservationWithMinMax, self).__init__(env)
+        self._map_name2values = map_name2values
+        for obs_name in self._map_name2values.keys():
+            self.observation_space[obs_name] = gym.spaces.Box(low=-1, high=+1,
+                                                              shape=self.observation_space[obs_name].shape)
+
+    def observation(self, observation):
+        for obs_name, (min_value, max_value) in self._map_name2values.items():
+            new_obs = np.clip(observation[obs_name], min_value, max_value)  # clip it
+            new_obs = (new_obs - min_value) / (max_value - min_value)  # norm in 0,1
+            observation[obs_name] = -1 + 2 * new_obs  # finally, map it to -1..+1
+        return observation

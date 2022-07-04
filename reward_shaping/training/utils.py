@@ -6,7 +6,7 @@ from gym.wrappers import FlattenObservation
 from stable_baselines3.common.env_checker import check_env
 
 from reward_shaping.core.wrappers import RewardWrapper
-from reward_shaping.envs.wrappers import FrameStackOnChannel, FlattenAction
+from reward_shaping.envs.wrappers import FlattenAction
 from reward_shaping.monitor.task import RLTask
 
 
@@ -149,8 +149,16 @@ def make_reward_wrap(env_name, env, env_params, reward, logdir=None):
     else:
         reward_fn = reward_conf
         env = RewardWrapper(env, reward_fn=reward_fn)
+    # additional: observation wrapper
     if env_name == "bipedal_walker":
+        # in bipedal walker, the agent do not observe its position 'x'
         from reward_shaping.envs.wrappers import FilterObservationWrapper
         fields = [k for k in env.observation_space.spaces.keys() if k != "x"]
         env = FilterObservationWrapper(env, fields)
+    if env_name == "racecar":
+        from reward_shaping.envs.wrappers import FilterObservationWrapper, NormalizeObservationWithMinMax
+        fields = ["lidar_64", "velocity_x"]
+        env = FilterObservationWrapper(env, fields)
+        env = NormalizeObservationWithMinMax(env, {"lidar_64": (0.0, 15.0),     # norm lidar rays from 0, 15 meters
+                                                   "velocity_x": (0.0, 3.5)})   # norm valocity from 0, 3.5 m/s
     return env
