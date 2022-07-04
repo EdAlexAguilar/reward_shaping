@@ -19,11 +19,13 @@ def register_spec(name, operator, build_predicate):
 def _build_no_collision(_):
     return lambda state, info: info['wall_collision']
 
+
 def _build_complete_lap(env_params):
     """
     info['progress'] contains the normalized lap progress w.r.t. the grid position
     """
     return lambda state, info: info["progress"] >= env_params["target_progress"]
+
 
 def _build_keep_center(env_params):
     """
@@ -39,5 +41,5 @@ def _build_keep_center(env_params):
 
 
 register_spec('s1_coll', Operator.ENSURE, _build_no_collision)
-register_spec("t_lap", Operator.CONQUER, _build_complete_lap)
+register_spec("t_lap", Operator.ACHIEVE, _build_complete_lap)
 register_spec("c1_center", Operator.ENCOURAGE, _build_keep_center)

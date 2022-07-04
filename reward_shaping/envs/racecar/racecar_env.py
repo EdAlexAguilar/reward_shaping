@@ -39,7 +39,13 @@ class RacecarEnv(ChangingTrackSingleAgentRaceEnv):
     def step(self, action: Dict):
         obs, reward, done, info = super(RacecarEnv, self).step(action)
         info["default_reward"] = reward
+        done = done or self._check_termination(obs, info)
         return obs, reward, done, info
+
+    def _check_termination(self, obs, info):
+        collision = info["wall_collision"]
+        lap_completion = info["progress"] >= self._target_progress
+        return bool(collision or lap_completion)
 
     def reset(self):
         return super(RacecarEnv, self).reset(mode='grid' if self._eval else 'random')
