@@ -24,7 +24,7 @@ def _build_complete_lap(env_params):
     """
     info['progress'] contains the normalized lap progress w.r.t. the grid position
     """
-    return lambda state, info: state["progress"] >= env_params["target_progress"]
+    return lambda state, info: state["progress"] - env_params["target_progress"]
 
 
 def _build_keep_center(env_params):
@@ -39,7 +39,7 @@ def _build_keep_center(env_params):
     The threshold defines then a corridor centered on the centerline,
     For example, requiring info['dist2obst'] >= 0.5 means a corridor large 0.5*max_track_width
     """
-    return lambda state, info: state["dist2obst"] >= env_params["target_dist2obst"]
+    return lambda state, info: state["dist2obst"] - env_params["target_dist2obst"]
 
 
 register_spec('s1_coll', Operator.ENSURE, _build_no_collision)
