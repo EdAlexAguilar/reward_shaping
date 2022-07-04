@@ -6,46 +6,34 @@ env_name = "bipedal_walker"
 task = "forward"
 
 
-class TestBipedalWalker(TestCase):
+class TestEnv(TestCase):
 
     def test_default_reward(self):
-        reward = "default"
-        result = generic_env_test(env_name, task, reward)
-        self.assertTrue(result)
-
-    def test_tltl(self):
-        reward = "tltl"
-        result = generic_env_test(env_name, task, reward)
-        self.assertTrue(result)
-
-    def test_morl_uni(self):
-        reward = "morl_uni"
-        result = generic_env_test(env_name, task, reward)
-        self.assertTrue(result)
-
-    def test_morl_dec(self):
-        reward = "morl_dec"
-        result = generic_env_test(env_name, task, reward)
+        result = generic_env_test(env_name, task, reward_name="default")
         self.assertTrue(result)
 
     def test_eval_reward(self):
-        reward = "eval"
-        result = generic_env_test(env_name, task, reward)
+        result = generic_env_test(env_name, task, reward_name="eval")
         self.assertTrue(result)
 
-    def test_hrs_reward(self):
-        reward = "hrs_pot"
-        result = generic_env_test(env_name, task, reward)
+    def test_tltl_reward(self):
+        result = generic_env_test(env_name, task, reward_name="tltl")
         self.assertTrue(result)
 
-    def test_hrs_nocomf_reward(self):
-        reward = "hrs_pot_nocomf"
-        result = generic_env_test(env_name, task, reward)
+    def test_hprs_reward(self):
+        result = generic_env_test(env_name, task, reward_name="hprs")
+        self.assertTrue(result)
+
+    def test_morl_uni_reward(self):
+        result = generic_env_test(env_name, task, reward_name="morl_uni")
+        self.assertTrue(result)
+
+    def test_morl_dec_reward(self):
+        result = generic_env_test(env_name, task, reward_name="morl_dec")
         self.assertTrue(result)
 
     def test_bhnr_reward(self):
-        reward = "bhnr"
-        result = generic_env_test(env_name, task, reward)
+        result = generic_env_test(env_name, task, reward_name="bhnr")
         self.assertTrue(result)
 
 
@@ -88,10 +76,10 @@ class TestWithAgent(TestCase):
         from stable_baselines3 import SAC
         task = "hardcore"
         checkpoint_paths = {
-            #"default": "/d_drive/reward_shaping_logs/iros22/bipedal_walker_15022022/hardcore/hardcore_default_sac_Seed750538_1644956389/checkpoint/model_1500000_steps.zip",
-            #"tltl": "/home/luigi/Desktop/logs_iros22/bipedal_walker/hardcore/hardcore_tltl_sac_Seed204494_1644350360/checkpoint/model_600000_steps.zip",
-            #"morl_uni": "/home/luigi/Desktop/logs_iros22/bipedal_walker/hardcore/hardcore_morl_uni_sac_Seed133842_1644350360/checkpoint/model_600000_steps.zip",
-            #"morl_dec": "/home/luigi/Desktop/logs_iros22/bipedal_walker/hardcore/hardcore_morl_dec_sac_Seed100327_1644341625/checkpoint/model_600000_steps.zip",
+            # "default": "/d_drive/reward_shaping_logs/iros22/bipedal_walker_15022022/hardcore/hardcore_default_sac_Seed750538_1644956389/checkpoint/model_1500000_steps.zip",
+            # "tltl": "/home/luigi/Desktop/logs_iros22/bipedal_walker/hardcore/hardcore_tltl_sac_Seed204494_1644350360/checkpoint/model_600000_steps.zip",
+            # "morl_uni": "/home/luigi/Desktop/logs_iros22/bipedal_walker/hardcore/hardcore_morl_uni_sac_Seed133842_1644350360/checkpoint/model_600000_steps.zip",
+            # "morl_dec": "/home/luigi/Desktop/logs_iros22/bipedal_walker/hardcore/hardcore_morl_dec_sac_Seed100327_1644341625/checkpoint/model_600000_steps.zip",
             "hrs_pos": "/d_drive/reward_shaping_logs/iros22/bipedal_walker_15022022/hardcore/hardcore_hrs_pot_sac_Seed566507_1644956388/checkpoint/model_1500000_steps.zip"
         }
         for reward, checkpoint_path in checkpoint_paths.items():

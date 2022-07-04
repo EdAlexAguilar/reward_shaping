@@ -146,8 +146,8 @@ class CartPoleContObsEnv(gym.Env):
         self.terminate_on_battery = terminate_on_battery
         self.randomize_side = randomize_side
         self.step_count = 0
-        self.feasible_height = feasible_height  # this is used to evaluate feasibility in overcoming obstacle
-        self.prob_sampling_feasible = prob_sampling_feasible  # this is used to sample obstacle height
+        self.feasible_height = feasible_height  # this is used to evaluate feasibility in overcoming obstacle TODO remove it
+        self.prob_sampling_feasible = prob_sampling_feasible  # this is used to sample obstacle height TODO remove it
 
         # Target parameters
         self.x_target = x_target
@@ -314,7 +314,7 @@ class CartPoleContObsEnv(gym.Env):
         self.state['collision'] = float(self.obstacle.intersect(self.state['x'], self.state['theta']))
         return self.state
 
-    def render(self, mode='human', info={'reward': None, 'return': None}):
+    def render(self, mode='human'):
         screen_width = 600
         screen_height = 400
         world_width = self.x_threshold * 2
@@ -411,8 +411,7 @@ class CartPoleContObsEnv(gym.Env):
             self.viewer.add_geom(obst)
 
             # score
-            text = f'episode: {self.n_resets}, feasible: {self.is_feasible}\n' \
-                   f'time: {self.step_count}, reward = {info["reward"]:.2f}, return = {info["return"]:.2f}'
+            text = f'episode: {self.n_resets}, time: {self.step_count}'
             self.label = pyglet.text.Label(text, font_size=15, multiline=True, width=1000,
                                            x=5, y=20, anchor_x='left', anchor_y='bottom',
                                            color=(255, 255, 255, 255))
@@ -439,8 +438,7 @@ class CartPoleContObsEnv(gym.Env):
         self.obsttrans.set_translation(obstx, obsty)
 
         dist_to_ground = self.obstacle.bottom_y - self.obstacle.axle_y
-        self.label.text = f'episode:{self.n_resets}, feasible:{self.is_feasible}, height:{dist_to_ground:.3f}\n' \
-                          f'time: {self.step_count}, reward = {info["reward"]:.2f}, return = {info["return"]:.2f}'
+        self.label.text = f'episode:{self.n_resets}, time: {self.step_count}'
         return self.viewer.render(return_rgb_array=mode == 'rgb_array')
 
     def close(self):
