@@ -1,6 +1,6 @@
 import os
 import random
-from typing import List
+from typing import List, Dict
 
 import numpy as np
 import racecar_gym
@@ -10,9 +10,12 @@ from gym.utils import seeding
 
 
 class RacecarEnv(ChangingTrackSingleAgentRaceEnv):
-    def __init__(self, scenario_files: List[str], order: str = 'sequential', render: bool = False, seed: int = 0):
+    def __init__(self, scenario_files: List[str], order: str = 'sequential',
+                 render: bool = False,
+                 eval: bool = False, seed: int = 0):
+        rendering = render or eval
         scenarios = [SingleAgentScenario.from_spec(path=str(f"{os.path.dirname(__file__)}/config/{sf}"),
-                                                           rendering=render) for sf in scenario_files]
+                                                   rendering=rendering) for sf in scenario_files]
         super(RacecarEnv, self).__init__(scenarios=scenarios, order=order)
         self.seed(seed)
         print(seed)
@@ -20,6 +23,11 @@ class RacecarEnv(ChangingTrackSingleAgentRaceEnv):
     def seed(self, seed=None):
         self.observation_space.seed(seed)
         self.action_space.seed(seed)
+
+    def step(self, action: Dict):
+        obs, reward, done, info = super(RacecarEnv, self).step(action)
+        info["default_reward"] = reward
+        return obs, reward, done, info
 
 
 if __name__ == "__main__":

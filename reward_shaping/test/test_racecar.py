@@ -6,41 +6,34 @@ env_name = "racecar"
 task = "drive"
 
 
-class TestRacecar(TestCase):
+class TestEnv(TestCase):
 
     def test_default_reward(self):
-        reward = "default"
-        result = generic_env_test(env_name, task, reward)
-        self.assertTrue(result)
-
-    def test_tltl(self):
-        reward = "tltl"
-        result = generic_env_test(env_name, task, reward)
-        self.assertTrue(result)
-
-    def test_morl_uni(self):
-        reward = "morl_uni"
-        result = generic_env_test(env_name, task, reward)
-        self.assertTrue(result)
-
-    def test_morl_dec(self):
-        reward = "morl_dec"
-        result = generic_env_test(env_name, task, reward)
+        result = generic_env_test(env_name, task, reward_name="default")
         self.assertTrue(result)
 
     def test_eval_reward(self):
-        reward = "eval"
-        result = generic_env_test(env_name, task, reward)
+        result = generic_env_test(env_name, task, reward_name="eval")
         self.assertTrue(result)
 
-    def test_hrs_reward(self):
-        reward = "hrs_pot"
-        result = generic_env_test(env_name, task, reward)
+    def test_tltl_reward(self):
+        result = generic_env_test(env_name, task, reward_name="tltl")
+        self.assertTrue(result)
+
+    def test_hprs_reward(self):
+        result = generic_env_test(env_name, task, reward_name="hprs")
+        self.assertTrue(result)
+
+    def test_morl_uni_reward(self):
+        result = generic_env_test(env_name, task, reward_name="morl_uni")
+        self.assertTrue(result)
+
+    def test_morl_dec_reward(self):
+        result = generic_env_test(env_name, task, reward_name="morl_dec")
         self.assertTrue(result)
 
     def test_bhnr_reward(self):
-        reward = "bhnr"
-        result = generic_env_test(env_name, task, reward)
+        result = generic_env_test(env_name, task, reward_name="bhnr")
         self.assertTrue(result)
 
 
@@ -62,9 +55,10 @@ class TestTrainingLoop(TestCase):
         generic_training(env_name, task, 'morl_dec')
 
 
+"""
 class TestWithAgent(TestCase):
     def test_progress(self):
         from stable_baselines3 import PPO
         agent = PPO.load("/home/luigi/Development/reward_shaping/logs/racecar/drive_hrs_pot_ppo_Seed474197_1644498938/checkpoint/model_50000_steps.zip")
         generic_env_test_wt_agent(env_name, agent, task, 'default')
-
+"""

@@ -69,6 +69,12 @@ def make_base_env(env, env_params={}):
         env = LunarLanderContinuous(**env_params)
         specs = [(k, op, build_pred(env_params)) for k, (op, build_pred) in get_all_specs().items()]
         env = RLTask(env=env, requirements=specs)
+    elif env == "racecar":
+        from reward_shaping.envs.racecar.racecar_env import RacecarEnv
+        from reward_shaping.envs.racecar.specs import get_all_specs
+        env = RacecarEnv(**env_params)
+        specs = [(k, op, build_pred(env_params)) for k, (op, build_pred) in get_all_specs().items()]
+        env = RLTask(env=env, requirements=specs)
     else:
         raise NotImplementedError(f"not implemented env for {env}")
     return env
@@ -118,6 +124,9 @@ def get_reward_conf(env_name, env_params, reward):
         reward_conf = get_reward(reward)(env_params=env_params)
     elif env_name == "lunar_lander":
         from reward_shaping.envs.lunar_lander import get_reward
+        reward_conf = get_reward(reward)(env_params=env_params)
+    elif env_name == "racecar":
+        from reward_shaping.envs.racecar import get_reward
         reward_conf = get_reward(reward)(env_params=env_params)
     else:
         raise NotImplementedError(f'{reward} not implemented for {env_name}')
