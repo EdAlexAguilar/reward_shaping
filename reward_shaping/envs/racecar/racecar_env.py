@@ -2,8 +2,10 @@ import os
 import random
 from typing import List, Dict
 
+import gym
 import numpy as np
 import racecar_gym
+from gym.spaces import Box
 from racecar_gym import SingleAgentScenario
 from racecar_gym.envs.gym_api import ChangingTrackSingleAgentRaceEnv
 from gym.utils import seeding
@@ -25,11 +27,17 @@ class RacecarEnv(ChangingTrackSingleAgentRaceEnv):
                                                    rendering=rendering) for sf in scenario_files]
         super(RacecarEnv, self).__init__(scenarios=scenarios, order=order)
 
+        # extend observation space (we need them to compute the potential, the agent do not directly observe them)
+        self.observation_space["progress"] = Box(low=0.0, high=1.0, dtype=np.float32, shape=(1,))
+        self.observation_space["dist2obst"] = Box(low=0.0, high=1.0, dtype=np.float32, shape=(1,))
+        self.observation_space["collision"] = Box(low=0.0, high=1.0, dtype=np.float32, shape=(1,))
+
         # spec params
         self._target_progress = target_progress
         self._target_dist2obst = target_dist2obst
         self._max_steps = max_steps
         self._steps = 0
+        self._initial_progress = None
 
         self._eval = eval
         self._seed = seed
@@ -39,31 +47,47 @@ class RacecarEnv(ChangingTrackSingleAgentRaceEnv):
         self.observation_space.seed(seed)
         self.action_space.seed(seed)
 
+    def reset(self):
+        obs = super(RacecarEnv, self).reset(mode='grid' if self._eval else 'random')
+        # extend observations
+        self._initial_progress = None
+        dummy_info = {"wall_collision": False, "progress": None, "obstacle": 1.0}
+        obs = self._extend_obs(obs, dummy_info)
+        self._steps = 0
+        return obs
+
     def step(self, action: Dict):
         obs, reward, done, info = super(RacecarEnv, self).step(action)
         self._steps += 1
-        info = self._extend_info(info, reward)
-        done = self._check_termination(obs, info, done)
+        obs = self._extend_obs(obs, info)
+        info = self._extend_info(reward, done, info)
+        done = self._check_termination(obs, done, info)
         return obs, reward, done, info
 
-    def _extend_info(self, info, reward):
+    def _extend_obs(self, obs, info):
+        if self._initial_progress is None and info["progress"] is not None:
+            # update the initial-progress on the first available progress after reset
+            self._initial_progress = info["progress"]
+        progress = 0.0 if self._initial_progress is None else info["progress"] - self._initial_progress
+        obs["collision"] = float(info["wall_collision"])
+        obs["progress"] = progress
+        obs["dist2obst"] = info["obstacle"]
+        return obs
+
+    def _extend_info(self, reward, done, info):
         info["default_reward"] = reward
         info["target_progress"] = self._target_progress
         info["target_dist2obst"] = self._target_dist2obst
         info["steps"] = self._steps
         info["max_steps"] = self._max_steps
+        info["done"] = done
         return info
 
-    def _check_termination(self, obs, info, done):
+    def _check_termination(self, obs, done, info):
         collision = info["wall_collision"]
         lap_completion = info["progress"] >= self._target_progress
         timeout = self._steps >= self._max_steps
         return bool(done or collision or lap_completion or timeout)
-
-    def reset(self):
-        obs = super(RacecarEnv, self).reset(mode='grid' if self._eval else 'random')
-        self._steps = 0
-        return obs
 
 
 if __name__ == "__main__":

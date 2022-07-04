@@ -36,10 +36,10 @@ class RCSTLReward(TLRewardConfig):
         # compute monitoring variables (all of them normalized in 0,1)
         monitored_state = {
             'time': info['steps'],
-            'collision': 1.0 if info['wall_collision'] else -1.0,
-            'progress': info['progress'],  # already in 0 or 1
+            'collision': 1.0 if state['collision'] > 0 else -1.0,
+            'progress': state['progress'],  # already in 0 or 1
             'target_progress': info['target_progress'],
-            'dist2obst': info['obstacle'],  # already in 0 or 1
+            'dist2obst': state['dist2obst'],  # already in 0 or 1
             'target_dist2obst': info['target_dist2obst']
         }
         self._max_episode_len = info['max_steps']

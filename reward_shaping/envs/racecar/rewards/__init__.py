@@ -1,5 +1,8 @@
 from reward_shaping.core.helper_fns import DefaultReward
 from reward_shaping.envs.racecar.rewards.baselines import RCEvalConfig
+from reward_shaping.envs.racecar.rewards.potential import RCHierarchicalPotentialShaping, \
+    RCUniformScalarizedMultiObjectivization, RCDecreasingScalarizedMultiObjectivization, \
+    RCHierarchicalPotentialShapingNoComfort
 from reward_shaping.envs.racecar.rewards.stl_based import RCSTLReward
 
 _registry = {}
@@ -25,11 +28,12 @@ register_reward('tltl', reward=RCSTLReward)  # evaluate on complete episode
 register_reward('bhnr', reward=RCSTLReward)  # evaluate with a moving window
 
 # Multi-objectivization solved via linear scalarization
-register_reward('morl_uni', reward=None)
-register_reward('morl_dec', reward=None)
+register_reward('morl_uni', reward=RCUniformScalarizedMultiObjectivization)
+register_reward('morl_dec', reward=RCDecreasingScalarizedMultiObjectivization)
 
 # Hierarchical Potential Shaping
-register_reward('hprs', reward=None)
+register_reward('hprs', reward=RCHierarchicalPotentialShaping)
+register_reward('hprs_nocomf', reward=RCHierarchicalPotentialShapingNoComfort)
 
 # Evaluation
 register_reward('eval', reward=RCEvalConfig)

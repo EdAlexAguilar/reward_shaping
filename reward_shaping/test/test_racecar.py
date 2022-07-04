@@ -45,20 +45,11 @@ class TestTrainingLoop(TestCase):
     def test_train_tltl(self):
         generic_training(env_name, task, 'tltl')
 
-    def test_train_hrs_pot(self):
-        generic_training(env_name, task, 'hrs_pot')
+    def test_train_hprs(self):
+        generic_training(env_name, task, 'hprs')
 
     def test_train_morl_uni(self):
         generic_training(env_name, task, 'morl_uni')
 
     def test_train_morl_dec(self):
         generic_training(env_name, task, 'morl_dec')
-
-
-"""
-class TestWithAgent(TestCase):
-    def test_progress(self):
-        from stable_baselines3 import PPO
-        agent = PPO.load("/home/luigi/Development/reward_shaping/logs/racecar/drive_hrs_pot_ppo_Seed474197_1644498938/checkpoint/model_50000_steps.zip")
-        generic_env_test_wt_agent(env_name, agent, task, 'default')
-"""
