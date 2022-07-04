@@ -1,0 +1,33 @@
+from reward_shaping.core.helper_fns import DefaultReward
+
+_registry = {}
+
+def get_reward(name: str):
+    try:
+        reward = _registry[name]
+    except KeyError:
+        raise KeyError(f"the reward {name} is not registered")
+    return reward
+
+
+def register_reward(name: str, reward):
+    if name not in _registry.keys():
+        _registry[name] = reward
+
+
+# Baselines
+register_reward('default', reward=DefaultReward)
+
+# TL-based
+register_reward('tltl', reward=None)  # evaluate on complete episode
+register_reward('bhnr', reward=None)  # evaluate with a moving window
+
+# Multi-objectivization solved via linear scalarization
+register_reward('morl_uni', reward=None)
+register_reward('morl_dec', reward=None)
+
+# Hierarchical Potential Shaping
+register_reward('hprs', reward=None)
+
+# Evaluation
+register_reward('eval', reward=None)
