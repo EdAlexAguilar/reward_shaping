@@ -17,25 +17,25 @@ def register_spec(name, operator, build_predicate):
 
 
 def _build_no_collision(_):
-    return lambda state, info: +1
-    # TODO implement it properly
-    return lambda state, info: -1 if state['collision'] == 1 else +1
-
+    return lambda state, info: info['wall_collision']
 
 def _build_complete_lap(env_params):
-    return lambda state, info: +1
-    # TODO implement it properly
-    assert "halfwidth_landing_area" in env_params and "landing_height" in env_params
-    dist_x = lambda state, info: env_params["halfwidth_landing_area"] - abs(state["x"])
-    dist_y = lambda state, info: env_params["landing_height"] - abs(state["y"])
-    return lambda state, info: min(dist_x(state, info), dist_y(state, info))
-
+    """
+    info['progress'] contains the normalized lap progress w.r.t. the grid position
+    """
+    return lambda state, info: info["progress"] >= env_params["target_progress"]
 
 def _build_keep_center(env_params):
-    return lambda state, info: +1
-    # TODO implement it properly
-    assert 'angle_limit' in env_params
-    return lambda state, info: env_params['angle_limit'] - abs(state['angle'])
+    """
+    info['obstacle'] is the normalized distance to static obstacles in the map (e.g., walls).
+    the normalization in 0..1 is done w.r.t.
+        min value (ie., 0 along the walls), and
+        max value (in the largest section of the track)
+
+    the threshold defines then a corridor centered on the centerline,
+    for example, requiring info['obstacle'] >= 0.5 means a corridor large 0.5*max_track_width
+    """
+    return lambda state, info: info["obstacle"] >= env_params["target_dist2obst"]
 
 
 register_spec('s1_coll', Operator.ENSURE, _build_no_collision)

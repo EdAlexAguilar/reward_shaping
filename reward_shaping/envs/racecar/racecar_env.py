@@ -10,15 +10,27 @@ from gym.utils import seeding
 
 
 class RacecarEnv(ChangingTrackSingleAgentRaceEnv):
-    def __init__(self, scenario_files: List[str], order: str = 'sequential',
+    def __init__(self,
+                 scenario_files: List[str],
+                 order: str = 'sequential',
+                 target_progress: float = 1.0,
+                 target_dist2obst: float = 0.5,
                  render: bool = False,
-                 eval: bool = False, seed: int = 0):
+                 eval: bool = False,
+                 seed: int = 0):
+        # make race environment
         rendering = render or eval
         scenarios = [SingleAgentScenario.from_spec(path=str(f"{os.path.dirname(__file__)}/config/{sf}"),
                                                    rendering=rendering) for sf in scenario_files]
         super(RacecarEnv, self).__init__(scenarios=scenarios, order=order)
+
+        # spec params
+        self._target_progress = target_progress
+        self._target_dist2obst = target_dist2obst
+
+        self._eval = eval
+        self._seed = seed
         self.seed(seed)
-        print(seed)
 
     def seed(self, seed=None):
         self.observation_space.seed(seed)
@@ -28,6 +40,9 @@ class RacecarEnv(ChangingTrackSingleAgentRaceEnv):
         obs, reward, done, info = super(RacecarEnv, self).step(action)
         info["default_reward"] = reward
         return obs, reward, done, info
+
+    def reset(self):
+        return super(RacecarEnv, self).reset(mode='grid' if self._eval else 'random')
 
 
 if __name__ == "__main__":

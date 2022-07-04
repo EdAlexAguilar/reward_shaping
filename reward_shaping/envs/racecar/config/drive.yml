@@ -1,3 +1,5 @@
 scenario_files:
   - treitlstrasse_single_agent.yml
-  - treitlstrasse_single_agent.yml
+order: random
+target_progress: 1.0      # 1 := complete lap
+target_dist2obst: 0.5     # normalized distance to walls

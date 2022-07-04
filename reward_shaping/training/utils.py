@@ -6,7 +6,7 @@ from gym.wrappers import FlattenObservation
 from stable_baselines3.common.env_checker import check_env
 
 from reward_shaping.core.wrappers import RewardWrapper
-from reward_shaping.envs.wrappers import FrameStackOnChannel
+from reward_shaping.envs.wrappers import FrameStackOnChannel, FlattenAction
 from reward_shaping.monitor.task import RLTask
 
 
@@ -23,6 +23,7 @@ def make_env(env_name, task, reward, eval=False, logdir=None, seed=0):
     # set reward
     env = make_reward_wrap(env_name, env, env_params, reward)
     env = FlattenObservation(env)
+    env = FlattenAction(env)
     check_env(env)
     return env, env_params
 
