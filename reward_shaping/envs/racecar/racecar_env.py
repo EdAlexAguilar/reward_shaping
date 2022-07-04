@@ -15,6 +15,7 @@ class RacecarEnv(ChangingTrackSingleAgentRaceEnv):
                  order: str = 'sequential',
                  target_progress: float = 1.0,
                  target_dist2obst: float = 0.5,
+                 max_steps: int = 1200,
                  render: bool = False,
                  eval: bool = False,
                  seed: int = 0):
@@ -27,6 +28,8 @@ class RacecarEnv(ChangingTrackSingleAgentRaceEnv):
         # spec params
         self._target_progress = target_progress
         self._target_dist2obst = target_dist2obst
+        self._max_steps = max_steps
+        self._steps = 0
 
         self._eval = eval
         self._seed = seed
@@ -38,17 +41,29 @@ class RacecarEnv(ChangingTrackSingleAgentRaceEnv):
 
     def step(self, action: Dict):
         obs, reward, done, info = super(RacecarEnv, self).step(action)
-        info["default_reward"] = reward
-        done = done or self._check_termination(obs, info)
+        self._steps += 1
+        info = self._extend_info(info, reward)
+        done = self._check_termination(obs, info, done)
         return obs, reward, done, info
 
-    def _check_termination(self, obs, info):
+    def _extend_info(self, info, reward):
+        info["default_reward"] = reward
+        info["target_progress"] = self._target_progress
+        info["target_dist2obst"] = self._target_dist2obst
+        info["steps"] = self._steps
+        info["max_steps"] = self._max_steps
+        return info
+
+    def _check_termination(self, obs, info, done):
         collision = info["wall_collision"]
         lap_completion = info["progress"] >= self._target_progress
-        return bool(collision or lap_completion)
+        timeout = self._steps >= self._max_steps
+        return bool(done or collision or lap_completion or timeout)
 
     def reset(self):
-        return super(RacecarEnv, self).reset(mode='grid' if self._eval else 'random')
+        obs = super(RacecarEnv, self).reset(mode='grid' if self._eval else 'random')
+        self._steps = 0
+        return obs
 
 
 if __name__ == "__main__":

@@ -20,6 +20,10 @@ class TestEnv(TestCase):
         result = generic_env_test(env_name, task, reward_name="tltl")
         self.assertTrue(result)
 
+    def test_bhnr_reward(self):
+        result = generic_env_test(env_name, task, reward_name="bhnr")
+        self.assertTrue(result)
+
     def test_hprs_reward(self):
         result = generic_env_test(env_name, task, reward_name="hprs")
         self.assertTrue(result)
@@ -30,10 +34,6 @@ class TestEnv(TestCase):
 
     def test_morl_dec_reward(self):
         result = generic_env_test(env_name, task, reward_name="morl_dec")
-        self.assertTrue(result)
-
-    def test_bhnr_reward(self):
-        result = generic_env_test(env_name, task, reward_name="bhnr")
         self.assertTrue(result)
 
 

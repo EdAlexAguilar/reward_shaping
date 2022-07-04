@@ -1,4 +1,6 @@
 from reward_shaping.core.helper_fns import DefaultReward
+from reward_shaping.envs.racecar.rewards.baselines import RCEvalConfig
+from reward_shaping.envs.racecar.rewards.stl_based import RCSTLReward
 
 _registry = {}
 
@@ -19,8 +21,8 @@ def register_reward(name: str, reward):
 register_reward('default', reward=DefaultReward)
 
 # TL-based
-register_reward('tltl', reward=None)  # evaluate on complete episode
-register_reward('bhnr', reward=None)  # evaluate with a moving window
+register_reward('tltl', reward=RCSTLReward)  # evaluate on complete episode
+register_reward('bhnr', reward=RCSTLReward)  # evaluate with a moving window
 
 # Multi-objectivization solved via linear scalarization
 register_reward('morl_uni', reward=None)
@@ -30,4 +32,4 @@ register_reward('morl_dec', reward=None)
 register_reward('hprs', reward=None)
 
 # Evaluation
-register_reward('eval', reward=None)
+register_reward('eval', reward=RCEvalConfig)

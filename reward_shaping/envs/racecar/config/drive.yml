@@ -3,3 +3,4 @@ scenario_files:
 order: random
 target_progress: 1.0      # 1 := complete lap
 target_dist2obst: 0.5     # normalized distance to walls
+max_steps: 6000           # sim steps, depends on integration step
