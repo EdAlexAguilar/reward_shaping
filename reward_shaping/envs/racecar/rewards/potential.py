@@ -23,6 +23,11 @@ def comfort_dist2obst(state, info):
     assert "dist2obst" in state and "target_dist2obst" in info
     return clip_and_norm(state["dist2obst"], 0.0, info["target_dist2obst"])
 
+def comfort_min_speed_cmd(state, info):
+    assert "last_actions" in state and "min_speed_cmd" in info
+    speed_cmd = state["last_actions"][-1][1]
+    return clip_and_norm(speed_cmd, 0.0, info["target_dist2obst"])
+
 
 def simple_base_reward(state, info):
     assert "progress" in state and "target_progress" in info
@@ -100,7 +105,7 @@ class RCScalarizedMultiObjectivization(RewardFunction):
 class RCUniformScalarizedMultiObjectivization(RCScalarizedMultiObjectivization):
 
     def __init__(self, **kwargs):
-        weights = np.array([1.0, 1.0, 1.0])
+        weights = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
         weights /= np.sum(weights)
         super(RCUniformScalarizedMultiObjectivization, self).__init__(weights=weights, **kwargs)
 
@@ -114,6 +119,6 @@ class RCDecreasingScalarizedMultiObjectivization(RCScalarizedMultiObjectivizatio
     """
 
     def __init__(self, **kwargs):
-        weights = np.array([1.0, 0.5, 0.25])
+        weights = np.array([1.0, 0.5, 0.25/5, 0.25/5, 0.25/5, 0.25/5, 0.25/5])
         weights /= np.sum(weights)
         super(RCDecreasingScalarizedMultiObjectivization, self).__init__(weights=weights, **kwargs)

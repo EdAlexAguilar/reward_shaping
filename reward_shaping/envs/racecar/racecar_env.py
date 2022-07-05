@@ -1,6 +1,7 @@
+import collections
 import os
 import random
-from typing import List, Dict
+from typing import List, Dict, Any
 
 import gym
 import numpy as np
@@ -15,16 +16,22 @@ class RacecarEnv(ChangingTrackSingleAgentRaceEnv):
     def __init__(self,
                  scenario_files: List[str],
                  order: str = 'sequential',
-                 target_progress: float = 1.0,
-                 target_dist2obst: float = 0.5,
-                 max_steps: int = 1200,
-                 render: bool = False,
-                 eval: bool = False,
-                 seed: int = 0):
+                 **kwargs):
         # make race environment
+        params = self._get_params(**kwargs)
         scenarios = [SingleAgentScenario.from_spec(path=str(f"{os.path.dirname(__file__)}/config/{sf}"),
-                                                   rendering=render) for sf in scenario_files]
+                                                   rendering=params["render"]) for sf in scenario_files]
         super(RacecarEnv, self).__init__(scenarios=scenarios, order=order)
+
+        # spec params
+        self._target_progress = params["reward_params"]["target_progress"]
+        self._target_dist2obst = params["reward_params"]["target_dist2obst"]
+        self._max_steps = params["max_steps"]
+        self._steps = 0
+        self._initial_progress = None
+        self._n_last_actions = params["n_last_actions"]
+        self._last_actions = collections.deque([[0.0] * len(self.action_space)] * self._n_last_actions,
+                                               maxlen=self._n_last_actions)
 
         # extend observation space (we need them to compute the potential, the agent do not directly observe them)
         self.observation_space["progress"] = Box(low=0.0, high=1.0, dtype=np.float32, shape=(1,))
@@ -32,17 +39,31 @@ class RacecarEnv(ChangingTrackSingleAgentRaceEnv):
         self.observation_space["collision"] = Box(low=0.0, high=1.0, dtype=np.float32, shape=(1,))
         minvel, maxvel = self.observation_space["velocity"].low[0], self.observation_space["velocity"].high[0]
         self.observation_space["velocity_x"] = Box(low=minvel, high=maxvel, shape=(1,))
-
-        # spec params
-        self._target_progress = target_progress
-        self._target_dist2obst = target_dist2obst
-        self._max_steps = max_steps
-        self._steps = 0
-        self._initial_progress = None
+        self.observation_space["last_actions"] = Box(low=-1, high=+1,
+                                                     shape=(self._n_last_actions, len(self.action_space)))
 
         self._eval = eval
-        self._seed = seed
-        self.seed(seed)
+        self._seed = params["seed"]
+        self.seed(self._seed)
+
+    @staticmethod
+    def _get_params(**kwargs):
+        params = {
+            "max_steps": 600,
+            "n_last_actions": 3,
+            "reward_params": {
+                "target_progress": 0.99,
+                "target_dist2obst": 0.5,
+                "min_speed_cmd": -1.0,
+                "max_speed_cmd": -1.0,
+            },
+            "render": True,
+            "eval": False,
+            "seed": 0,
+        }
+        for k, v in kwargs.items():
+            params[k] = v
+        return params
 
     def seed(self, seed=None):
         self.observation_space.seed(seed)
@@ -51,6 +72,8 @@ class RacecarEnv(ChangingTrackSingleAgentRaceEnv):
     def reset(self):
         obs = super(RacecarEnv, self).reset(mode='grid' if self._eval else 'random')
         # extend observations
+        self._last_actions = collections.deque([[0.0] * len(self.action_space)] * self._n_last_actions,
+                                               maxlen=self._n_last_actions)
         self._initial_progress = None
         dummy_info = {"wall_collision": False, "progress": None, "obstacle": 1.0}
         obs = self._extend_obs(obs, dummy_info)
@@ -59,6 +82,8 @@ class RacecarEnv(ChangingTrackSingleAgentRaceEnv):
 
     def step(self, action: Dict):
         obs, reward, done, info = super(RacecarEnv, self).step(action)
+        flat_action = np.array([action["steering"][0], action["speed"][0]])
+        self._last_actions.append(flat_action)
         self._steps += 1
         obs = self._extend_obs(obs, info)
         info = self._extend_info(reward, done, info)
@@ -74,6 +99,7 @@ class RacecarEnv(ChangingTrackSingleAgentRaceEnv):
         obs["progress"] = progress
         obs["dist2obst"] = info["obstacle"]
         obs["velocity_x"] = obs["velocity"][0]
+        obs["last_actions"] = self._last_actions
         return obs
 
     def _extend_info(self, reward, done, info):
@@ -96,7 +122,6 @@ class RacecarEnv(ChangingTrackSingleAgentRaceEnv):
         screen = super(RacecarEnv, self).render(mode=view_mode)
         if mode == "rgb_array":
             return screen
-
 
 
 if __name__ == "__main__":
