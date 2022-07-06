@@ -133,10 +133,10 @@ class CPODecreasingScalarizedMultiObjectivization(CPOScalarizedMultiObjectivizat
 
     def __init__(self, **kwargs):
         """
-        weights selected considering a budget of 1.0 + 0.5 + 0.25 = 1.75, then:
-            - the sum of safety weights is ~ 1.0/1.75
-            - the sum of target weights is ~ 0.50/1.75
-            - the sum of comfort weights is ~ 0.25/1.75
+        weights selected according to the class:
+            - safety reqs have weight 1.0
+            - target req has weight 0.5
+            - comfort reqs have weight 0.25
         """
         weights = np.array([1.0, 1.0, 1.0, 0.5, 0.25])
         weights /= np.sum(weights)
