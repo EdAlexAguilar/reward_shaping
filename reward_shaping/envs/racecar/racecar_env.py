@@ -59,7 +59,7 @@ class RacecarEnv(ChangingTrackSingleAgentRaceEnv):
                 "min_speed_cmd": -1.0,
                 "max_speed_cmd": -1.0,
             },
-            "render": True,
+            "render": False,
             "eval": False,
             "seed": 0,
         }
