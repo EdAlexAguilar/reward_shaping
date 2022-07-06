@@ -23,10 +23,33 @@ def comfort_dist2obst(state, info):
     assert "dist2obst" in state and "target_dist2obst" in info
     return clip_and_norm(state["dist2obst"], 0.0, info["target_dist2obst"])
 
+
+def comfort_small_steer(state, info):
+    # assume target steering is 0
+    assert "last_actions" in state
+    steering_cmd = state["last_actions"][-1][0]
+    return 1.0 - clip_and_norm(abs(steering_cmd), 0.0, 1.0)
+
+
 def comfort_min_speed_cmd(state, info):
+    # assume actions are already normalized in +-1
     assert "last_actions" in state and "min_speed_cmd" in info
     speed_cmd = state["last_actions"][-1][1]
-    return clip_and_norm(speed_cmd, 0.0, info["target_dist2obst"])
+    return clip_and_norm(speed_cmd, -1.0, info["min_speed_cmd"])
+
+
+def comfort_max_speed_cmd(state, info):
+    # assume actions are already normalized in +-1
+    assert "last_actions" in state and "max_speed_cmd" in info
+    speed_cmd = state["last_actions"][-1][1]
+    return 1 - clip_and_norm(speed_cmd, info["max_speed_cmd"], 1.0)
+
+
+def comfort_smooth_control(state, info):
+    assert "last_actions" in state
+    norm2_action = np.linalg.norm(state["last_actions"][-1] - state["last_actions"][-2])
+    max_norm2 = np.sqrt(8)  # assume action_1=[-1, -1], action_2=[1, 1]
+    return 1.0 - clip_and_norm(norm2_action, 0.0, max_norm2)
 
 
 def simple_base_reward(state, info):
@@ -49,10 +72,14 @@ class RCHierarchicalPotentialShaping(RewardFunction):
     @staticmethod
     def _comfort_potential(state, info):
         comfort_d2o = comfort_dist2obst(state, info)
+        comfort_steer = comfort_small_steer(state, info)
+        comfort_minv = comfort_min_speed_cmd(state, info)
+        comfort_maxv = comfort_max_speed_cmd(state, info)
+        comfort_smooth = comfort_smooth_control(state, info)
         # hierarchical weights
         safety_w = safety_collision_potential(state, info)
         target_w = dist_to_target(state, info)
-        return safety_w * target_w * (comfort_d2o)
+        return safety_w * target_w * (comfort_d2o + comfort_steer + comfort_minv + comfort_maxv + comfort_smooth)
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
         # base reward
@@ -94,10 +121,17 @@ class RCScalarizedMultiObjectivization(RewardFunction):
         shaping_coll = gamma * safety_collision_potential(next_state, info) - safety_collision_potential(state, info)
         shaping_target = gamma * dist_to_target(next_state, info) - dist_to_target(state, info)
         shaping_comf_d20 = gamma * comfort_dist2obst(next_state, info) - comfort_dist2obst(state, info)
+        shaping_comf_steer = gamma * comfort_small_steer(next_state, info) - comfort_small_steer(state, info)
+        shaping_comf_minv = gamma * comfort_min_speed_cmd(next_state, info) - comfort_min_speed_cmd(state, info)
+        shaping_comf_maxv = gamma * comfort_max_speed_cmd(next_state, info) - comfort_max_speed_cmd(state, info)
+        shaping_comf_smooth = gamma * comfort_smooth_control(next_state, info) - comfort_smooth_control(state, info)
         # linear scalarization of the multi-objectivized requirements
         reward = base_reward
         for w, f in zip(self._weights,
-                        [shaping_coll, shaping_target, shaping_comf_d20]):
+                        [shaping_coll, shaping_target,
+                         shaping_comf_d20, shaping_comf_steer,
+                         shaping_comf_minv, shaping_comf_maxv,
+                         shaping_comf_smooth]):
             reward += w * f
         return reward
 
@@ -112,13 +146,13 @@ class RCUniformScalarizedMultiObjectivization(RCScalarizedMultiObjectivization):
 
 class RCDecreasingScalarizedMultiObjectivization(RCScalarizedMultiObjectivization):
     """
-    weights selected considering a budget of 1.0 + 0.5 + 0.25 = 1.75, then:
-        - the sum of safety weights is ~ 1.0/1.75
-        - the sum of target weights is ~ 0.50/1.75
-        - the sum of comfort weights is ~ 0.25/1.75
+    weights selected according to the class:
+        - safety reqs have weight 1.0
+        - target req has weight 0.5
+        - comfort reqs have weight 0.25
     """
 
     def __init__(self, **kwargs):
-        weights = np.array([1.0, 0.5, 0.25/5, 0.25/5, 0.25/5, 0.25/5, 0.25/5])
+        weights = np.array([1.0, 0.5, 0.25 / 5, 0.25 / 5, 0.25 / 5, 0.25 / 5, 0.25 / 5])
         weights /= np.sum(weights)
         super(RCDecreasingScalarizedMultiObjectivization, self).__init__(weights=weights, **kwargs)

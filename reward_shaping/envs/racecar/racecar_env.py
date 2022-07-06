@@ -26,6 +26,8 @@ class RacecarEnv(ChangingTrackSingleAgentRaceEnv):
         # spec params
         self._target_progress = params["reward_params"]["target_progress"]
         self._target_dist2obst = params["reward_params"]["target_dist2obst"]
+        self._min_speed_cmd = params["reward_params"]["min_speed_cmd"]
+        self._max_speed_cmd = params["reward_params"]["max_speed_cmd"]
         self._max_steps = params["max_steps"]
         self._steps = 0
         self._initial_progress = None
@@ -42,7 +44,7 @@ class RacecarEnv(ChangingTrackSingleAgentRaceEnv):
         self.observation_space["last_actions"] = Box(low=-1, high=+1,
                                                      shape=(self._n_last_actions, len(self.action_space)))
 
-        self._eval = eval
+        self._eval = params["eval"]
         self._seed = params["seed"]
         self.seed(self._seed)
 
@@ -106,6 +108,8 @@ class RacecarEnv(ChangingTrackSingleAgentRaceEnv):
         info["default_reward"] = reward
         info["target_progress"] = self._target_progress
         info["target_dist2obst"] = self._target_dist2obst
+        info["min_speed_cmd"] = self._min_speed_cmd
+        info["max_speed_cmd"] = self._max_speed_cmd
         info["steps"] = self._steps
         info["max_steps"] = self._max_steps
         info["done"] = done
