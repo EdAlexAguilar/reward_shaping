@@ -19,9 +19,10 @@ def make_env(env_name, task, reward, eval=False, logdir=None, seed=0):
     if logdir:
         with open(logdir / f"{task}.yml", "w") as file:
             yaml.dump(env_params, file)
-    env = make_base_env(env_name, env_params)
+    env = make_base_env(env_name, task, env_params)
     # set reward
     env = make_reward_wrap(env_name, env, env_params, reward)
+    env = make_observation_wrap(env_name, env)
     env = FlattenObservation(env)
     env = FlattenAction(env)
     check_env(env)
@@ -51,7 +52,7 @@ def load_eval_params(env, task):
     return params
 
 
-def make_base_env(env, env_params={}):
+def make_base_env(env, task, env_params={}):
     if env == "cart_pole_obst":
         from reward_shaping.envs import CartPoleContObsEnv
         from reward_shaping.envs.cart_pole_obst.specs import get_all_specs
@@ -71,11 +72,16 @@ def make_base_env(env, env_params={}):
         specs = [(k, op, build_pred(env_params)) for k, (op, build_pred) in get_all_specs().items()]
         env = RLTask(env=env, requirements=specs)
     elif env == "racecar":
-        from reward_shaping.envs.racecar.racecar_env import RacecarEnv
+        from reward_shaping.envs.racecar.single_agent_racecar_env import RacecarEnv
         from reward_shaping.envs.racecar.specs import get_all_specs
         env = RacecarEnv(**env_params)
-        specs = [(k, op, build_pred(env_params)) for k, (op, build_pred) in get_all_specs().items()]
-        env = RLTask(env=env, requirements=specs)
+        if task == "drive":
+            specs = [(k, op, build_pred(env_params)) for k, (op, build_pred) in get_all_specs().items()]
+            env = RLTask(env=env, requirements=specs)
+        elif task == "drive_multi":
+            # TODO: this is a temporary solution for prototyping the multi-agent environment
+            # in future, we have to expand it with requirements and other stuff.
+            pass
     else:
         raise NotImplementedError(f"not implemented env for {env}")
     return env
@@ -149,7 +155,10 @@ def make_reward_wrap(env_name, env, env_params, reward, logdir=None):
     else:
         reward_fn = reward_conf
         env = RewardWrapper(env, reward_fn=reward_fn)
-    # additional: observation wrapper
+    return env
+
+def make_observation_wrap(env_name, env, ):
+    """ goal: filter and normalize observations """
     if env_name == "bipedal_walker":
         # in bipedal walker, the agent do not observe its position 'x'
         from reward_shaping.envs.wrappers import FilterObservationWrapper
@@ -159,9 +168,9 @@ def make_reward_wrap(env_name, env, env_params, reward, logdir=None):
         from reward_shaping.envs.wrappers import FilterObservationWrapper, NormalizeObservationWithMinMax, FrameSkip
         fields = ["lidar_64", "velocity_x", "last_actions"]
         env = FilterObservationWrapper(env, fields)
-        env = NormalizeObservationWithMinMax(env, {"lidar_64": (0.0, 15.0),     # norm lidar rays from 0, 15 meters
-                                                   "velocity_x": (0.0, 3.5),    # norm valocity from 0, 3.5 m/s
+        env = NormalizeObservationWithMinMax(env, {"lidar_64": (0.0, 15.0),  # norm lidar rays from 0, 15 meters
+                                                   "velocity_x": (0.0, 3.5),  # norm valocity from 0, 3.5 m/s
                                                    "last_actions": (-1.0, 1.0)  # norm actions in +-1
                                                    })
-        env = FrameSkip(env, skip=10)       # skip 10 frames means control at 10 Hz
+        env = FrameSkip(env, skip=10)  # skip 10 frames means control at 10 Hz
     return env

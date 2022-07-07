@@ -100,8 +100,8 @@ class RacecarEnv(ChangingTrackSingleAgentRaceEnv):
         obs["collision"] = float(info["wall_collision"])
         obs["progress"] = progress
         obs["dist2obst"] = info["obstacle"]
-        obs["velocity_x"] = obs["velocity"][0]
-        obs["last_actions"] = self._last_actions
+        obs["velocity_x"] = np.array([obs["velocity"][0]], dtype=np.float32)
+        obs["last_actions"] = np.array(self._last_actions, dtype=np.float32)
         return obs
 
     def _extend_info(self, reward, done, info):
