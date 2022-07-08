@@ -115,7 +115,9 @@ class LunarLander(gym.Env, EzPickle):
         self.prev_reward = None
         self.angle_limit = angle_limit
         self.angle_speed_limit = angle_speed_limit
-        # useful range is -1 .. +1, but spikes can be higher
+        self.initial_state = None
+
+        # useful range is -1 .. +1, but spikes can be higher__init
         self.observation_space = spaces.Box(-np.inf, np.inf, shape=(14,), dtype=np.float32)
         self.observation_space = gym.spaces.Dict(dict(
             x=Box(low=-np.Inf, high=np.Inf, shape=(1,), dtype=np.float32),
@@ -278,7 +280,8 @@ class LunarLander(gym.Env, EzPickle):
 
         self.drawlist = [self.lander, self.obstacle] + self.legs
 
-        return self.step(np.array([0, 0]) if self.continuous else 0)[0]
+        self.initial_state = self.step(np.array([0, 0]) if self.continuous else 0)[0]
+        return self.initial_state
 
     def _create_particle(self, mass, x, y, ttl):
         p = self.world.CreateDynamicBody(
@@ -417,6 +420,7 @@ class LunarLander(gym.Env, EzPickle):
 
         info = {"time": self.step_count,
                 "max_steps": self.max_episode_steps,
+                "initial_state": self.initial_state,
                 "FPS": self.FPS,
                 "angle_limit": self.angle_limit,
                 "angle_speed_limit": self.angle_speed_limit,
