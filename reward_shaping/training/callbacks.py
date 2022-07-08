@@ -67,6 +67,7 @@ class CustomEvalCallback(EvalCallback):
             self,
             eval_env: Union[gym.Env, VecEnv],
             callback_on_new_best: Optional[BaseCallback] = None,
+            callback_after_eval: Optional[BaseCallback] = None,
             n_eval_episodes: int = 5,
             eval_freq: int = 10000,
             log_path: Optional[str] = None,
@@ -76,7 +77,8 @@ class CustomEvalCallback(EvalCallback):
             verbose: int = 1,
             warn: bool = True,
     ):
-        super(CustomEvalCallback, self).__init__(eval_env, callback_on_new_best, n_eval_episodes, eval_freq, log_path,
+        super(CustomEvalCallback, self).__init__(eval_env, callback_on_new_best, callback_after_eval,
+                                                 n_eval_episodes, eval_freq, log_path,
                                                  best_model_save_path, deterministic, render, verbose, warn)
         # initialize list of metrics, in our case the metric of an individual requirement (e.g., s1_nofalldown_counter)
         self._list_of_metrics = [f"{req}_counter" for req in eval_env.req_labels]
