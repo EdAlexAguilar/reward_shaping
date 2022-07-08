@@ -2,7 +2,7 @@ from reward_shaping.core.helper_fns import DefaultReward
 from reward_shaping.envs.bipedal_walker.rewards.baselines import BWEvalConfig
 from reward_shaping.envs.bipedal_walker.rewards.potential import BWHierarchicalPotentialShaping, \
     BWUniformScalarizedMultiObjectivization, BWDecreasingScalarizedMultiObjectivization, \
-    BWHierarchicalPotentialShapingNoComfort
+    BWHierarchicalPotentialShapingNoComfort, BWScalarizedMultiObjectiveTargetVSComfort
 from reward_shaping.envs.bipedal_walker.rewards.stl_based import BWSTLReward
 
 _registry = {}
@@ -31,6 +31,9 @@ register_reward('bhnr', reward=BWSTLReward)  # evaluation with a moving window
 # Multi-Objectivization solved via Linear Scalarization
 register_reward('morl_uni', reward=BWUniformScalarizedMultiObjectivization)
 register_reward('morl_dec', reward=BWDecreasingScalarizedMultiObjectivization)
+
+# Multi-objectivization into target and aggregated comfort with lambda, 1-lambda weights
+register_reward('morl_lambda', reward=BWScalarizedMultiObjectiveTargetVSComfort)
 
 # Hierarchical Potential Shaping
 register_reward('hprs', reward=BWHierarchicalPotentialShaping)

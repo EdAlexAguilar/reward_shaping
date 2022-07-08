@@ -150,3 +150,31 @@ class BWDecreasingScalarizedMultiObjectivization(BWScalarizedMultiObjectivizatio
         weights = np.array([1.0, 0.5, 0.25, 0.25, 0.25, 0.25])
         weights /= np.sum(weights)
         super(BWDecreasingScalarizedMultiObjectivization, self).__init__(weights=weights, **kwargs)
+
+
+#########################################################################
+###              Scalarized Target vs Comfort Multi-Objective         ###
+#########################################################################
+class BWScalarizedMultiObjectiveTargetVSComfort(RewardFunction):
+
+    def __init__(self, lmbda: float, **kwargs):
+        """ Scalarized Reward to study the tradeoff between target and comfort.
+        - lmbda:    the weight coefficient for the target
+                    (1-lmbda) is the weight coefficient for the aggregated comforts
+        """
+        self._lambda = lmbda
+
+    def __call__(self, state, action=None, next_state=None, info=None) -> float:
+        # define norm coefficient s.t. target and comfort sum up to 1 under optimal policy
+        targ_coeff = dist_to_target(info["initial_state"], info)  # norm progress w.r.t. starting x
+        comfort_coeff = (1 / 4) * (1 / info["max_steps"])  # norm comfort w.r.t. nr comfort reqs and time steps
+        # compute target, comfort rewards
+        target_rew = targ_coeff * dist_to_target(next_state, info) - dist_to_target(state, info)
+        comfort_vx = float(state["horizontal_speed"] >= info["speed_x_target"])             # 0 or 1
+        comfort_vy = float(abs(state["vertical_speed"]) <= info["speed_y_limit"])           # 0 or 1
+        comfort_ang = float(abs(state["hull_angle"]) <= info["angle_hull_limit"])           # 0 or 1
+        comfort_angvel = float(abs(state["hull_angle_speed"]) <= info["angle_vel_limit"])   # 0 or 1
+        comfort_rew = comfort_coeff * (comfort_vx + comfort_vy + comfort_ang + comfort_angvel)  # avg and norm step
+        # linear scalarization of the multi-objectivized requirements
+        reward = self._lambda * target_rew + (1 - self._lambda) * comfort_rew
+        return reward

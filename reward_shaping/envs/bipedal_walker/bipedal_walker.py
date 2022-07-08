@@ -179,6 +179,7 @@ class BipedalWalker(gym.Env, EzPickle):
         self.speed_x_target = speed_x_target
         self.target_x = target_x / 1600 * max_steps
         self.step_count = 0
+        self.initial_state = None
 
         self.reset()
 
@@ -412,7 +413,8 @@ class BipedalWalker(gym.Env, EzPickle):
                 return fraction
 
         self.lidar = [LidarCallback() for _ in range(10)]
-        return self.step(np.array([0, 0, 0, 0]))[0]
+        self.initial_state = self.step(np.array([0, 0, 0, 0]))[0]
+        return self.initial_state
 
     def step(self, action):
         # self.hull.ApplyForceToCenter((0, 20), True) -- Uncomment this to receive a bit of stability help
@@ -492,6 +494,7 @@ class BipedalWalker(gym.Env, EzPickle):
         # define additional info for reward shaping
         info = {"time": self.step_count,
                 "max_steps": self.max_episode_steps,
+                "initial_state": self.initial_state,
                 "position_x": pos[0],
                 "target_x": self.target_x,
                 "norm_target_x": 1.0,
