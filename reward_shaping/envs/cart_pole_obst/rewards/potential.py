@@ -166,7 +166,7 @@ class CPOScalarizedMultiObjectiveTargetVSComfort(RewardFunction):
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
         # define norm coefficient s.t. target and comfort sum up to 1 under optimal policy
-        targ_coeff = 1 / target_dist2goal_potential(info["initial_state"], info)  # norm progress w.r.t. starting x
+        targ_coeff = 1 / (1 - target_dist2goal_potential(info["initial_state"], info))  # norm progress w.r.t. starting x
         comfort_coeff = 1 / info["max_steps"]  # norm comfort w.r.t. nr time steps
         # compute target, comfort rewards
         target_rew = targ_coeff * (target_dist2goal_potential(next_state, info) - target_dist2goal_potential(state, info))

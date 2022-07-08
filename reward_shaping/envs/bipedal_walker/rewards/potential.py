@@ -167,7 +167,7 @@ class BWScalarizedMultiObjectiveTargetVSComfort(RewardFunction):
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
         # define norm coefficient s.t. target and comfort sum up to 1 under optimal policy
-        targ_coeff = 1 / dist_to_target(info["initial_state"], info)  # norm progress w.r.t. starting x
+        targ_coeff = 1 / (1 - dist_to_target(info["initial_state"], info))  # norm progress w.r.t. starting x
         comfort_coeff = (1 / 4) * (1 / info["max_steps"])  # norm comfort w.r.t. nr comfort reqs and time steps
         # compute target, comfort rewards
         target_rew = targ_coeff * (dist_to_target(next_state, info) - dist_to_target(state, info))
