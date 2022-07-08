@@ -8,6 +8,7 @@ from reward_shaping.envs.cart_pole_obst.specs import get_all_specs
 
 gamma = 1.0
 
+
 def safety_falldown_potential(state, info):
     assert "theta" in state and "theta_limit" in info
     falldown = (state["theta"] <= info["theta_limit"])
@@ -26,7 +27,7 @@ def safety_collision_potential(state, info):
     return float(collision)
 
 
-def target_dist_to_goal_potential(state, info):
+def target_dist2goal_potential(state, info):
     assert "x" in state and "theta" in state and "x_target" in info
     assert "axle_y" in info and "pole_length" in info
     x, theta = state['x'], state['theta']
@@ -55,6 +56,9 @@ def simple_base_reward(state, info):
     return 1.0 if check_goal else 0.0
 
 
+#########################################################################
+###        Hierarchical Potential-based Reward Shaping (HPRS)         ###
+#########################################################################
 class CPOHierarchicalPotentialShaping(RewardFunction):
 
     def _safety_potential(self, state, info):
@@ -68,7 +72,7 @@ class CPOHierarchicalPotentialShaping(RewardFunction):
         idea: since the task is to conquer the origin, the potential of a state depends on two factors:
             - the distance to the target (if not reached yet), and the persistence on the target (once reached)
         """
-        target_reward = target_dist_to_goal_potential(state, info)
+        target_reward = target_dist2goal_potential(state, info)
         # hierarchical weights
         falldown_reward = safety_falldown_potential(state, info)
         exit_reward = safety_exit_potential(state, info)
@@ -83,7 +87,7 @@ class CPOHierarchicalPotentialShaping(RewardFunction):
         exit_reward = safety_exit_potential(state, info)
         collision_reward = safety_collision_potential(state, info)
         safety_w = falldown_reward * exit_reward * collision_reward
-        target_w = target_dist_to_goal_potential(state, info)
+        target_w = target_dist2goal_potential(state, info)
         return safety_w * target_w * comfort_reward
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
@@ -97,6 +101,9 @@ class CPOHierarchicalPotentialShaping(RewardFunction):
         return base_reward + shaping_safety + shaping_target + shaping_comfort
 
 
+#########################################################################
+###         Scalarized Potential-based Multi-Objectivization          ###
+#########################################################################
 class CPOScalarizedMultiObjectivization(RewardFunction):
 
     def __init__(self, weights: List[float], **kwargs):
@@ -112,7 +119,8 @@ class CPOScalarizedMultiObjectivization(RewardFunction):
         shaping_falldown = gamma * safety_falldown_potential(next_state, info) - safety_falldown_potential(state, info)
         shaping_exit = gamma * safety_exit_potential(next_state, info) - safety_exit_potential(state, info)
         shaping_coll = gamma * safety_collision_potential(next_state, info) - safety_collision_potential(state, info)
-        shaping_target = gamma * target_dist_to_goal_potential(next_state, info) - target_dist_to_goal_potential(state, info)
+        shaping_target = gamma * target_dist2goal_potential(next_state, info) - target_dist2goal_potential(state,
+                                                                                                           info)
         shaping_comfort = gamma * comfort_balance_potential(next_state, info) - comfort_balance_potential(state, info)
         # linear scalarization of the multi-objectivized requirements
         reward = base_reward
@@ -141,3 +149,27 @@ class CPODecreasingScalarizedMultiObjectivization(CPOScalarizedMultiObjectivizat
         weights = np.array([1.0, 1.0, 1.0, 0.5, 0.25])
         weights /= np.sum(weights)
         super(CPODecreasingScalarizedMultiObjectivization, self).__init__(weights=weights, **kwargs)
+
+
+#########################################################################
+###              Scalarized Target vs Comfort Multi-Objective         ###
+#########################################################################
+class CPOScalarizedMultiObjectiveTargetVSComfort(RewardFunction):
+
+    def __init__(self, lmbda: float, **kwargs):
+        """ Scalarized Reward to study the tradeoff between target and comfort.
+        - lmbda:    the weight coefficient for the target
+                    (1-lmbda) is the weight coefficient for the aggregated comforts
+        """
+        self._lambda = lmbda
+
+    def __call__(self, state, action=None, next_state=None, info=None) -> float:
+        # define norm coefficient s.t. target and comfort sum up to 1 under optimal policy
+        targ_coeff = target_dist2goal_potential(info["initial_state"], info)  # norm progress w.r.t. starting x
+        comfort_coeff = 1 / info["max_steps"]  # norm comfort w.r.t. nr time steps
+        # compute target, comfort rewards
+        target_rew = targ_coeff * target_dist2goal_potential(next_state, info) - target_dist2goal_potential(state, info)
+        comfort_rew = comfort_coeff * float(abs(state["theta"]) <= info["theta_target_tol"])
+        # linear scalarization of the multi-objectivized requirements
+        reward = self._lambda * target_rew + (1 - self._lambda) * comfort_rew
+        return reward
