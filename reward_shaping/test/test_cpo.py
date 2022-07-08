@@ -28,6 +28,11 @@ class TestCartPoleObstacle(TestCase):
         result = generic_env_test(env_name, task, reward)
         self.assertTrue(result)
 
+    def test_morl_lambda_reward(self):
+        reward = "morl_lambda-0.25"
+        result = generic_env_test(env_name, task, reward)
+        self.assertTrue(result)
+
     def test_eval_reward(self):
         reward = "eval"
         result = generic_env_test(env_name, task, reward)
