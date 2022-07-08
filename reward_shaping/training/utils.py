@@ -110,6 +110,12 @@ def make_agent(env_name, env, reward, rl_algo, logdir=None):
 
 
 def get_reward_conf(env_name, env_params, reward):
+    if "morl_lambda" in reward:
+        # assume format: morl_lambda-{%f}, where %f indicates the lambda value in [0,1]
+        reward, lmbda = reward.split("-")
+        lmbda = float(lmbda)
+        assert reward == "morl_lambda" and 0 <= lmbda <= 1, "wrong format, expected: morl_lambda-{%f}"
+        env_params["lambda"] = lmbda
     if env_name == "cart_pole_obst":
         from reward_shaping.envs.cart_pole_obst import get_reward
         reward_conf = get_reward(reward)(env_params=env_params)

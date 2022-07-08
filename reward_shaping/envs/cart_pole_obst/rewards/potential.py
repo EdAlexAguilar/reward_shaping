@@ -1,4 +1,4 @@
-from typing import Union, List
+from typing import Union, List, Dict, Any
 
 from reward_shaping.core.reward import RewardFunction
 import numpy as np
@@ -156,12 +156,13 @@ class CPODecreasingScalarizedMultiObjectivization(CPOScalarizedMultiObjectivizat
 #########################################################################
 class CPOScalarizedMultiObjectiveTargetVSComfort(RewardFunction):
 
-    def __init__(self, lmbda: float, **kwargs):
+    def __init__(self, params: Dict[str, Any], **kwargs):
         """ Scalarized Reward to study the tradeoff between target and comfort.
-        - lmbda:    the weight coefficient for the target
-                    (1-lmbda) is the weight coefficient for the aggregated comforts
+        - lambda:    the weight coefficient for the target
+                    (1-lambda) is the weight coefficient for the aggregated comforts
         """
-        self._lambda = lmbda
+        assert "lambda" in params, "missing lambda in params"
+        self._lambda = params["lambda"]
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
         # define norm coefficient s.t. target and comfort sum up to 1 under optimal policy
