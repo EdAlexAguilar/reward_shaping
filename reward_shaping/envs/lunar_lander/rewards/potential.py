@@ -6,8 +6,8 @@ from reward_shaping.core.reward import RewardFunction
 from reward_shaping.core.utils import clip_and_norm
 from reward_shaping.envs.lunar_lander.specs import get_all_specs
 
-
 gamma = 1.0
+
 
 def safety_collision_potential(state, info):
     assert "collision" in state
@@ -19,7 +19,7 @@ def safety_exit_potential(state, info):
     return int(abs(state["x"]) <= info["x_limit"])
 
 
-def target_dist_to_goal_potential(state, info):
+def target_dist2goal_potential(state, info):
     dist_goal = np.linalg.norm([state["x"] - info["x_target"], state["y"] - info["y_target"]])
     return 1.0 - clip_and_norm(dist_goal, 0, 1.5)
 
@@ -38,6 +38,9 @@ def simple_base_reward(state, info):
     return 1.0 if min(dist_x, dist_y) >= 0 else 0.0
 
 
+#########################################################################
+###           Hierachical Potential-based Reward Shaping (HPRS)       ###
+#########################################################################
 class LLHierarchicalShapingOnSparseTargetReward(RewardFunction):
     def _safety_potential(self, state, info):
         collision_reward = safety_collision_potential(state, info)
@@ -45,7 +48,7 @@ class LLHierarchicalShapingOnSparseTargetReward(RewardFunction):
         return collision_reward + exit_reward
 
     def _target_potential(self, state, info):
-        target_reward = target_dist_to_goal_potential(state, info)
+        target_reward = target_dist2goal_potential(state, info)
         # hierarchical weights
         safety_weight = safety_collision_potential(state, info) * safety_exit_potential(state, info)
         return safety_weight * target_reward
@@ -55,7 +58,7 @@ class LLHierarchicalShapingOnSparseTargetReward(RewardFunction):
         angvel_reward = comfort_angvel_potential(state, info)
         # hierarchical weights
         safety_weight = safety_collision_potential(state, info) * safety_exit_potential(state, info)
-        target_weight = target_dist_to_goal_potential(state, info)
+        target_weight = target_dist2goal_potential(state, info)
         return safety_weight * target_weight * (angle_reward + angvel_reward)
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
@@ -69,6 +72,9 @@ class LLHierarchicalShapingOnSparseTargetReward(RewardFunction):
         return base_reward + shaping_safety + shaping_target + shaping_comfort
 
 
+#########################################################################
+###           Scalarized Potential-based Multi-objectivization        ###
+#########################################################################
 class LLScalarizedMultiObjectivization(RewardFunction):
 
     def __init__(self, weights: List[float], **kwargs):
@@ -81,14 +87,17 @@ class LLScalarizedMultiObjectivization(RewardFunction):
         if info["done"]:
             return base_reward
         # evaluate individual shaping functions
-        shaping_collision = gamma * safety_collision_potential(next_state, info) - safety_collision_potential(state, info)
+        shaping_collision = gamma * safety_collision_potential(next_state, info) - safety_collision_potential(state,
+                                                                                                              info)
         shaping_exit = gamma * safety_exit_potential(next_state, info) - safety_exit_potential(state, info)
-        shaping_target = gamma * target_dist_to_goal_potential(next_state, info) - target_dist_to_goal_potential(state, info)
+        shaping_target = gamma * target_dist2goal_potential(next_state, info) - target_dist2goal_potential(state,
+                                                                                                           info)
         shaping_comf_ang = gamma * comfort_angle_potential(next_state, info) - comfort_angle_potential(state, info)
         shaping_comf_angvel = gamma * comfort_angvel_potential(next_state, info) - comfort_angvel_potential(state, info)
         # linear scalarization of the multi-objectivized requirements
         reward = base_reward
-        for w, f in zip(self._weights, [shaping_collision, shaping_exit, shaping_target, shaping_comf_ang, shaping_comf_angvel]):
+        for w, f in zip(self._weights,
+                        [shaping_collision, shaping_exit, shaping_target, shaping_comf_ang, shaping_comf_angvel]):
             reward += w * f
         return reward
 
@@ -113,3 +122,29 @@ class LLDecreasingScalarizedMultiObjectivization(LLScalarizedMultiObjectivizatio
         weights = np.array([1.0, 1.0, 0.5, 0.25, 0.25])
         weights /= np.sum(weights)
         super(LLDecreasingScalarizedMultiObjectivization, self).__init__(weights=weights, **kwargs)
+
+
+#########################################################################
+###              Scalarized Target vs Comfort Multi-Objective         ###
+#########################################################################
+class LLScalarizedMultiObjectiveTargetVSComfort(RewardFunction):
+
+    def __init__(self, lmbda: float, **kwargs):
+        """ Scalarized Reward to study the tradeoff between target and comfort.
+        - lmbda:    the weight coefficient for the target
+                    (1-lmbda) is the weight coefficient for the aggregated comforts
+        """
+        self._lambda = lmbda
+
+    def __call__(self, state, action=None, next_state=None, info=None) -> float:
+        # define norm coefficient s.t. target and comfort sum up to 1 under optimal policy
+        targ_coeff = target_dist2goal_potential(info["initial_state"], info)  # norm progress w.r.t. starting x
+        comfort_coeff = (1 / 2) * (1 / info["max_steps"])  # norm comfort w.r.t. nr comfort reqs and time steps
+        # compute target, comfort rewards
+        target_rew = targ_coeff * target_dist2goal_potential(next_state, info) - target_dist2goal_potential(state, info)
+        comfort_angle = float(abs(state["angle"]) <= info["angle_limit"])                   # 0 or 1
+        comfort_angvel = float(abs(state["angle_speed"]) <= info["angle_speed_limit"])      # 0 or 1
+        comfort_rew = comfort_coeff * (comfort_angle + comfort_angvel)                      # avg and norm step
+        # linear scalarization of the multi-objectivized requirements
+        reward = self._lambda * target_rew + (1 - self._lambda) * comfort_rew
+        return reward
