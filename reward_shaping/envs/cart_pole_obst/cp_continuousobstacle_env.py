@@ -148,6 +148,7 @@ class CartPoleContObsEnv(gym.Env):
         self.step_count = 0
         self.feasible_height = feasible_height  # this is used to evaluate feasibility in overcoming obstacle
         self.prob_sampling_feasible = prob_sampling_feasible  # this is used to sample obstacle height
+        self.initial_state = None
 
         # Target parameters
         self.x_target = x_target
@@ -241,7 +242,7 @@ class CartPoleContObsEnv(gym.Env):
 
         reward = self.reward()
         info = {'time': self.step_count, 'tau': self.tau,
-                'max_steps': self.max_episode_steps,
+                'max_steps': self.max_episode_steps, 'initial_state': self.initial_state,
                 'x_limit': self.x_threshold, 'theta_limit': self.theta_threshold_radians,
                 'x_target': self.x_target, 'x_target_tol': self.x_target_tol, 'dist_target_tol': self.dist_target_tol,
                 'theta_target': self.theta_target, 'theta_target_tol': self.theta_target_tol,
@@ -312,6 +313,8 @@ class CartPoleContObsEnv(gym.Env):
         self.state['obstacle_bottom'] = self.obstacle.bottom_y
         self.state['obstacle_top'] = self.obstacle.top_y
         self.state['collision'] = float(self.obstacle.intersect(self.state['x'], self.state['theta']))
+
+        self.initial_state = self.state
         return self.state
 
     def render(self, mode='human', info={'reward': None, 'return': None}):
