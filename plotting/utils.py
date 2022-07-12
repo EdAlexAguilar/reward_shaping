@@ -1,3 +1,5 @@
+import re
+
 def get_files(logdir, regex, fileregex):
     return logdir.glob(f"{regex}/{fileregex}")
 
@@ -18,7 +20,9 @@ def parse_env_task(filepath: str):
 
 
 def parse_reward(filepath: str):
-    for reward in ["default", "tltl", "bhnr", "morl_uni", "morl_dec", "hrs_pot"]:
-        if reward in filepath:
-            return reward
+    # note: important to have morl after morl_uni, morl_dec to avoid wrong parsing
+    for reward in ["default", "tltl", "bhnr", "morl_uni", "morl_dec", "hprs", "morl_lambda-[0-9]+\.[0-9]*"]:
+        res = re.search(reward, filepath)
+        if res is not None:
+            return res.group(0)
     raise ValueError(f"reward not found in {filepath}")

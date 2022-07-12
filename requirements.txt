@@ -2,7 +2,7 @@ gym[box2d]<0.22.0
 pyglet~=1.5.19
 h5py~=3.1.0
 matplotlib~=3.4.3
-numpy~=1.20.0
+numpy==1.22.3
 stable-baselines3[extra]~=1.5.0
 moviepy~=1.0.3
 PyYAML~=5.4.1
@@ -10,3 +10,5 @@ git+https://github.com/nickovic/rtamt.git@a16db77b61028f774d81457ff22e666229a543
 tensorboard~=2.8.0
 yamldataclassconfig~=1.5.0
 protobuf<3.21.0
+cloudpickle~=2.1.0
+nptyping<2

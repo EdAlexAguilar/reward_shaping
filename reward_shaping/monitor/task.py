@@ -25,9 +25,10 @@ class RLTask(gym.Wrapper):
     def _get_monitor_infos(self, obs, info):
         infos = {}
         for i, monitor in self._monitors.items():
-            mstate, mcounter = monitor.step(obs, info)
+            mstate, mcounter, mlrob = monitor.step(obs, info)
             infos[f"{self._requirements[i][0]}_state"] = mstate
             infos[f"{self._requirements[i][0]}_counter"] = mcounter
+            infos[f"{self._requirements[i][0]}_lastrob"] = mlrob
         return infos
 
     def reset(self, **kwargs):

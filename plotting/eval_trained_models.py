@@ -84,7 +84,7 @@ def main(args):
                         results[env_name][task_name][reward_name] = {}
                     print(f"[simulation] env: {env_name}, task: {task_name}, reward: {reward_name}")
                     env, env_params = make_env(env_name, task_name, 'eval', eval=True, logdir=None, seed=0)
-                    list_of_metrics = [f"{req}_counter" for req in env.req_labels]
+                    list_of_metrics = [f"{req}_{suff}" for suff in args.metric_suffix for req in env.req_labels]
                     # init results
                     results[env_name][task_name][reward_name]["rewards"] = []
                     results[env_name][task_name][reward_name]["ep_lengths"] = []
@@ -102,7 +102,7 @@ def main(args):
                         results[env_name][task_name][reward_name]["rewards"] += [float(r) for r in rewards]
                         results[env_name][task_name][reward_name]["ep_lengths"] += [int(l) for l in eplens]
                         for metric in list_of_metrics:
-                            results[env_name][task_name][reward_name][metric] += [int(l) for l in metrics[metric]]
+                            results[env_name][task_name][reward_name][metric] += [float(l) for l in metrics[metric]]
                         print(f"\tcheckpoint {i + 1}: nr episodes: {len(rewards)}, " \
                               f"mean reward: {np.mean(rewards):.5f}, mean lengths: {np.mean(eplens):.5f}")
                     env.close()
@@ -144,6 +144,7 @@ if __name__ == "__main__":
     parser.add_argument("--min_steps", type=int, default=0, help="filter checkpoint with steps > min_steps")
     parser.add_argument("--max_steps", type=int, default=1e10, help="filter checkpoint with steps < max_steps")
     parser.add_argument("--n_episodes", type=int, default=1, help="nr evaluation episodes")
+    parser.add_argument("--metric_suffix", type=str, nargs='+', default="counter", help="suffix of requirement metrics, eg. s1_counter")
     parser.add_argument("-save", action="store_true")
     parser.add_argument("-info", action="store_true")
     parser.add_argument("-render", action="store_true")

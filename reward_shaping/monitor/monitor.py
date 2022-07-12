@@ -20,6 +20,7 @@ class GenericMonitor(ABC):
         self._terminal_ids = None
         self._counter = None
         self._state_id = None
+        self._last_robustness = None
         self._states = None
 
     @abstractmethod
@@ -40,6 +41,9 @@ class GenericMonitor(ABC):
     def get_counter(self) -> bool:
         return self._counter
 
+    def get_last_robustness(self) -> bool:
+        return self._last_robustness
+
 
 class EnsureMonitor(GenericMonitor):
     def __init__(self, predicate: Callable):
@@ -48,11 +52,13 @@ class EnsureMonitor(GenericMonitor):
         self._terminal_ids = {1}
         self._state_id = None
         self._counter = None
+        self._last_robustness = None
         self.reset()
 
     def reset(self):
         self._state_id = 1
         self._counter = 0
+        self._last_robustness = None
 
     def step(self, state, info={}):
         """
@@ -61,15 +67,15 @@ class EnsureMonitor(GenericMonitor):
             state: (1, k), p(s)<0   -> (0, k)
             state: (0, k), *        -> (0, k)
          """
-        current_rob = self._p(state, info)
+        self._last_robustness = self._p(state, info)
         # transition
-        if self._state_id == 1 and current_rob < 0:
+        if self._state_id == 1 and self._last_robustness < 0:
             self._state_id = 0
         # update counter
-        if self._state_id == 1 and current_rob >= 0:
+        if self._state_id == 1 and self._last_robustness >= 0:
             self._counter += 1
         assert self._state_id in self._states, f"unexpected state {self._state_id} in a ensure automaton"
-        return self._state_id, self._counter
+        return self._state_id, self._counter, self._last_robustness
 
 
 class AchieveMonitor(GenericMonitor):
@@ -79,11 +85,13 @@ class AchieveMonitor(GenericMonitor):
         self._terminal_ids = {1}
         self._state_id = None
         self._counter = None
+        self._last_robustness = None
         self.reset()
 
     def reset(self):
         self._state_id = 0
         self._counter = 0
+        self._last_robustness = None
 
     def step(self, state, info={}):
         """
@@ -93,15 +101,15 @@ class AchieveMonitor(GenericMonitor):
             state: (1, k), p(s)>0   -> (1, k++)
             state: (1, k), p(s)<0   -> (1, k)
          """
-        current_rob = self._p(state, info)
+        self._last_robustness = self._p(state, info)
         # transition
-        if self._state_id == 0 and current_rob >= 0:
+        if self._state_id == 0 and self._last_robustness >= 0:
             self._state_id = 1
         # update counter
-        if current_rob >= 0:
+        if self._last_robustness >= 0:
             self._counter += 1
         assert self._state_id in self._states, f"unexpected state {self._state_id} in a achieve automaton"
-        return self._state_id, self._counter
+        return self._state_id, self._counter, self._last_robustness
 
 
 class ConquerMonitor(GenericMonitor):
@@ -111,11 +119,13 @@ class ConquerMonitor(GenericMonitor):
         self._terminal_ids = {2}
         self._state_id = None
         self._counter = None
+        self._last_robustness = None
         self.reset()
 
     def reset(self):
         self._state_id = 0
         self._counter = 0
+        self._last_robustness = None
 
     def step(self, state, info={}):
         """
@@ -127,21 +137,21 @@ class ConquerMonitor(GenericMonitor):
             (2, k), p(x)<0 -> (1, 0)
             (2, k), p(x)>0 -> (2, k++)
          """
-        current_rob = self._p(state, info)
+        self._last_robustness = self._p(state, info)
         # transition
-        if self._state_id == 0 and current_rob >= 0:
+        if self._state_id == 0 and self._last_robustness >= 0:
             self._state_id = 2
-        elif self._state_id == 1 and current_rob >= 0:
+        elif self._state_id == 1 and self._last_robustness >= 0:
             self._state_id = 2
-        elif self._state_id == 2 and current_rob < 0:
+        elif self._state_id == 2 and self._last_robustness < 0:
             self._state_id = 1
         # counter
-        if current_rob >= 0:
+        if self._last_robustness >= 0:
             self._counter += 1
         else:
             self._counter = 0  # reset counter
         assert self._state_id in self._states, f"unexpected state {self._state_id} in a conquer automaton"
-        return self._state_id, self._counter
+        return self._state_id, self._counter, self._last_robustness
 
 
 class EncourageMonitor(GenericMonitor):
@@ -151,11 +161,13 @@ class EncourageMonitor(GenericMonitor):
         self._terminal_ids = {0, 1}  # comfort is always satisfied
         self._state_id = None
         self._counter = None
+        self._last_robustness = None
         self.reset()
 
     def reset(self):
         self._state_id = 0
         self._counter = 0
+        self._last_robustness = None
 
     def step(self, state, info={}):
         """
@@ -163,17 +175,17 @@ class EncourageMonitor(GenericMonitor):
             state: (*, k), p(s)>0   -> (1, k++)
             state: (*, k), p(s)<0   -> (0, k)
          """
-        current_rob = self._p(state, info)
+        self._last_robustness = self._p(state, info)
         # transition
-        if current_rob >= 0:
+        if self._last_robustness >= 0:
             self._state_id = 1
-        elif current_rob < 0:
+        elif self._last_robustness < 0:
             self._state_id = 0
         # update counter
-        if current_rob >= 0:
+        if self._last_robustness >= 0:
             self._counter += 1
         assert self._state_id in self._states, f"unexpected state {self._state_id} in a encourage automaton"
-        return self._state_id, self._counter
+        return self._state_id, self._counter, self._last_robustness
 
 
 class Monitor(GenericMonitor):
