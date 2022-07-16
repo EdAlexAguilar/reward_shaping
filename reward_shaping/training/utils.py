@@ -169,7 +169,7 @@ def make_observation_wrap(env_name, env, ):
         fields = ["lidar_64", "velocity_x", "last_actions"]
         env = FilterObservationWrapper(env, fields)
         env = NormalizeObservationWithMinMax(env, {"lidar_64": (0.0, 15.0),  # norm lidar rays from 0, 15 meters
-                                                   "velocity_x": (0.0, 3.5),  # norm valocity from 0, 3.5 m/s
+                                                   "velocity_x": (0.0, 3.5),  # norm velocity from 0, 3.5 m/s
                                                    "last_actions": (-1.0, 1.0)  # norm actions in +-1
                                                    })
         env = FrameSkip(env, skip=10)  # skip 10 frames means control at 10 Hz

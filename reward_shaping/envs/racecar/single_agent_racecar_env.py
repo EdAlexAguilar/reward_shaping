@@ -131,6 +131,16 @@ class RacecarEnv(ChangingTrackSingleAgentRaceEnv):
 if __name__ == "__main__":
     scenario_files = ["treitlstrasse_single_agent.yml", "treitlstrasse_single_agent.yml"]
     env = RacecarEnv(scenario_files, render=True)
+    from reward_shaping.envs.wrappers import FilterObservationWrapper, NormalizeObservationWithMinMax
+    from gym.wrappers import FlattenObservation
+
+    fields = ["lidar_64", "velocity_x", "last_actions"]
+    env = FilterObservationWrapper(env, fields)
+    env = NormalizeObservationWithMinMax(env, {"lidar_64": (0.0, 15.0),  # norm lidar rays from 0, 15 meters
+                                               "velocity_x": (0.0, 3.5),  # norm valocity from 0, 3.5 m/s
+                                               "last_actions": (-1.0, 1.0)  # norm actions in +-1
+                                               })
+    env = FlattenObservation(env)
 
     for _ in range(5):
         env.reset()

@@ -1,10 +1,12 @@
 scenario_files:
+  - lecture_hall_single_agent.yml
   - treitlstrasse_single_agent.yml
-order: random
+  - aufbaulabor_single_agent.yml
+order: sequential
 max_steps: 6000           # sim steps, depends on integration step
 n_last_actions: 3         # nr last actions to include in the observation
 reward_params:
   target_progress: 0.99     # note: when lap=1, progress is not exactly 1.0. Then, use 0.99
   target_dist2obst: 0.5     # normalized distance to walls
-  min_speed_cmd: -1.0       # target min speed command, NORMALIZED in +-1
-  max_speed_cmd: +1.0       # target max speed command, NORMALIZED in +-1
+  min_speed_cmd: 0.00       # target min speed command, NORMALIZED in +-1 (0 ~ 1.75 m/s)
+  max_speed_cmd: 0.71       # target max speed command, NORMALIZED in +-1 (0.71 ~ 3.0 m/s)

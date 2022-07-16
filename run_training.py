@@ -9,7 +9,7 @@ def main(args):
     video_every = (args.steps - 1) if args.env == "f1tenth" else int(args.steps / 10)  # f1tenth only once at the end
     train_params = {'steps': args.steps,
                     'video_every': video_every,  # note: causes trouble with containers, one can disable it wt -novideo
-                    'n_recorded_episodes': 1,
+                    'n_recorded_episodes': 3,
                     'eval_every': min(10000, int(args.steps / 10)),
                     'n_eval_episodes': 10,
                     'checkpoint_every': int(args.steps / 10)}
