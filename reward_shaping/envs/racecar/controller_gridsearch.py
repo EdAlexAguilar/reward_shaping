@@ -9,7 +9,7 @@ import racecar_gym
 from gym.spaces import Box
 from racecar_gym import SingleAgentScenario, MultiAgentScenario
 from racecar_gym.envs.gym_api import ChangingTrackMultiAgentRaceEnv
-from wrappers.racecar_wrappers import Multi2SingleEnv
+from sklearn.model_selection import ParameterGrid
 
 class MultiAgentRacecarEnv(ChangingTrackMultiAgentRaceEnv):
     def __init__(self,
@@ -64,37 +64,60 @@ class MultiAgentRacecarEnv(ChangingTrackMultiAgentRaceEnv):
         if mode == "rgb_array":
             return screen
 
-def play_random_agent(env, num_trials=30):
+def evaluate_agent(env, wf_params, num_trials=30):
+    agent_a = WallFollow(**wf_params)
     progress = []
     for _ in range(num_trials):
         env.reset()
-        action = env.action_space.sample()
-        obs, reward, done, info = env.step(action)
-        init_progress= info['progress'] + float(info['lap'])
+        done = False
+        action_a = {'speed': 0.0, 'steering': 0.0}
+        action_b = {'speed': -1.0, 'steering': 0.0}
+        actions = {'A': action_a, 'B': action_b}
+        obss, rewards, dones, infos = env.step(actions)
+        init_progress_a = infos['A']['progress'] + float(infos['A']['lap'])
         while not done:
-            action = env.action_space.sample()
-            obs, reward, done, info = env.step(action)
+            action_a = agent_a.act(obss['A'])
+            actions = {'A': action_a, 'B': action_b}
+            obss, rewards, dones, infos = env.step(actions)
+            done = any(dones.values())
             if done:
-                fin_progress = info['progress'] + float(info['lap'])
-                progress.append(fin_progress - init_progress)
+                fin_progress_a = infos['A']['progress'] + float(infos['A']['lap'])
+                progress.append(fin_progress_a - init_progress_a)
     return np.array(progress)
 
 if __name__ == "__main__":
-    wall_follow_params = {'target_distance_left': 0.4,
-                          'reference_angle': 55,
-                          'steer_kp': 0.9,
-                          'steer_ki': 0.0,
-                          'steer_kd': 0.1,
-                          'target_velocity': 1,
-                          'throttle_kp': 1.1,
-                          'throttle_ki': 0.0,
-                          'throttle_kd': 0.1,
-                          'base_throttle': 0.0}
-    npc_controller = WallFollow(**wall_follow_params)
     scenario_files = ["treitlstrasse_multi_agent.yml", "treitlstrasse_multi_agent.yml"]
     env = MultiAgentRacecarEnv(scenario_files, render=True)
-    env = Multi2SingleEnv(env, npc_controller=npc_controller)
-    progress = play_random_agent(env, num_trials=10)
-    print(f"Environment ran with random agent. Avg Track Progress: {progress}")
+    best_progress = 0.0
+    wall_follow_params = {'target_distance_left': [0.4],
+                          'reference_angle': [50, 55, 60],
+                          'steer_kp': [0.7, 0.9, 1.0],
+                          'steer_ki': [0.0],
+                          'steer_kd': [0.05, 0.1, 0.15],
+                          'target_velocity': [1],
+                          'throttle_kp': [0.8, 1.0, 1.1],
+                          'throttle_ki': [0.0],
+                          'throttle_kd': [0.05, 0.1],
+                          'base_throttle': [0.0]}
+    for ii, controller_params in enumerate(list(ParameterGrid(wall_follow_params))):
+        progress = evaluate_agent(env, controller_params)
+        if np.mean(progress) >= best_progress:
+            best_progress = np.mean(progress)
+            print(f'New Best Controller: {ii} :  Mean Progress: {best_progress:.3f}')
+            print(controller_params)
+            print('\n')
     env.close()
     print("done")
+'''
+    wall_follow_params = {'target_distance_left':0.4,
+                        'reference_angle':55,
+                        'steer_kp':1.0,
+                        'steer_ki':0.0,
+                        'steer_kd':0.1,
+                        'target_velocity':1,
+                        'throttle_kp':1.0,
+                        'throttle_ki':0.0,
+                        'throttle_kd':0.05,
+                        'base_throttle':0.0}
+'''
+    # progress = evaluate_agent(env, wall_follow_params)
