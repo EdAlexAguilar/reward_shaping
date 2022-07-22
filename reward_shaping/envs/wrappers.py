@@ -187,32 +187,4 @@ class FrameSkip(gym.Wrapper):
         return self.env.reset(**kwargs)
 
 
-class DeltaSpeedWrapper(gym.ActionWrapper):
-    def __init__(self, env, frame_skip: int, action_config: Dict[str, Any], **kwargs):
-        super(DeltaSpeedWrapper, self).__init__(env)
-        self.action_space = gym.spaces.Dict({
-            "delta_speed": Box(low=-1.0, high=1.0, dtype=np.float32, shape=(1,)),
-            "steering": Box(low=-1.0, high=1.0, dtype=np.float32, shape=(1,))
-        })
-        self._max_delta_speed = action_config["max_accx"] * frame_skip * action_config["dt"]
-        self._minspeed = action_config["min_speed"]
-        self._maxspeed = action_config["max_speed"]
 
-    def reset(self, **kwargs):
-        self.speed_ms = np.array([0.0], dtype=np.float32)  # last speed cmd in m/s
-        return super(DeltaSpeedWrapper, self).reset(**kwargs)
-
-    def action(self, action):
-        delta_speed = action["delta_speed"][0] * self._max_delta_speed     # ranges in +-max delta speed
-        self.speed_ms = self.speed_ms + delta_speed
-        self.speed_ms = np.clip(self.speed_ms, self._minspeed, self._maxspeed)
-
-        original_action = {
-            "speed": self.speed_ms,
-            "steering": action["steering"],
-        }
-        return original_action
-
-    def reverse_action(self, action):
-        raise NotImplementedError("delta speed wrapper reverse action")
-        pass
