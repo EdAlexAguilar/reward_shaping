@@ -53,11 +53,10 @@ args=(
   ##
   ## Lunar Lander
   ##
-  "racecar drive sac ${logdir} 1 hprs ${short_steps}"
-  #"racecar drive sac ${logdir} 1 default ${short_steps} -novideo"
-  #"racecar drive sac ${logdir} 1 hprs ${short_steps} -novideo"
-  #"racecar drive sac ${logdir} 1 tltl ${short_steps} -novideo"
-  #"racecar drive sac ${logdir} 1 bhnr ${short_steps} -novideo"
-  #"racecar drive sac ${logdir} 1 morl_uni ${short_steps} -novideo"
-  #"racecar drive sac ${logdir} 1 morl_dec ${short_steps} -novideo"
+  "racecar drive_delta sac ${logdir} 1 default ${short_steps}"
+  "racecar drive_delta sac ${logdir} 1 hprs ${short_steps}"
+  "racecar drive_delta sac ${logdir} 1 tltl ${short_steps}"
+  "racecar drive_delta sac ${logdir} 1 bhnr ${short_steps}"
+  "racecar drive_delta sac ${logdir} 1 morl_uni ${short_steps}"
+  "racecar drive_delta sac ${logdir} 1 morl_dec ${short_steps}"
 )
