@@ -27,29 +27,27 @@ def comfort_dist2obst(state, info):
 def comfort_small_steer(state, info):
     # assume target steering is 0
     assert "last_actions" in state
-    steering_cmd = state["last_actions"][-1][0]
-    return 1.0 - clip_and_norm(abs(steering_cmd), 0.0, 1.0)
+    abs_steering = abs(state["last_actions"][-1][0])
+    return 1.0 - clip_and_norm(abs_steering, 0.0, info["comfort_max_steering"])
 
 
-def comfort_min_speed_cmd(state, info):
+def comfort_min_velx(state, info):
     # assume actions are already normalized in +-1
-    assert "last_actions" in state and "min_speed_cmd" in info
-    speed_cmd = state["last_actions"][-1][1]
-    return clip_and_norm(speed_cmd, -1.0, info["min_speed_cmd"])
+    assert "velocity_x" in state and "min_velx" in info
+    return clip_and_norm(state["velocity_x"][0], 0.0, info["min_velx"])
 
 
 def comfort_max_speed_cmd(state, info):
     # assume actions are already normalized in +-1
-    assert "last_actions" in state and "max_speed_cmd" in info
-    speed_cmd = state["last_actions"][-1][1]
-    return 1 - clip_and_norm(speed_cmd, info["max_speed_cmd"], 1.0)
+    assert "velocity_x" in state and "max_velx" in info and "limit_velx" in info
+    return 1 - clip_and_norm(state["velocity_x"][0], info["max_velx"], info["limit_velx"])
 
 
 def comfort_smooth_control(state, info):
-    assert "last_actions" in state
-    norm2_action = np.linalg.norm(state["last_actions"][-1] - state["last_actions"][-2])
-    max_norm2 = np.sqrt(8)  # assume action_1=[-1, -1], action_2=[1, 1]
-    return 1.0 - clip_and_norm(norm2_action, 0.0, max_norm2)
+    assert "last_actions" in state and "comfort_max_norm" in info
+    l2norm_action = np.linalg.norm(state["last_actions"][-1] - state["last_actions"][-2])
+    max_l2norm = np.sqrt(8)  # assume action_1=[-1, -1], action_2=[1, 1]
+    return 1.0 - clip_and_norm(l2norm_action, info["comfort_max_norm"], max_l2norm)
 
 
 def simple_base_reward(state, info):
@@ -73,7 +71,7 @@ class RCHierarchicalPotentialShaping(RewardFunction):
     def _comfort_potential(state, info):
         comfort_d2o = comfort_dist2obst(state, info)
         comfort_steer = comfort_small_steer(state, info)
-        comfort_minv = comfort_min_speed_cmd(state, info)
+        comfort_minv = comfort_min_velx(state, info)
         comfort_maxv = comfort_max_speed_cmd(state, info)
         comfort_smooth = comfort_smooth_control(state, info)
         # hierarchical weights
@@ -122,7 +120,7 @@ class RCScalarizedMultiObjectivization(RewardFunction):
         shaping_target = gamma * dist_to_target(next_state, info) - dist_to_target(state, info)
         shaping_comf_d20 = gamma * comfort_dist2obst(next_state, info) - comfort_dist2obst(state, info)
         shaping_comf_steer = gamma * comfort_small_steer(next_state, info) - comfort_small_steer(state, info)
-        shaping_comf_minv = gamma * comfort_min_speed_cmd(next_state, info) - comfort_min_speed_cmd(state, info)
+        shaping_comf_minv = gamma * comfort_min_velx(next_state, info) - comfort_min_velx(state, info)
         shaping_comf_maxv = gamma * comfort_max_speed_cmd(next_state, info) - comfort_max_speed_cmd(state, info)
         shaping_comf_smooth = gamma * comfort_smooth_control(next_state, info) - comfort_smooth_control(state, info)
         # linear scalarization of the multi-objectivized requirements

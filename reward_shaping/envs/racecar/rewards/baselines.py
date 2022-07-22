@@ -1,3 +1,4 @@
+import math
 from typing import Dict, Any
 
 import numpy as np
@@ -14,11 +15,14 @@ class RCEvalConfig(EvalConfig):
 
     @property
     def monitoring_variables(self):
-        return ['time', 'collision', 'progress', 'target_progress', 'dist2obst', 'target_dist2obst']
+        return ['time', 'collision', 'progress', 'target_progress', 'dist2obst', 'target_dist2obst',
+                'velocity_x', 'min_velx', 'max_velx', 'last_steering', 'comfort_max_steering',
+                'action_norm', 'comfort_max_norm']
 
     @property
     def monitoring_types(self):
-        return ['int', 'float', 'float', 'float', 'float', 'float']
+        return ['int', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
+                'float', 'float', 'float', 'float']
 
     def get_monitored_state(self, state, done, info) -> Dict[str, Any]:
         # compute monitoring variables (all of them normalized in 0,1)
@@ -28,9 +32,16 @@ class RCEvalConfig(EvalConfig):
             'progress': state['progress'],       # already in 0 or 1
             'target_progress': info['target_progress'],
             'dist2obst': state['dist2obst'],     # already in 0 or 1
-            'target_dist2obst': info['target_dist2obst']
+            'target_dist2obst': info['target_dist2obst'],
+            'velocity_x': state['velocity_x'],
+            'min_velx': info['min_velx'],
+            'max_velx': info['max_velx'],
+            'last_steering': state['last_actions'][-1][0],
+            'comfort_max_steering': info['comfort_max_steering'],
+            'action_norm': np.linalg.norm([state['last_actions'][-1] - state['last_actions'][-2]]),
+            'comfort_max_norm': info['comfort_max_norm'],
         }
-        self._max_episode_len = info['max_steps']
+        self._max_episode_len = math.ceil(info['max_steps'] / info["frame_skip"])
         return monitored_state
 
     def eval_episode(self, episode) -> float:
@@ -50,8 +61,12 @@ class RCEvalConfig(EvalConfig):
                                          episode=episode)[0][1]
         #
         comfort_dist2obst = "(dist2obst>=target_dist2obst)"
+        comfort_minvelx = "(velocity_x>=min_velx)"
+        comfort_maxvelx = "(velocity_x<=max_velx)"
+        comfort_steering = "(abs(last_steering)<=comfort_max_steering)"
+        comfort_actnorm = "(action_norm<=comfort_max_norm)"
         comfort_metrics = []
-        for comfort_spec in [comfort_dist2obst]:
+        for comfort_spec in [comfort_dist2obst, comfort_minvelx, comfort_maxvelx, comfort_steering, comfort_actnorm]:
             comfort_trace = monitor_stl_episode(stl_spec=comfort_spec,
                                                 vars=self.monitoring_variables, types=self.monitoring_types,
                                                 episode=episode)
