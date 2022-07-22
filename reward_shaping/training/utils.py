@@ -85,7 +85,7 @@ def make_base_env(env, task, env_params={}):
             from reward_shaping.envs.racecar.wrappers import DeltaSpeedWrapper
             assert all([p in env_params for p in ["frame_skip", "action_config"]]), "missing parameters racecar"
             env = DeltaSpeedWrapper(env, **env_params)
-        if task == "drive":
+        if task == "drive" or task == "drive_delta":
             specs = [(k, op, build_pred(env_params)) for k, (op, build_pred) in get_all_specs().items()]
             env = RLTask(env=env, requirements=specs)
         elif task == "drive_multi":
@@ -179,11 +179,11 @@ def make_observation_wrap(env_name, env, env_params={}):
         from reward_shaping.envs.wrappers import FilterObservationWrapper, NormalizeObservationWithMinMax, FrameSkip
         fields = ["lidar_64", "velocity_x", "last_actions"]
         env = FilterObservationWrapper(env, fields)
-        for obs in env_params["observation_config"]["obs_names"]:
-            env = ObservationHistoryWrapper(env, obs_name=obs,
-                                            n_last_observations=env_params["observation_config"]["n_last_observations"])
         env = NormalizeObservationWithMinMax(env, {"lidar_64": (0.0, 15.0),  # norm lidar rays from 0, 15 meters
                                                    "velocity_x": (0.0, 3.5),  # norm valocity from 0, 3.5 m/s
                                                    "last_actions": (-1.0, 1.0)  # norm actions in +-1
                                                    })
+        for obs in env_params["observation_config"]["obs_names"]:
+            env = ObservationHistoryWrapper(env, obs_name=obs,
+                                            n_last_observations=env_params["observation_config"]["n_last_observations"])
     return env
