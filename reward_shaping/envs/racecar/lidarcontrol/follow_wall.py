@@ -65,7 +65,7 @@ class WallFollow:
         lidar = observation[f'lidar_{self.num_scans}']
         measured_vel = self.process_vel(velocity)
         throttle = self.throttle_controller.control(self.target_velocity, measured_vel)
-        throttle = np.clip(throttle, 0, 1)
+        throttle = np.clip(throttle, -1, 1)
         measured_dist = self.process_lidar(lidar)
         steering = self.steer_controller.control(self.target_distance_left, measured_dist)
         steering = np.clip(steering, -1, 1)

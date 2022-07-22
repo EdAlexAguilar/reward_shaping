@@ -1,1 +1,1 @@
-#-e git+https://github.com:luigiberducci/racecar_gym.git#egg=racecar_gym
+-e git+https://github.com/luigiberducci/racecar_gym.git#egg=racecar_gym

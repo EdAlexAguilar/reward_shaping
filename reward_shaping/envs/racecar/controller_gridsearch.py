@@ -27,7 +27,7 @@ class MultiAgentRacecarEnv(ChangingTrackMultiAgentRaceEnv):
         self._steps = 0
         self._initial_progress = None
 
-        self._eval = params["eval"]
+        self._eval = True # params["eval"]
         self._seed = params["seed"]
         self.seed(self._seed)
 
@@ -64,7 +64,7 @@ class MultiAgentRacecarEnv(ChangingTrackMultiAgentRaceEnv):
         if mode == "rgb_array":
             return screen
 
-def evaluate_agent(env, wf_params, num_trials=30):
+def evaluate_agent(env, wf_params, num_trials=3):
     agent_a = WallFollow(**wf_params)
     progress = []
     for _ in range(num_trials):
@@ -89,16 +89,16 @@ if __name__ == "__main__":
     scenario_files = ["treitlstrasse_multi_agent.yml", "treitlstrasse_multi_agent.yml"]
     env = MultiAgentRacecarEnv(scenario_files, render=True)
     best_progress = 0.0
-    wall_follow_params = {'target_distance_left': [0.4],
-                          'reference_angle': [50, 55, 60],
-                          'steer_kp': [0.7, 0.9, 1.0],
+    wall_follow_params = {'target_distance_left': [0.4, 0.5, 0.6, 0.7],
+                          'reference_angle': [45, 50, 55, 60, 65],
+                          'steer_kp': [0.8, 0.9, 1.0, 1.1, 1.2],
                           'steer_ki': [0.0],
-                          'steer_kd': [0.05, 0.1, 0.15],
-                          'target_velocity': [1],
-                          'throttle_kp': [0.8, 1.0, 1.1],
+                          'steer_kd': [0.05, 0.1, 0.15, 0.2, 0.25],
+                          'target_velocity': [1.0, 1.25, 0.75],
+                          'throttle_kp': [1.0, 1.1, 1.2, 1.3],
                           'throttle_ki': [0.0],
-                          'throttle_kd': [0.05, 0.1],
-                          'base_throttle': [0.0]}
+                          'throttle_kd': [0.1, 0.15, 0.2, 0.25],
+                          'base_throttle': [-0.2, -0.1, 0.0, 0.1, 0.2, 0.3]}
     for ii, controller_params in enumerate(list(ParameterGrid(wall_follow_params))):
         progress = evaluate_agent(env, controller_params)
         if np.mean(progress) >= best_progress:
@@ -106,6 +106,11 @@ if __name__ == "__main__":
             print(f'New Best Controller: {ii} :  Mean Progress: {best_progress:.3f}')
             print(controller_params)
             print('\n')
+        if np.mean(progress) >= 0.9*best_progress and np.mean(progress)!=best_progress:
+            print(f'New OK Controller: {ii} : Mean Progress{np.mean(progress):.3f}')
+            print(controller_params)
+        if ii%10==0:
+            print(f'{ii} controllers checked!  --------------------*--')
     env.close()
     print("done")
 '''
