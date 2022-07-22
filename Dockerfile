@@ -18,5 +18,9 @@ COPY reward_shaping/envs/racecar/requirements.txt /build/racecar_requirements.tx
 RUN pip install -r requirements.txt && pip install --upgrade "antlr4-python3-runtime<4.6"
 RUN pip install -r racecar_requirements.txt
 
+# download track maps
+WORKDIR /build/src/racecar-gym/models/scenes
+RUN wget https://github.com/luigiberducci/racecar_gym/releases/download/tracks-v2.0.0/all.zip && unzip all.zip
+
 WORKDIR /src
 
