@@ -78,7 +78,7 @@ class RacecarEnv(ChangingTrackSingleAgentRaceEnv):
                 "n_last_observations": 1,
             },
             "frame_skip": 1,
-            "render": True,
+            "render": False,
             "eval": False,
             "seed": 0,
         }

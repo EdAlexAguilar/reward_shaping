@@ -1,8 +1,11 @@
 FROM pytorch/pytorch:1.9.0-cuda10.2-cudnn7-devel
 
+# solution to nvidia issue: https://github.com/open-mmlab/OpenPCDet/issues/955
+RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/3bf863cc.pub
+
 RUN apt-get update && apt-get install -y xvfb python-opengl \
     git swig gcc libxml2-dev libxslt1-dev zlib1g-dev g++ libfontconfig-dev \
-    wget unzip
+    unzip wget
 RUN pip install --upgrade pip
 
 WORKDIR /src
