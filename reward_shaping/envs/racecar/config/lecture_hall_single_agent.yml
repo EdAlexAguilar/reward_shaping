@@ -1,5 +1,5 @@
 world:
-  name: treitlstrasse
+  name: lecture_hall
 agents:
   - id: A
     vehicle:

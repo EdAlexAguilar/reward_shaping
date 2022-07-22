@@ -11,17 +11,17 @@ reward_params:
   comfort_max_steering: 0.10        # target max steering in absolute value, NOTE: NORMALIZED in +-1
   comfort_max_norm: 0.25    # comfortable deviation on consecutive actions, measured as l2-norm (empirically choosen)
 action_config:
-  delta_speed: False       # if true controls the increment in speed, if false directly controls the speed
+  delta_speed: True       # if true controls the increment in speed, if false directly controls the speed
   min_velx: 0.0           # min speed m/s, consistent with pybullet sim
   max_velx: 3.5           # max speed m/s, consistent with pybullet sim
-  cap_min_speed: 0.0       # min speed m/s
+  cap_min_speed: 1.0       # min speed m/s
   cap_max_speed: 3.5       # min speed m/s
   max_accx: 4.0            # max forward acceleration m/s2
   dt: 0.01                 # integration time in simulation
 observation_config:
   use_history_wrapper: True   # if true, stack last actions and obs in the observations
   n_last_actions: 3       # n actions to stack with action-history wrapper
-  n_last_observations: 1  # n observation to stack with obs history wrapper
+  n_last_observations: 3  # n observation to stack with obs history wrapper
   obs_names:
     - lidar_64
     - velocity_x
