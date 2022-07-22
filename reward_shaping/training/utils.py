@@ -22,7 +22,7 @@ def make_env(env_name, task, reward, eval=False, logdir=None, seed=0):
     env = make_base_env(env_name, task, env_params)
     # set reward
     env = make_reward_wrap(env_name, env, env_params, reward)
-    env = make_observation_wrap(env_name, env)
+    env = make_observation_wrap(env_name, env, env_params)
     env = FlattenObservation(env)
     env = FlattenAction(env)
     check_env(env)
@@ -75,6 +75,10 @@ def make_base_env(env, task, env_params={}):
         from reward_shaping.envs.racecar.single_agent_racecar_env import RacecarEnv
         from reward_shaping.envs.racecar.specs import get_all_specs
         env = RacecarEnv(**env_params)
+        if env_params["action_config"]["delta_speed"] == True:
+            from reward_shaping.envs.wrappers import DeltaSpeedWrapper
+            assert all([p in env_params for p in ["frame_skip", "action_config"]]), "missing parameters racecar"
+            env = DeltaSpeedWrapper(env, **env_params)
         if task == "drive":
             specs = [(k, op, build_pred(env_params)) for k, (op, build_pred) in get_all_specs().items()]
             env = RLTask(env=env, requirements=specs)
@@ -157,7 +161,7 @@ def make_reward_wrap(env_name, env, env_params, reward, logdir=None):
         env = RewardWrapper(env, reward_fn=reward_fn)
     return env
 
-def make_observation_wrap(env_name, env, ):
+def make_observation_wrap(env_name, env, env_params = {}):
     """ goal: filter and normalize observations """
     if env_name == "bipedal_walker":
         # in bipedal walker, the agent do not observe its position 'x'
@@ -172,5 +176,5 @@ def make_observation_wrap(env_name, env, ):
                                                    "velocity_x": (0.0, 3.5),  # norm valocity from 0, 3.5 m/s
                                                    "last_actions": (-1.0, 1.0)  # norm actions in +-1
                                                    })
-        env = FrameSkip(env, skip=10)  # skip 10 frames means control at 10 Hz
+        env = FrameSkip(env, skip=env_params["frame_skip"])  # skip 10 frames means control at 10 Hz
     return env

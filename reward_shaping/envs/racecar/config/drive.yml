@@ -2,9 +2,16 @@ scenario_files:
   - treitlstrasse_single_agent.yml
 order: random
 max_steps: 6000           # sim steps, depends on integration step
+frame_skip: 10            # nr frame to skip after each action
 n_last_actions: 3         # nr last actions to include in the observation
 reward_params:
   target_progress: 0.99     # note: when lap=1, progress is not exactly 1.0. Then, use 0.99
   target_dist2obst: 0.5     # normalized distance to walls
   min_speed_cmd: -1.0       # target min speed command, NORMALIZED in +-1
   max_speed_cmd: +1.0       # target max speed command, NORMALIZED in +-1
+action_config:
+  delta_speed: True        # if true controls the increment in speed, if false directly controls the speed
+  min_speed: 1.0           # min speed m/s
+  max_speed: 3.5           # max speed m/s
+  max_accx: 4.0            # max forward acceleration m/s2
+  dt: 0.01                 # integration time in simulation

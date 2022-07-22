@@ -11,6 +11,8 @@ from racecar_gym import SingleAgentScenario
 from racecar_gym.envs.gym_api import ChangingTrackSingleAgentRaceEnv
 from gym.utils import seeding
 
+from reward_shaping.envs.wrappers import DeltaSpeedWrapper
+
 
 class RacecarEnv(ChangingTrackSingleAgentRaceEnv):
     def __init__(self,
@@ -129,10 +131,18 @@ class RacecarEnv(ChangingTrackSingleAgentRaceEnv):
 
 
 if __name__ == "__main__":
-    scenario_files = ["treitlstrasse_single_agent.yml", "treitlstrasse_single_agent.yml"]
-    env = RacecarEnv(scenario_files, render=True)
 
-    for _ in range(5):
+    scenario_files = ["treitlstrasse_single_agent.yml", "treitlstrasse_single_agent.yml"]
+    scenario_files = ["treitlstrasse_single_agent.yml"]
+    action_config = {"min_speed": 1.0, "max_speed": 2.0, "max_accx": 4.0, "dt": 0.01}
+
+    env = RacecarEnv(scenario_files, render=True)
+    env = DeltaSpeedWrapper(env, action_config=action_config, frame_skip=1)
+
+    for _ in range(1):
+
+        speeds = []
+
         env.reset()
         done = False
         tot_reward = 0
@@ -140,7 +150,12 @@ if __name__ == "__main__":
             action = env.action_space.sample()
             obs, reward, done, info = env.step(action)
             tot_reward += reward
+            speeds.append(env.speed_ms)
         print(tot_reward)
+
+    import matplotlib.pyplot as plt
+    plt.plot(speeds)
+    plt.show()
 
     env.close()
     print("done")
