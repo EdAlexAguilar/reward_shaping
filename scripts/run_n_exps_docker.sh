@@ -11,7 +11,7 @@ steps=$8
 novideo=$9
 
 image=luigiberducci/reward_shaping:racecar
-gpus="" #"--gpus all"
+gpus="--gpus all"
 
 debug_prefix="run_n_exps"
 
