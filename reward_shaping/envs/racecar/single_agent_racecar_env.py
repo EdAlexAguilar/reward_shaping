@@ -81,10 +81,6 @@ class RacecarEnv(ChangingTrackSingleAgentRaceEnv):
             params[k] = v
         return params
 
-    def seed(self, seed=None):
-        self.observation_space.seed(seed)
-        self.action_space.seed(seed)
-
     def reset(self):
         obs = super(RacecarEnv, self).reset(mode='grid' if self._eval else 'random')
         self._initial_progress = None
