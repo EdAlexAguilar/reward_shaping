@@ -177,8 +177,6 @@ def make_observation_wrap(env_name, env, env_params={}):
         env = FilterObservationWrapper(env, fields)
     if env_name == "racecar":
         from reward_shaping.envs.wrappers import FilterObservationWrapper, NormalizeObservationWithMinMax, FrameSkip
-        fields = ["lidar_64", "velocity_x", "last_actions"]
-        env = FilterObservationWrapper(env, fields)
         env = NormalizeObservationWithMinMax(env, {"lidar_64": (0.0, 15.0),  # norm lidar rays from 0, 15 meters
                                                    "velocity_x": (0.0, 3.5),  # norm velocity from 0, 3.5 m/s
                                                    "last_actions": (-1.0, 1.0)  # norm actions in +-1

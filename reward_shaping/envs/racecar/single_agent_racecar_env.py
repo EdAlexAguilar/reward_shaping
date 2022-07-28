@@ -72,11 +72,6 @@ class RacecarEnv(ChangingTrackSingleAgentRaceEnv):
                 "max_accx": 4.0,
                 "dt": 0.01,
             },
-            "observation_config": {
-                "use_history_wrapper": False,
-                "n_last_actions": 1,
-                "n_last_observations": 1,
-            },
             "frame_skip": 1,
             "render": False,
             "eval": False,
@@ -156,7 +151,7 @@ if __name__ == "__main__":
     env = RacecarEnv(scenario_files, render=True, eval=True)
     env = ActionHistoryWrapper(env, n_last_actions=3)
     env = DeltaSpeedWrapper(env, action_config=action_config, frame_skip=1)
-    env = ObservationHistoryWrapper(env, obs_name="lidar_64", n_last_obs=3)
+    env = ObservationHistoryWrapper(env, obs_name="lidar_64", n_last_observations=3)
 
     for _ in range(1):
 
@@ -177,6 +172,7 @@ if __name__ == "__main__":
             steps += 1
             norms.append(np.linalg.norm(obs["last_actions"][-1] - obs["last_actions"][-2]))
         print(tot_reward)
+    env.close()
 
     import matplotlib.pyplot as plt
     plt.plot(speeds)
@@ -184,5 +180,4 @@ if __name__ == "__main__":
     plt.plot(norms)
     plt.show()
 
-    env.close()
     print("done")
