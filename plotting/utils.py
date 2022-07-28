@@ -8,7 +8,7 @@ def parse_env_task(filepath: str):
         if env_name in filepath:
             env = env_name
             break
-    for task_name in ["fixed_height", "forward", "hardcore", "land", "drive"]:
+    for task_name in ["fixed_height", "forward", "hardcore", "land", "drive_delta", "drive"]:
         if task_name in filepath:
             task = task_name
             break
