@@ -1,7 +1,8 @@
 import collections
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Any
 
 import gym
+from gym.spaces import Box
 from gym.wrappers import LazyFrames
 import numpy as np
 from stable_baselines3.common.type_aliases import GymObs
@@ -184,3 +185,6 @@ class FrameSkip(gym.Wrapper):
 
     def reset(self, **kwargs) -> GymObs:
         return self.env.reset(**kwargs)
+
+
+

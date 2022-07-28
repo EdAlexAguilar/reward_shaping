@@ -6,6 +6,7 @@ from gym.wrappers import FlattenObservation
 from stable_baselines3.common.env_checker import check_env
 
 from reward_shaping.core.wrappers import RewardWrapper
+from reward_shaping.envs.racecar.wrappers import ObservationHistoryWrapper
 from reward_shaping.envs.wrappers import FlattenAction
 from reward_shaping.monitor.task import RLTask
 
@@ -22,7 +23,7 @@ def make_env(env_name, task, reward, eval=False, logdir=None, seed=0):
     env = make_base_env(env_name, task, env_params)
     # set reward
     env = make_reward_wrap(env_name, env, env_params, reward)
-    env = make_observation_wrap(env_name, env)
+    env = make_observation_wrap(env_name, env, env_params)
     env = FlattenObservation(env)
     env = FlattenAction(env)
     check_env(env)
@@ -73,9 +74,18 @@ def make_base_env(env, task, env_params={}):
         env = RLTask(env=env, requirements=specs)
     elif env == "racecar":
         from reward_shaping.envs.racecar.single_agent_racecar_env import RacecarEnv
+        from reward_shaping.envs.wrappers import FrameSkip
         from reward_shaping.envs.racecar.specs import get_all_specs
+        from reward_shaping.envs.racecar.wrappers import ActionHistoryWrapper, ObservationHistoryWrapper
         env = RacecarEnv(**env_params)
-        if task == "drive":
+        env = FrameSkip(env, skip=env_params["frame_skip"])  # skip 10 frames means control at 10 Hz
+        if env_params["observation_config"]["use_history_wrapper"] == True:
+            env = ActionHistoryWrapper(env, n_last_actions=env_params["observation_config"]["n_last_actions"])
+        if env_params["action_config"]["delta_speed"] == True:
+            from reward_shaping.envs.racecar.wrappers import DeltaSpeedWrapper
+            assert all([p in env_params for p in ["frame_skip", "action_config"]]), "missing parameters racecar"
+            env = DeltaSpeedWrapper(env, **env_params)
+        if task == "drive" or task == "drive_delta":
             specs = [(k, op, build_pred(env_params)) for k, (op, build_pred) in get_all_specs().items()]
             env = RLTask(env=env, requirements=specs)
         elif task == "drive_multi":
@@ -157,7 +167,8 @@ def make_reward_wrap(env_name, env, env_params, reward, logdir=None):
         env = RewardWrapper(env, reward_fn=reward_fn)
     return env
 
-def make_observation_wrap(env_name, env, ):
+
+def make_observation_wrap(env_name, env, env_params={}):
     """ goal: filter and normalize observations """
     if env_name == "bipedal_walker":
         # in bipedal walker, the agent do not observe its position 'x'
@@ -172,5 +183,10 @@ def make_observation_wrap(env_name, env, ):
                                                    "velocity_x": (0.0, 3.5),  # norm velocity from 0, 3.5 m/s
                                                    "last_actions": (-1.0, 1.0)  # norm actions in +-1
                                                    })
-        env = FrameSkip(env, skip=10)  # skip 10 frames means control at 10 Hz
+        for obs in env_params["observation_config"]["obs_names"]:
+            env = ObservationHistoryWrapper(env, obs_name=obs,
+                                            n_last_observations=env_params["observation_config"]["n_last_observations"])
+        fields = ["last_lidar_64", "last_velocity_x", "last_actions"]
+        env = FilterObservationWrapper(env, fields)
+
     return env

@@ -53,39 +53,39 @@ def _build_keep_center(env_params):
 
 def _build_small_steering(env_params):
     """
-    encourage abs(last steering) <= 0
+    encourage abs(last steering) <= max_steering
 
     note:   assume actions is a (k,2)-dim array containing the last k actions,
             where the 1st action is steering and 2nd action is speed.
     """
-    return lambda state, info: - abs(state["last_actions"][-1][0])
+    return lambda state, info: env_params["reward_params"]["comfort_max_steering"] - abs(state["last_actions"][-1][0])
 
 
 def _build_min_velocity(env_params):
     """
     encourage velocity_x >= min_velocity
     """
-    return lambda state, info: state["last_actions"][-1][1] - env_params["reward_params"]["min_speed_cmd"]
+    return lambda state, info: state["velocity_x"] - env_params["reward_params"]["min_velx"]
 
 
 def _build_max_velocity(env_params):
     """
     encourage velocity_x <= max_velocity
     """
-    return lambda state, info: env_params["reward_params"]["max_speed_cmd"] - state["last_actions"][-1][1]
+    return lambda state, info: env_params["reward_params"]["max_velx"] - state["velocity_x"]
 
 
 def _build_smooth_controls(env_params):
     """
-    encourage (action[-1] - action[-2])**2 <= 0
+    encourage (action[-1] - action[-2])**2 <= comfortable_value
     """
-    return lambda state, info: - np.linalg.norm(state["last_actions"][-1] - state["last_actions"][-2])
+    return lambda state, info: env_params["reward_params"]["comfort_max_norm"] - np.linalg.norm(state["last_actions"][-1] - state["last_actions"][-2])
 
 
 register_spec('s1_coll', Operator.ENSURE, _build_no_collision)
 register_spec("t_lap", Operator.ACHIEVE, _build_complete_lap)
 register_spec("c1_center", Operator.ENCOURAGE, _build_keep_center)
+register_spec("c3_minvel", Operator.ENCOURAGE, _build_min_velocity)
+register_spec("c4_maxvel", Operator.ENCOURAGE, _build_max_velocity)
 register_spec("c2_smallsteer", Operator.ENCOURAGE, _build_small_steering)
-register_spec("c3_minvel", Operator.ENCOURAGE, _build_max_velocity)
-register_spec("c4_maxvel", Operator.ENCOURAGE, _build_keep_center)
 register_spec("c5_smooth", Operator.ENCOURAGE, _build_smooth_controls)
