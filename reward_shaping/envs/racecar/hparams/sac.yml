@@ -11,3 +11,7 @@ gradient_steps: 1
 target_entropy: 'auto'
 action_noise: null
 use_sde: True
+policy_kwargs:
+  net_arch:
+    qf: [256, 256]
+    pi: [64, 64]
