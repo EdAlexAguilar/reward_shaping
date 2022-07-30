@@ -1,5 +1,5 @@
 world:
-  name: lecture_hall
+  name: getreidemarkt
   reverse: False
   domain_randomization:
     gravity: [ -15, -9.81 ]

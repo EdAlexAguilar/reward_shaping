@@ -1,6 +1,6 @@
 world:
-  name: lecture_hall
-  reverse: False
+  name: treitlstrasse
+  reverse: True
   domain_randomization:
     gravity: [ -15, -9.81 ]
     velocity_multiplier: [ 20, 25 ]
