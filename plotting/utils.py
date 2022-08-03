@@ -18,7 +18,7 @@ def parse_env_task(filepath: str):
 
 
 def parse_reward(filepath: str):
-    for reward in ["default", "tltl", "bhnr", "morl_uni", "morl_dec", "hprs"]:
+    for reward in ["default", "tltl", "bhnr", "morl_uni", "morl_dec", "hprs", "hrs_pot"]:
         if reward in filepath:
             return reward
     raise ValueError(f"reward not found in {filepath}")
