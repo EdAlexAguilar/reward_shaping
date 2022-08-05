@@ -183,7 +183,7 @@ class MultiAgentRacecarEnv(ChangingTrackMultiAgentRaceEnv):
         obs["progress"] = progress
         obs["dist2obst"] = info["obstacle"]
         obs["velocity_x"] = np.array([obs["velocity"][0]], dtype=np.float32)
-        obs["dist_ego2npc"] = (info["progress"] - info_npc["progress"]) * self._track_length
+        obs["dist_ego2npc"] = ((info["lap"] + info["progress"]) - (info_npc["lap"] + info_npc["progress"])) * self._track_length
         return obs
 
     def _extend_info(self, reward, done, joint_info):
@@ -215,7 +215,7 @@ class MultiAgentRacecarEnv(ChangingTrackMultiAgentRaceEnv):
 
     def render(self, mode):
         view_mode = "follow"
-        screen = super(MultiAgentRacecarEnv, self).render(mode=view_mode)
+        screen = super(MultiAgentRacecarEnv, self).render(mode=view_mode, agent=self._agent_id)
         if mode == "rgb_array":
             return screen
 

@@ -12,8 +12,7 @@ npc_max_base_speed: 1.75
 npc_min_var_speed: 0.25
 npc_max_var_speed: 0.75
 npc_params:
-    scan_field: "lidar_64"
-
+  scan_field: "lidar_64"
 
 reward_params:
   safety_distance: -0.75
