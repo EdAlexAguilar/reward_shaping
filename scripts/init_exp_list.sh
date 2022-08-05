@@ -51,12 +51,21 @@ args=(
   #"lunar_lander land sac ${logdir} 1 morl_uni ${long_steps} -novideo"
   #"lunar_lander land sac ${logdir} 1 morl_dec ${long_steps} -novideo"
   ##
-  ## Lunar Lander
+  ## Racecar (Single-agent)
   ##
-  "racecar drive_delta sac ${logdir} 1 default ${short_steps}"
-  "racecar drive_delta sac ${logdir} 1 hprs ${short_steps}"
-  "racecar drive_delta sac ${logdir} 1 tltl ${short_steps}"
-  "racecar drive_delta sac ${logdir} 1 bhnr ${short_steps}"
-  "racecar drive_delta sac ${logdir} 1 morl_uni ${short_steps}"
-  "racecar drive_delta sac ${logdir} 1 morl_dec ${short_steps}"
+  #"racecar drive_delta sac ${logdir} 1 default ${short_steps}"
+  #"racecar drive_delta sac ${logdir} 1 hprs ${short_steps}"
+  #"racecar drive_delta sac ${logdir} 1 tltl ${short_steps}"
+  #"racecar drive_delta sac ${logdir} 1 bhnr ${short_steps}"
+  #"racecar drive_delta sac ${logdir} 1 morl_uni ${short_steps}"
+  #"racecar drive_delta sac ${logdir} 1 morl_dec ${short_steps}"
+  ##
+  ## Racecar (Multi-agent)
+  ##
+  "racecar2 follow_delta sac ${logdir} 1 default ${short_steps}"
+  "racecar2 follow_delta sac ${logdir} 1 hprs ${short_steps}"
+  "racecar2 follow_delta sac ${logdir} 1 tltl ${short_steps}"
+  "racecar2 follow_delta sac ${logdir} 1 bhnr ${short_steps}"
+  "racecar2 follow_delta sac ${logdir} 1 morl_uni ${short_steps}"
+  "racecar2 follow_delta sac ${logdir} 1 morl_dec ${short_steps}"
 )
