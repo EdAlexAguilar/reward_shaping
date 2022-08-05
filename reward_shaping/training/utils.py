@@ -6,8 +6,8 @@ from gym.wrappers import FlattenObservation
 from stable_baselines3.common.env_checker import check_env
 
 from reward_shaping.core.wrappers import RewardWrapper
-from reward_shaping.envs.racecar.wrappers import ObservationHistoryWrapper
-from reward_shaping.envs.wrappers import FlattenAction
+from reward_shaping.envs.wrappers import FlattenAction, FrameSkip, DeltaSpeedWrapper
+from reward_shaping.envs.wrappers import ActionHistoryWrapper, ObservationHistoryWrapper
 from reward_shaping.monitor.task import RLTask
 
 
@@ -72,26 +72,29 @@ def make_base_env(env, task, env_params={}):
         env = LunarLanderContinuous(**env_params)
         specs = [(k, op, build_pred(env_params)) for k, (op, build_pred) in get_all_specs().items()]
         env = RLTask(env=env, requirements=specs)
-    elif env == "racecar":
-        from reward_shaping.envs.racecar.single_agent_racecar_env import RacecarEnv
-        from reward_shaping.envs.wrappers import FrameSkip
-        from reward_shaping.envs.racecar.specs import get_all_specs
-        from reward_shaping.envs.racecar.wrappers import ActionHistoryWrapper, ObservationHistoryWrapper
-        env = RacecarEnv(**env_params)
+    elif "racecar" in env:
+        # base env for either racecar or racecar2
+        if env == "racecar":
+            from reward_shaping.envs.racecar.single_agent_racecar_env import RacecarEnv
+            from reward_shaping.envs.racecar.specs import get_all_specs
+            env = RacecarEnv(**env_params)
+        else:
+            from reward_shaping.envs.racecar2.multi_agent_racecar_env import MultiAgentRacecarEnv
+            from reward_shaping.envs.racecar2.specs import get_all_specs
+            env = MultiAgentRacecarEnv(**env_params)
+
+        # skip frame to match hardware frequency
         env = FrameSkip(env, skip=env_params["frame_skip"])  # skip 10 frames means control at 10 Hz
+        # include past actions in observations
         if env_params["observation_config"]["use_history_wrapper"] == True:
             env = ActionHistoryWrapper(env, n_last_actions=env_params["observation_config"]["n_last_actions"])
+        # change action space to control increase/decrease speed
         if env_params["action_config"]["delta_speed"] == True:
-            from reward_shaping.envs.racecar.wrappers import DeltaSpeedWrapper
             assert all([p in env_params for p in ["frame_skip", "action_config"]]), "missing parameters racecar"
             env = DeltaSpeedWrapper(env, **env_params)
-        if task == "drive" or task == "drive_delta":
-            specs = [(k, op, build_pred(env_params)) for k, (op, build_pred) in get_all_specs().items()]
-            env = RLTask(env=env, requirements=specs)
-        elif task == "drive_multi":
-            # TODO: this is a temporary solution for prototyping the multi-agent environment
-            # in future, we have to expand it with requirements and other stuff.
-            pass
+
+        specs = [(k, op, build_pred(env_params)) for k, (op, build_pred) in get_all_specs().items()]
+        env = RLTask(env=env, requirements=specs)
     else:
         raise NotImplementedError(f"not implemented env for {env}")
     return env
@@ -145,6 +148,9 @@ def get_reward_conf(env_name, env_params, reward):
     elif env_name == "racecar":
         from reward_shaping.envs.racecar import get_reward
         reward_conf = get_reward(reward)(env_params=env_params)
+    elif env_name == "racecar2":
+        from reward_shaping.envs.racecar2 import get_reward
+        reward_conf = get_reward(reward)(env_params=env_params)
     else:
         raise NotImplementedError(f'{reward} not implemented for {env_name}')
     return reward_conf
@@ -175,7 +181,7 @@ def make_observation_wrap(env_name, env, env_params={}):
         from reward_shaping.envs.wrappers import FilterObservationWrapper
         fields = [k for k in env.observation_space.spaces.keys() if k != "x"]
         env = FilterObservationWrapper(env, fields)
-    if env_name == "racecar":
+    if "racecar" in env_name:
         from reward_shaping.envs.wrappers import FilterObservationWrapper, NormalizeObservationWithMinMax, FrameSkip
         env = NormalizeObservationWithMinMax(env, {"lidar_64": (0.0, 15.0),  # norm lidar rays from 0, 15 meters
                                                    "velocity_x": (0.0, 3.5),  # norm velocity from 0, 3.5 m/s

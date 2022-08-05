@@ -11,8 +11,7 @@ from racecar_gym import SingleAgentScenario
 from racecar_gym.envs.gym_api import ChangingTrackSingleAgentRaceEnv
 from gym.utils import seeding
 
-from reward_shaping.envs.racecar.wrappers import DeltaSpeedWrapper
-from reward_shaping.envs.racecar.wrappers.racecar_wrappers import ActionHistoryWrapper, ObservationHistoryWrapper
+from reward_shaping.envs.wrappers import ActionHistoryWrapper, DeltaSpeedWrapper, ObservationHistoryWrapper
 
 
 class RacecarEnv(ChangingTrackSingleAgentRaceEnv):
@@ -92,9 +91,9 @@ class RacecarEnv(ChangingTrackSingleAgentRaceEnv):
     def step(self, action: Dict):
         obs, reward, done, info = super(RacecarEnv, self).step(action)
         self._steps += 1
-        info = self._extend_info(reward, done, info)
         obs = self._extend_obs(obs, info)
         done = self._check_termination(obs, done, info)
+        info = self._extend_info(reward, done, info)
         return obs, reward, done, info
 
     def _extend_obs(self, obs, info):
