@@ -59,14 +59,18 @@ class MultiAgentRacecarEnv(ChangingTrackMultiAgentRaceEnv):
         assert len(self.scenario.agents) == 2, "not supported more than 2 agents in the scenario"
         agents_ids = list(self.scenario.agents.keys())
         self._agent_id, self._npc_id = agents_ids[0], agents_ids[1]
+        self._npc_type = npc
         self._npc_params = npc_params
-        self._npc = NPCs[npc](self._npc_params)
+        self._npc = NPCs[self._npc_type](self._npc_params)
         self._npc_obs = None
         self._npc_state = None
         self._npc_min_base_speed = params["npc_min_base_speed"]
         self._npc_max_base_speed = params["npc_max_base_speed"]
         self._npc_min_var_speed = params["npc_min_var_speed"]
         self._npc_max_var_speed = params["npc_max_var_speed"]
+        if self._npc_type == "ftw":
+            self._npc_min_dist_left = params["npc_min_dist_left"]
+            self._npc_max_dist_left = params["npc_max_dist_left"]
 
         # reduce observation space to 1 agent
         # extend it with state information (we need them to compute the potential, the agent do not directly observe them)
@@ -142,18 +146,23 @@ class MultiAgentRacecarEnv(ChangingTrackMultiAgentRaceEnv):
         agent_obs = self._extend_obs(joint_obs, joint_info)
         # save obs npc for later step
         self._npc_obs = joint_obs[self._npc_id]
-        new_npc_params = self._randomize_npc_params(self._npc_params)
+        new_npc_params = self._randomize_npc_params(self._npc_type, self._npc_params)
         self._npc_state = self._npc.reset(config=new_npc_params)
         # interval vars
         self._initial_progress = None
         self._steps = 0
         return agent_obs
 
-    def _randomize_npc_params(self, default_params):
+    def _randomize_npc_params(self, npc_type, default_params):
+        # ftg: randomize velocity profile
+        # ftw: randomize velocity profile and distance to wall
         default_params["base_speed"] = self._npc_min_base_speed + np.random.rand() * (
                     self._npc_max_base_speed - self._npc_min_base_speed)
         default_params["variable_speed"] = self._npc_min_var_speed + np.random.rand() * (
                     self._npc_max_var_speed - self._npc_min_var_speed)
+        if npc_type == "ftw":
+            default_params["target_distance_left"] = self._npc_min_dist_left + np.random.rand() * (
+                    self._npc_max_dist_left - self._npc_min_dist_left)
         return default_params
 
     def step(self, action: Dict):
@@ -207,7 +216,7 @@ class MultiAgentRacecarEnv(ChangingTrackMultiAgentRaceEnv):
 
     def _check_termination(self, obs, joint_done, joint_info):
         info, info_npc = joint_info[self._agent_id], joint_info[self._npc_id]
-        collision = info["wall_collision"] or info_npc["wall_collision"] or len(info["opponent_collisions"]) > 0
+        collision = info["wall_collision"] or len(info["opponent_collisions"]) > 0
         break_safety_dist = not (obs["dist_ego2npc"] < self._safety_distance)
         lap_completion = obs["progress"] >= self._target_progress
         timeout = self._steps >= self._max_steps
@@ -235,8 +244,8 @@ def test_npc_controllers():
                 # longitudinal control
                 "base_speed": 1.75,
                 "variable_speed": 0.75,
-                }
-        # "rnd": {},
+                },
+        "rnd": {},
     }
 
     n_episodes = 30

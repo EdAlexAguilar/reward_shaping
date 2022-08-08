@@ -6,13 +6,21 @@ max_steps: 3000             # sim steps, depends on integration step
 n_last_actions: 3           # nr last actions to include in the observation
 frame_skip: 10            # nr frame to skip after each action
 
-npc: "ftg"                # ftg = follow the gap
+npc: "ftw"                # ftg = follow the gap, ftw: follow the wall
 npc_min_base_speed: 1.25  # randomize npc behavior
 npc_max_base_speed: 1.75
 npc_min_var_speed: 0.25
 npc_max_var_speed: 0.75
+npc_min_dist_left: 0.5
+npc_max_dist_left: 1.0
 npc_params:
   scan_field: "lidar_64"
+  scan_size: 64
+  pid_config:
+    kp: 1.00
+    ki: 0.00
+    kd: 0.01
+
 
 reward_params:
   safety_distance: -0.75

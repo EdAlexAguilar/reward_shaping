@@ -29,7 +29,8 @@ COLORS = {
     'bhnr': '#984ea3',
     'morl_uni': '#a65628',
     'morl_dec': '#ff7f00',
-    'hrs_pot': '#e41a1c'
+    'hrs_pot': '#e41a1c',
+    'hprs': '#e41a1c'
 }
 
 REWARD_LABELS = {
@@ -38,7 +39,8 @@ REWARD_LABELS = {
     'bhnr': 'BHNR',
     'morl_uni': 'MORL (unif.)',
     'morl_dec': 'MORL (decr.)',
-    'hrs_pot': 'HPRS (ours)'
+    'hrs_pot': 'HPRS (ours)',
+    'hprs': 'HPRS (ours)'
 }
 
 ENV_LABELS = {
