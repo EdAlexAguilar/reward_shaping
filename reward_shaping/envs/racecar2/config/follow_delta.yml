@@ -1,5 +1,5 @@
 scenario_files:
-  - oval_multi_agent.yml
+  #- oval_multi_agent.yml
   - oval_reverse_multi_agent.yml
 order: sequential
 max_steps: 3000             # sim steps, depends on integration step
@@ -12,14 +12,14 @@ npc_max_base_speed: 1.75
 npc_min_var_speed: 0.25
 npc_max_var_speed: 0.75
 npc_min_dist_left: 0.5
-npc_max_dist_left: 1.0
+npc_max_dist_left: 0.75
 npc_params:
   scan_field: "lidar_64"
   scan_size: 64
   pid_config:
-    kp: 1.00
-    ki: 0.00
-    kd: 0.01
+    kp: 5.0
+    ki: 0.0
+    kd: 0.1
 
 
 reward_params:
