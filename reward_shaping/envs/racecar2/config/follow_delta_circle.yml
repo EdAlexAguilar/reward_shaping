@@ -1,5 +1,5 @@
 scenario_files:
-  #- circle_gm_multi_agent.yml
+  - circle_gm_multi_agent.yml
   - circle_gm_reverse_multi_agent.yml
 track_length: 13.5        # length of track to compute dist btw agents in meters from progress, (oval:38.5, circle_gm:13.5)
 order: sequential
