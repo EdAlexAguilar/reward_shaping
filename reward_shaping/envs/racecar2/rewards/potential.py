@@ -84,18 +84,14 @@ class RC2HierarchicalPotentialShaping(RewardFunction):
 
     @staticmethod
     def _comfort_potential(state, info):
-        comfort_d2o = comfort_dist2obst(state, info)
         comfort_steer = comfort_small_steer(state, info)
-        comfort_minv = comfort_min_velx(state, info)
-        comfort_maxv = comfort_max_velx(state, info)
         comfort_smooth = comfort_smooth_control(state, info)
         comfort_mindist = comfort_min_comfort_dist(state, info)
         comfort_maxdist = comfort_max_comfort_dist(state, info)
         # hierarchical weights
         safety_w = safety_collision_potential(state, info)
         target_w = dist_to_target(state, info)
-        return safety_w * target_w * (comfort_d2o + comfort_steer + comfort_minv + comfort_maxv +
-                                      comfort_smooth + comfort_mindist + comfort_maxdist)
+        return safety_w * target_w * (comfort_steer + comfort_smooth + comfort_mindist + comfort_maxdist)
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
         # base reward
@@ -137,10 +133,7 @@ class RC2ScalarizedMultiObjectivization(RewardFunction):
         shaping_coll = gamma * safety_collision_potential(next_state, info) - safety_collision_potential(state, info)
         shaping_safe_dist = gamma * safety_distance_potential(next_state, info) - safety_distance_potential(state, info)
         shaping_target = gamma * dist_to_target(next_state, info) - dist_to_target(state, info)
-        shaping_comf_d20 = gamma * comfort_dist2obst(next_state, info) - comfort_dist2obst(state, info)
         shaping_comf_steer = gamma * comfort_small_steer(next_state, info) - comfort_small_steer(state, info)
-        shaping_comf_minv = gamma * comfort_min_velx(next_state, info) - comfort_min_velx(state, info)
-        shaping_comf_maxv = gamma * comfort_max_velx(next_state, info) - comfort_max_velx(state, info)
         shaping_comf_smooth = gamma * comfort_smooth_control(next_state, info) - comfort_smooth_control(state, info)
         shaping_comf_mindist = gamma * comfort_min_comfort_dist(next_state, info) - comfort_min_comfort_dist(state, info)
         shaping_comf_maxdist = gamma * comfort_max_comfort_dist(next_state, info) - comfort_max_comfort_dist(state, info)
@@ -148,9 +141,7 @@ class RC2ScalarizedMultiObjectivization(RewardFunction):
         reward = base_reward
         for w, f in zip(self._weights,
                         [shaping_coll, shaping_safe_dist, shaping_target,
-                         shaping_comf_d20, shaping_comf_steer,
-                         shaping_comf_minv, shaping_comf_maxv,
-                         shaping_comf_smooth, shaping_comf_mindist,
+                         shaping_comf_steer, shaping_comf_smooth, shaping_comf_mindist,
                          shaping_comf_maxdist]):
             reward += w * f
         return reward
@@ -159,7 +150,7 @@ class RC2ScalarizedMultiObjectivization(RewardFunction):
 class RC2UniformScalarizedMultiObjectivization(RC2ScalarizedMultiObjectivization):
 
     def __init__(self, **kwargs):
-        weights = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
+        weights = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
         weights /= np.sum(weights)
         super(RC2UniformScalarizedMultiObjectivization, self).__init__(weights=weights, **kwargs)
 
@@ -173,6 +164,6 @@ class RC2DecreasingScalarizedMultiObjectivization(RC2ScalarizedMultiObjectivizat
     """
 
     def __init__(self, **kwargs):
-        weights = np.array([1.0, 1.0, 0.5, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25])
+        weights = np.array([1.0, 1.0, 0.5, 0.25, 0.25, 0.25, 0.25])
         weights /= np.sum(weights)
         super(RC2DecreasingScalarizedMultiObjectivization, self).__init__(weights=weights, **kwargs)

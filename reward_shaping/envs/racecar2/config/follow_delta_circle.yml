@@ -1,32 +1,28 @@
 scenario_files:
-  - oval_multi_agent.yml
-  - oval_reverse_multi_agent.yml
-track_length: 38.5        # length of track to compute dist btw agents in meters from progress, (oval:38.5, circle_gm:13.5)
+  #- circle_gm_multi_agent.yml
+  - circle_gm_reverse_multi_agent.yml
+track_length: 13.5        # length of track to compute dist btw agents in meters from progress, (oval:38.5, circle_gm:13.5)
 order: sequential
 max_steps: 3000             # sim steps, depends on integration step
 n_last_actions: 3           # nr last actions to include in the observation
 frame_skip: 10            # nr frame to skip after each action
 
-npc: "ftw"                # ftg = follow the gap, ftw: follow the wall
+npc: "ftg"                # ftg = follow the gap, ftw: follow the wall
 npc_min_base_speed: 1.25  # randomize npc behavior
 npc_max_base_speed: 1.75
 npc_min_var_speed: 0.25
 npc_max_var_speed: 0.75
-npc_min_dist_left: 0.5
-npc_max_dist_left: 0.75
+#npc_min_dist_left: 0.5
+#npc_max_dist_left: 0.75
 npc_params:
   scan_field: "lidar_64"
-  scan_size: 64
-  pid_config:
-    kp: 5.0
-    ki: 0.0
-    kd: 0.1
+  gap_threshold: 1.5
 
 
 reward_params:
-  safety_distance: -0.75
-  min_comfort_distance: -2.0
-  max_comfort_distance: -1.5
+  safety_distance: -0.30
+  min_comfort_distance: -1.0
+  max_comfort_distance: -2.0
   target_progress: 0.98     # note: when lap=1, progress is not exactly 1.0 because of initial_progress>0. Then, use 0.98
   target_dist2obst: 0.5     # normalized distance to walls
   min_velx: 2.0             # target min velocity (m/s)
