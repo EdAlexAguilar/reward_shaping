@@ -87,6 +87,7 @@ class MultiAgentRacecarEnv(ChangingTrackMultiAgentRaceEnv):
         minvel, maxvel = self.observation_space["velocity"].low[0], self.observation_space["velocity"].high[0]
         self.observation_space["velocity_x"] = Box(low=minvel, high=maxvel, shape=(1,))
         self.observation_space["dist_ego2npc"] = Box(low=-np.Inf, high=np.Inf, shape=(1,))
+        self.observation_space["remaining_time"] = Box(low=0.0, high=1.0, shape=(1,))
 
     @staticmethod
     def _get_params(**kwargs):
@@ -190,6 +191,7 @@ class MultiAgentRacecarEnv(ChangingTrackMultiAgentRaceEnv):
                     info["progress"] - self._initial_progress)
         obs["collision"] = float(info["wall_collision"])
         obs["progress"] = progress
+        obs["remaining_time"] = 1.0 if self._eval else (self._max_steps - self._steps)/self._max_steps
         obs["dist2obst"] = info["obstacle"]
         obs["velocity_x"] = np.array([obs["velocity"][0]], dtype=np.float32)
         obs["dist_ego2npc"] = ((info["lap"] + info["progress"]) - (info_npc["lap"] + info_npc["progress"])) * self._track_length
