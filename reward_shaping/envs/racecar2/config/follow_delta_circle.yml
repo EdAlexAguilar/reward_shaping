@@ -3,7 +3,7 @@ scenario_files:
   - circle_gm_reverse_multi_agent.yml
 track_length: 13.5        # length of track to compute dist btw agents in meters from progress, (oval:38.5, circle_gm:13.5)
 order: sequential
-max_steps: 3000             # sim steps, depends on integration step
+max_steps: 1500             # sim steps, depends on integration step
 n_last_actions: 3           # nr last actions to include in the observation
 frame_skip: 10            # nr frame to skip after each action
 
@@ -12,8 +12,7 @@ npc_min_base_speed: 1.25  # randomize npc behavior
 npc_max_base_speed: 1.75
 npc_min_var_speed: 0.25
 npc_max_var_speed: 0.75
-#npc_min_dist_left: 0.5
-#npc_max_dist_left: 0.75
+
 npc_params:
   scan_field: "lidar_64"
   gap_threshold: 1.5
