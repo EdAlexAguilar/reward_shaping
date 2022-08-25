@@ -1,4 +1,4 @@
-FROM pytorch/pytorch:1.11.0-cuda11.3-cudnn8-devel
+FROM pytorch/pytorch:1.11.0-cuda11.3-cudnn8-runtime
 
 # solution to nvidia issue: https://github.com/open-mmlab/OpenPCDet/issues/955
 RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/3bf863cc.pub
