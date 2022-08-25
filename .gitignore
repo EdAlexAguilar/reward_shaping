@@ -148,3 +148,5 @@ cartpole_models/
 logs/*
 /run_experiment.sh
 *tar
+*json
+*videos*
