@@ -190,7 +190,11 @@ def make_observation_wrap(env_name, env, env_params={}):
         for obs in env_params["observation_config"]["obs_names"]:
             env = ObservationHistoryWrapper(env, obs_name=obs,
                                             n_last_observations=env_params["observation_config"]["n_last_observations"])
-        fields = ["last_lidar_64", "last_velocity_x", "last_actions"]
+
+        if "racecar2" in env_name:
+            fields = ["last_lidar_64", "last_velocity_x", "last_actions", "remaining_time"]
+        else:
+            fields = ["last_lidar_64", "last_velocity_x", "last_actions"]
         env = FilterObservationWrapper(env, fields)
 
     return env
