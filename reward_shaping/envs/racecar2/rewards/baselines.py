@@ -65,16 +65,12 @@ class RC2EvalConfig(EvalConfig):
                                          vars=self.monitoring_variables, types=self.monitoring_types,
                                          episode=episode)[0][1]
         #
-        comfort_dist2obst = "(dist2obst>=target_dist2obst)"
-        comfort_minvelx = "(velocity_x>=min_velx)"
-        comfort_maxvelx = "(velocity_x<=max_velx)"
         comfort_steering = "(abs(last_steering)<=comfort_max_steering)"
         comfort_actnorm = "(action_norm<=comfort_max_norm)"
         comfort_mindist = "(dist_ego2npc >= comfort_min_dist)"
         comfort_maxdist = "(dist_ego2npc <= comfort_max_dist)"
         comfort_metrics = []
-        for comfort_spec in [comfort_dist2obst, comfort_minvelx, comfort_maxvelx, comfort_steering,
-                             comfort_actnorm, comfort_mindist, comfort_maxdist]:
+        for comfort_spec in [comfort_steering, comfort_actnorm, comfort_mindist, comfort_maxdist]:
             comfort_trace = monitor_stl_episode(stl_spec=comfort_spec,
                                                 vars=self.monitoring_variables, types=self.monitoring_types,
                                                 episode=episode)
