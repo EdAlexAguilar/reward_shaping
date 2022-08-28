@@ -1,6 +1,7 @@
 scenario_files:
-    - gm_single_agent.yml
-order: sequential
+  - treitlstrasse_single_agent.yml
+  - lecture_hall_single_agent.yml
+order: random
 max_steps: 2500           # sim steps, depends on integration step (2500 steps ~ 25 sec)
 frame_skip: 10            # nr frame to skip after each action
 reward_params:
