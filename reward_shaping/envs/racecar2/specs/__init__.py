@@ -70,20 +70,6 @@ def _build_small_steering(env_params):
     return lambda state, info: env_params["reward_params"]["comfort_max_steering"] - abs(state["last_actions"][-1][0])
 
 
-def _build_min_velocity(env_params):
-    """
-    encourage velocity_x >= min_velocity
-    """
-    return lambda state, info: state["velocity_x"] - env_params["reward_params"]["min_velx"]
-
-
-def _build_max_velocity(env_params):
-    """
-    encourage velocity_x <= max_velocity
-    """
-    return lambda state, info: env_params["reward_params"]["max_velx"] - state["velocity_x"]
-
-
 def _build_min_comfort_dist(env_params):
     """
     encourage dist_ego2npc >= min_comfort_dist

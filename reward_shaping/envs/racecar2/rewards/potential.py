@@ -24,26 +24,11 @@ def dist_to_target(state, info):
     return clip_and_norm(state["progress"], 0.0, info["target_progress"])
 
 
-def comfort_dist2obst(state, info):
-    assert "dist2obst" in state and "target_dist2obst" in info
-    return clip_and_norm(state["dist2obst"], 0.0, info["target_dist2obst"])
-
-
 def comfort_small_steer(state, info):
     # assume target steering is 0
     assert "last_actions" in state
     abs_steering = abs(state["last_actions"][-1][0])
-    return 1.0 - clip_and_norm(abs_steering, 0.0, info["comfort_max_steering"])
-
-
-def comfort_min_velx(state, info):
-    assert "velocity_x" in state and "min_velx" in info
-    return clip_and_norm(state["velocity_x"][0], 0.0, info["min_velx"])
-
-
-def comfort_max_velx(state, info):
-    assert "velocity_x" in state and "max_velx" in info and "limit_velx" in info
-    return 1 - clip_and_norm(state["velocity_x"][0], info["max_velx"], info["limit_velx"])
+    return 1.0 - clip_and_norm(abs_steering, info["comfort_max_steering"], 1.0)
 
 
 def comfort_smooth_control(state, info):
@@ -135,8 +120,10 @@ class RC2ScalarizedMultiObjectivization(RewardFunction):
         shaping_target = gamma * dist_to_target(next_state, info) - dist_to_target(state, info)
         shaping_comf_steer = gamma * comfort_small_steer(next_state, info) - comfort_small_steer(state, info)
         shaping_comf_smooth = gamma * comfort_smooth_control(next_state, info) - comfort_smooth_control(state, info)
-        shaping_comf_mindist = gamma * comfort_min_comfort_dist(next_state, info) - comfort_min_comfort_dist(state, info)
-        shaping_comf_maxdist = gamma * comfort_max_comfort_dist(next_state, info) - comfort_max_comfort_dist(state, info)
+        shaping_comf_mindist = gamma * comfort_min_comfort_dist(next_state, info) - comfort_min_comfort_dist(state,
+                                                                                                             info)
+        shaping_comf_maxdist = gamma * comfort_max_comfort_dist(next_state, info) - comfort_max_comfort_dist(state,
+                                                                                                             info)
         # linear scalarization of the multi-objectivized requirements
         reward = base_reward
         for w, f in zip(self._weights,

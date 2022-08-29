@@ -28,7 +28,7 @@ def comfort_small_steer(state, info):
     # assume target steering is 0
     assert "last_actions" in state
     abs_steering = abs(state["last_actions"][-1][0])
-    return 1.0 - clip_and_norm(abs_steering, 0.0, info["comfort_max_steering"])
+    return 1.0 - clip_and_norm(abs_steering, info["comfort_max_steering"], 1.0)
 
 
 def comfort_min_velx(state, info):
@@ -37,7 +37,7 @@ def comfort_min_velx(state, info):
     return clip_and_norm(state["velocity_x"][0], 0.0, info["min_velx"])
 
 
-def comfort_max_speed_cmd(state, info):
+def comfort_max_velx(state, info):
     # assume actions are already normalized in +-1
     assert "velocity_x" in state and "max_velx" in info and "limit_velx" in info
     return 1 - clip_and_norm(state["velocity_x"][0], info["max_velx"], info["limit_velx"])
@@ -72,7 +72,7 @@ class RCHierarchicalPotentialShaping(RewardFunction):
         comfort_d2o = comfort_dist2obst(state, info)
         comfort_steer = comfort_small_steer(state, info)
         comfort_minv = comfort_min_velx(state, info)
-        comfort_maxv = comfort_max_speed_cmd(state, info)
+        comfort_maxv = comfort_max_velx(state, info)
         comfort_smooth = comfort_smooth_control(state, info)
         # hierarchical weights
         safety_w = safety_collision_potential(state, info)
@@ -121,7 +121,7 @@ class RCScalarizedMultiObjectivization(RewardFunction):
         shaping_comf_d20 = gamma * comfort_dist2obst(next_state, info) - comfort_dist2obst(state, info)
         shaping_comf_steer = gamma * comfort_small_steer(next_state, info) - comfort_small_steer(state, info)
         shaping_comf_minv = gamma * comfort_min_velx(next_state, info) - comfort_min_velx(state, info)
-        shaping_comf_maxv = gamma * comfort_max_speed_cmd(next_state, info) - comfort_max_speed_cmd(state, info)
+        shaping_comf_maxv = gamma * comfort_max_velx(next_state, info) - comfort_max_velx(state, info)
         shaping_comf_smooth = gamma * comfort_smooth_control(next_state, info) - comfort_smooth_control(state, info)
         # linear scalarization of the multi-objectivized requirements
         reward = base_reward
