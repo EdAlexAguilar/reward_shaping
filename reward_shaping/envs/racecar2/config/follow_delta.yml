@@ -7,7 +7,7 @@ max_steps: 3000             # sim steps, depends on integration step
 n_last_actions: 3           # nr last actions to include in the observation
 frame_skip: 10            # nr frame to skip after each action
 
-npc: "ftw"                # ftg = follow the gap, ftw: follow the wall
+npc: "ftg"                # ftg = follow the gap, ftw: follow the wall
 npc_min_base_speed: 1.25  # randomize npc behavior
 npc_max_base_speed: 1.75
 npc_min_var_speed: 0.25
@@ -16,11 +16,7 @@ npc_min_dist_left: 0.5
 npc_max_dist_left: 0.75
 npc_params:
   scan_field: "lidar_64"
-  scan_size: 64
-  pid_config:
-    kp: 5.0
-    ki: 0.0
-    kd: 0.1
+  gap_threshold: 2.0
 
 
 reward_params:
@@ -38,7 +34,7 @@ action_config:
   delta_speed: True       # if true controls the increment in speed, if false directly controls the speed
   min_velx: 0.0           # min speed m/s, consistent with pybullet sim
   max_velx: 3.5           # max speed m/s, consistent with pybullet sim
-  cap_min_speed: 1.0       # min speed m/s
+  cap_min_speed: 0.0       # min speed m/s
   cap_max_speed: 3.5       # min speed m/s
   max_accx: 4.0            # max forward acceleration m/s2
   dt: 0.01                 # integration time in simulation
