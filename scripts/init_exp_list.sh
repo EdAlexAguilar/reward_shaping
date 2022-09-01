@@ -2,8 +2,8 @@
 
 debug=0
 debug_steps=1000
-short_steps=2000000
-long_steps=3000000
+short_steps=1000000
+long_steps=2000000
 
 if [ $debug -ne 0 ]
 then
@@ -62,10 +62,10 @@ args=(
   ##
   ## Racecar (Multi-agent)
   ##
-  "racecar2 follow_delta sac ${logdir} 1 default ${short_steps}"
-  "racecar2 follow_delta sac ${logdir} 1 hprs ${short_steps}"
-  "racecar2 follow_delta sac ${logdir} 1 tltl ${short_steps}"
-  "racecar2 follow_delta sac ${logdir} 1 bhnr ${short_steps}"
-  "racecar2 follow_delta sac ${logdir} 1 morl_uni ${short_steps}"
-  "racecar2 follow_delta sac ${logdir} 1 morl_dec ${short_steps}"
+  "racecar2 follow_delta sac ${logdir} 5 default ${short_steps} -novideo"
+  "racecar2 follow_delta sac ${logdir} 5 hprs ${short_steps} -novideo"
+  "racecar2 follow_delta sac ${logdir} 5 tltl ${short_steps} -novideo"
+  "racecar2 follow_delta sac ${logdir} 5 bhnr ${short_steps} -novideo"
+  "racecar2 follow_delta sac ${logdir} 5 morl_uni ${short_steps} -novideo"
+  "racecar2 follow_delta sac ${logdir} 5 morl_dec ${short_steps} -novideo"
 )

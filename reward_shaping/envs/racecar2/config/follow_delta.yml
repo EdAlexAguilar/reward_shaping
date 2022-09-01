@@ -2,8 +2,8 @@ scenario_files:
   - oval_multi_agent.yml
 track_length: 38.5        # length of track to compute dist btw agents in meters from progress, (oval:38.5, circle_gm:13.5)
 order: sequential
-max_steps: 3000             # sim steps, depends on integration step
-n_last_actions: 3           # nr last actions to include in the observation
+max_steps: 3000           # sim steps, depends on integration step
+n_last_actions: 3         # nr last actions to include in the observation
 frame_skip: 10            # nr frame to skip after each action
 
 npc: "ftg"                # ftg = follow the gap, ftw: follow the wall
