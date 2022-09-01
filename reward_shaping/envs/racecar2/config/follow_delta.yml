@@ -1,6 +1,5 @@
 scenario_files:
   - oval_multi_agent.yml
-  - oval_reverse_multi_agent.yml
 track_length: 38.5        # length of track to compute dist btw agents in meters from progress, (oval:38.5, circle_gm:13.5)
 order: sequential
 max_steps: 3000             # sim steps, depends on integration step
