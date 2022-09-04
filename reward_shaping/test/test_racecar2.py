@@ -3,7 +3,7 @@ from unittest import TestCase
 from reward_shaping.test.test import generic_env_test, generic_training, generic_env_test_wt_agent
 
 env_name = "racecar2"
-tasks = ["follow_delta_circle"]
+tasks = ["follow_delta"]
 
 
 class TestEnv(TestCase):

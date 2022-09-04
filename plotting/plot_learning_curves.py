@@ -44,10 +44,12 @@ REWARD_LABELS = {
 }
 
 ENV_LABELS = {
-    "cart_pole_obst_fixed_height": "Cartpole",
-    "lunar_lander_land": "Lunar Lander",
-    "bipedal_walker_forward": "Bipedal Walker",
-    "bipedal_walker_hardcore": "Bipedal Walker (Hardcore)",
+    #"cart_pole_obst_fixed_height": "Cartpole",
+    #"lunar_lander_land": "Lunar Lander",
+    #"bipedal_walker_forward": "Bipedal Walker",
+    #"bipedal_walker_hardcore": "Bipedal Walker (Hardcore)",
+    "racecar_drive_delta": "Single-Agent Driving",
+    "racecar2_follow_delta": "Multi-Agent Driving",
 }
 HLINES = {
     1.5: "Safety+Target"
@@ -90,11 +92,11 @@ def aggregate_evaluations(evaluations: List[Dict[str, np.ndarray]], params: Dict
     # aggregate
     df = pd.DataFrame({'x': xx, 'y': yy})
     bins = np.arange(0, max(xx) + params['binning'], params['binning'])
-    df['xbin'] = pd.cut(df['x'], bins=bins, labels=bins[:-1])
+    df['xbin'] = pd.cut(df['x'], bins=bins, labels=bins[1:])
     aggregated = df.groupby("xbin").agg(['mean', 'std'])['y'].reset_index()
-    return {'x': aggregated['xbin'].values,
-            'mean': aggregated['mean'].values,
-            'std': aggregated['std'].values}
+    return {'x': np.array([0.0] + list(aggregated['xbin'].values)),
+            'mean': np.array([0.0] + list(aggregated['mean'].values)),
+            'std': np.array([0.0] + list(aggregated['std'].values))}
 
 
 def plot_data(data: Dict[str, np.ndarray], ax: plt.Axes, clipminy: float, clipmaxy: float,
@@ -154,7 +156,7 @@ def plot_secondaries(ax, xlabel, ylabel, hlines, minx, maxx, miny, maxy, show_yt
     ax.set_xlim(minx, maxx)
     ax.set_ylim(miny, maxy)
     # ticks
-    round_maxx = 3e6 if maxx > 2e6 else 2e6
+    round_maxx = (maxx // 1e6) * 1e6
     ax.set_xticks(np.linspace(minx, round_maxx, 5))
     if show_yticks:
         ax.set_yticks(np.linspace(miny, maxy, 5))
@@ -191,7 +193,7 @@ def main(args):
             plot_data(data, ax, clipminy=args.clipminy, clipmaxy=args.clipmaxy, title=title, label=label, color=color)
             # update min/max x
             minxs[i] = min(minxs[i], min(data["x"]))
-            maxxs[i] = max(maxxs[i], max(data["x"]))
+            maxxs[i] = 1e6 #max(maxxs[i], max(data["x"]))
     # add secodnary stuff
     for i, ax in enumerate(axes):
         if minxs[i] == np.Inf or maxxs[i] == -np.Inf:
