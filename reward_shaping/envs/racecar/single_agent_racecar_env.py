@@ -72,7 +72,7 @@ class RacecarEnv(ChangingTrackSingleAgentRaceEnv):
                 "dt": 0.01,
             },
             "frame_skip": 1,
-            "render": False,
+            "render": True,
             "eval": False,
             "seed": 0,
         }
@@ -129,7 +129,7 @@ class RacecarEnv(ChangingTrackSingleAgentRaceEnv):
         return bool(done or collision or lap_completion or timeout)
 
     def render(self, mode):
-        view_mode = "follow"
+        view_mode = "birds_eye"
         screen = super(RacecarEnv, self).render(mode=view_mode)
         if mode == "rgb_array":
             return screen
