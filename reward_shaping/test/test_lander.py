@@ -6,36 +6,34 @@ env_name = "lunar_lander"
 task = "land"
 
 
-class TestContinuousLunarLander(TestCase):
+class TestEnv(TestCase):
+
+    def test_default_reward(self):
+        result = generic_env_test(env_name, task, reward_name="default")
+        self.assertTrue(result)
 
     def test_eval_reward(self):
-        reward = "eval"
-        result = generic_env_test(env_name, task, reward)
+        result = generic_env_test(env_name, task, reward_name="eval")
         self.assertTrue(result)
 
-    def test_stl_reward(self):
-        reward = "tltl"
-        result = generic_env_test(env_name, task, reward)
+    def test_tltl_reward(self):
+        result = generic_env_test(env_name, task, reward_name="tltl")
         self.assertTrue(result)
 
-    def test_hrs_reward(self):
-        reward = "hrs_pot"
-        result = generic_env_test(env_name, task, reward)
+    def test_hprs_reward(self):
+        result = generic_env_test(env_name, task, reward_name="hprs")
         self.assertTrue(result)
 
     def test_morl_uni_reward(self):
-        reward = "morl_uni"
-        result = generic_env_test(env_name, task, reward)
+        result = generic_env_test(env_name, task, reward_name="morl_uni")
         self.assertTrue(result)
 
     def test_morl_dec_reward(self):
-        reward = "morl_dec"
-        result = generic_env_test(env_name, task, reward)
+        result = generic_env_test(env_name, task, reward_name="morl_dec")
         self.assertTrue(result)
 
     def test_bhnr_reward(self):
-        reward = "bhnr"
-        result = generic_env_test(env_name, task, reward)
+        result = generic_env_test(env_name, task, reward_name="bhnr")
         self.assertTrue(result)
 
 
@@ -54,7 +52,7 @@ class TestTrainingLoop(TestCase):
         generic_training(env_name, task, 'morl_dec')
 
     def test_train_hrs_pot(self):
-        generic_training(env_name, task, 'hrs_pot')
+        generic_training(env_name, task, 'hprs')
 
 
 class TestWithAgent(TestCase):

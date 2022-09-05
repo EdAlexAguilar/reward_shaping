@@ -438,7 +438,7 @@ class LunarLander(gym.Env, EzPickle):
     def state(self) -> Dict:
         return
 
-    def render(self, mode='human', info={}):
+    def render(self, mode='human'):
         from gym.envs.classic_control import rendering
         if self.viewer is None:
             self.viewer = rendering.Viewer(VIEWPORT_W, VIEWPORT_H)

@@ -32,9 +32,6 @@ class RewardWrapper(gym.Wrapper):
         self._return += reward
         return next_state, reward, done, info
 
-    def render(self, mode='human', **kwargs):
-        return super(RewardWrapper, self).render(mode=mode, info={'reward': self._reward, 'return': self._return})
-
 
 class CollectionWrapper(gym.Wrapper):
     """
@@ -69,9 +66,6 @@ class CollectionWrapper(gym.Wrapper):
             self._episode[key].append(value)
         # evaluate reward only in terminal states
         return obs, reward, done, info
-
-    def render(self, mode='human', **kwargs):
-        return super(CollectionWrapper, self).render(mode=mode, info={'reward': self._reward, 'return': self._return})
 
 
 class TLRewardWrapper(CollectionWrapper):
@@ -123,9 +117,6 @@ class TLRewardWrapper(CollectionWrapper):
         self._return += reward
         return obs, reward, done, info
 
-    def render(self, mode='human', **kwargs):
-        return super(TLRewardWrapper, self).render(mode=mode, info={'reward': self._reward, 'return': self._return})
-
 
 class EvaluationRewardWrapper(CollectionWrapper):
     """ This is an 'episodic' wrapper which evaluate a custom metric in the terminal states."""
@@ -148,7 +139,3 @@ class EvaluationRewardWrapper(CollectionWrapper):
         self._reward = reward
         self._return += reward
         return obs, reward, done, info
-
-    def render(self, mode='human', **kwargs):
-        return super(EvaluationRewardWrapper, self).render(mode=mode,
-                                                           info={'reward': self._reward, 'return': self._return})

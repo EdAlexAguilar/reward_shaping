@@ -82,7 +82,7 @@ def main(args):
                 for reward_name in envs_task_rew_files[env_name][task_name]:
                     if not reward_name in results[env_name][task_name]:
                         results[env_name][task_name][reward_name] = {}
-                    print(f"[simulation] env: {env_name}, task: {task_name}, reward: {reward_name}")
+                    print(f"\n\n[simulation] env: {env_name}, task: {task_name}, reward: {reward_name}")
                     env, env_params = make_env(env_name, task_name, 'eval', eval=True, logdir=None, seed=0)
                     list_of_metrics = [f"{req}_counter" for req in env.req_labels]
                     # init results

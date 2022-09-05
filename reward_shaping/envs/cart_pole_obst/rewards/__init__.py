@@ -27,7 +27,7 @@ register_reward('morl_uni', reward=CPOUniformScalarizedMultiObjectivization)
 register_reward('morl_dec', reward=CPODecreasingScalarizedMultiObjectivization)
 
 # Hierarchical Potential Shaping
-register_reward('hrs_pot', reward=CPOHierarchicalPotentialShaping)
+register_reward('hprs', reward=CPOHierarchicalPotentialShaping)
 
 # Evaluation
 register_reward('eval', reward=CPOEvalConfig)

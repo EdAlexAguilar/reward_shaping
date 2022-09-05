@@ -9,7 +9,7 @@ def main(args):
     video_every = (args.steps - 1) if args.env == "f1tenth" else int(args.steps / 10)  # f1tenth only once at the end
     train_params = {'steps': args.steps,
                     'video_every': video_every,  # note: causes trouble with containers, one can disable it wt -novideo
-                    'n_recorded_episodes': 3,
+                    'n_recorded_episodes': 2,
                     'eval_every': min(10000, int(args.steps / 10)),
                     'n_eval_episodes': 10,
                     'checkpoint_every': int(args.steps / 10)}
@@ -21,7 +21,7 @@ def main(args):
 
 
 if __name__ == "__main__":
-    envs = ['cart_pole_obst', 'bipedal_walker', 'lunar_lander', 'f1tenth', 'racecar']
+    envs = ['cart_pole_obst', 'bipedal_walker', 'lunar_lander', 'racecar', 'racecar2']
     parser = parser.ArgumentParser()
     parser.add_argument("--env", type=str, required=True, choices=envs)
     parser.add_argument("--task", type=str, required=True, help="task executed for the env")

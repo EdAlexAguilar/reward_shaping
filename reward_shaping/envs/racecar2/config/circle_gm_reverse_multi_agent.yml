@@ -1,0 +1,26 @@
+world:
+  name: circle_gm
+  reverse: True
+  domain_randomization:
+    gravity: [ -15, -9.81 ]
+    velocity_multiplier: [ 20, 25 ]
+    max_velocity: [ 3.5, 4.0 ]
+    steering_multiplier: [ 0.5, 0.75 ]
+    sensor_velocity_noise: [ 0.01, 0.05 ]
+agents:
+  - id: A
+    vehicle:
+      name: racecar
+      sensors: [ lidar_64, velocity ]
+      actuators: [ speed, steering ]
+    task:   # not used but required to use default constructor racecar_gym
+      task_name: maximize_progress
+      params: {laps: 2, time_limit: 120.0, terminate_on_collision: False}
+  - id: B
+    vehicle:
+      name: racecar
+      sensors: [ lidar_64, velocity ]
+      actuators: [ speed, steering ]
+    task: # not used but required to use default constructor racecar_gym
+      task_name: maximize_progress
+      params: { laps: 2, time_limit: 120.0, terminate_on_collision: False }

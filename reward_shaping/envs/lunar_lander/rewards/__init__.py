@@ -32,7 +32,7 @@ register_reward('morl_uni', reward=LLUniformScalarizedMultiObjectivization)
 register_reward('morl_dec', reward=LLDecreasingScalarizedMultiObjectivization)
 
 # Hierarchical Potential Shaping
-register_reward('hrs_pot', reward=LLHierarchicalShapingOnSparseTargetReward)
+register_reward('hprs', reward=LLHierarchicalShapingOnSparseTargetReward)
 
 # Evaluation
 register_reward('eval', reward=LLEvalConfig)

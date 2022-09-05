@@ -17,7 +17,9 @@ class WeightedEvalFunction(EvaluationFunction):
     comfort_prefix = "c"
     max_steps = {"cart_pole_obst": 401,
                  "bipedal_walker": 1600,
-                 "lunar_lander": 600}
+                 "lunar_lander": 600,
+                 "racecar2": 300,
+                 "racecar": 300}
 
     def __init__(self, name: str, safety_w: float, target_w: float, comfort_w: float):
         self.name = name
