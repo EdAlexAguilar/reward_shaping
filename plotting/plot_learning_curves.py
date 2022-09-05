@@ -1,4 +1,5 @@
 import argparse
+import math
 import pathlib
 import time
 import warnings
@@ -12,7 +13,7 @@ import pandas as pd
 from plotting.custom_evaluations import get_custom_evaluation
 from plotting.utils import get_files, parse_env_task, parse_reward
 
-FIGSIZE = (15, 4)
+FIGSIZE = (17.5, 4)
 LARGESIZE, MEDIUMSIZE, SMALLSIZE = 16, 13, 10
 
 plt.rcParams.update({'font.size': LARGESIZE})
@@ -33,6 +34,16 @@ COLORS = {
     'hprs': '#e41a1c'
 }
 
+LINESTYLES = {
+    'default': '-',
+    'tltl': '--',
+    'bhnr': '--',
+    'morl_uni': '-.',
+    'morl_dec': '-.',
+    'hrs_pot': '-',
+    'hprs': '-'
+}
+
 REWARD_LABELS = {
     'default': 'Default',
     'tltl': 'TLTL',
@@ -44,15 +55,25 @@ REWARD_LABELS = {
 }
 
 ENV_LABELS = {
-    #"cart_pole_obst_fixed_height": "Cartpole",
-    #"lunar_lander_land": "Lunar Lander",
-    #"bipedal_walker_forward": "Bipedal Walker",
-    #"bipedal_walker_hardcore": "Bipedal Walker (Hardcore)",
+    # "cart_pole_obst_fixed_height": "Cartpole",
+    "lunar_lander_land": "Lunar Lander",
+    "bipedal_walker_forward": "Bipedal Walker",
+    "bipedal_walker_hardcore": "Bipedal Walker (Hardcore)",
     "racecar_drive_delta": "Single-Agent Driving",
     "racecar2_follow_delta": "Multi-Agent Driving",
 }
+
 HLINES = {
     1.5: "Safety+Target"
+}
+
+XLIMITS = {
+    "cart_pole_obst_fixed_height":  1e6,
+    "lunar_lander_land":            1.5e6,
+    "bipedal_walker_forward":       2e6,
+    "bipedal_walker_hardcore":      3e6,
+    "racecar_drive_delta":          1e6,
+    "racecar2_follow_delta":        1e6,
 }
 
 file_regex = "evaluations*.npz"
@@ -100,13 +121,13 @@ def aggregate_evaluations(evaluations: List[Dict[str, np.ndarray]], params: Dict
 
 
 def plot_data(data: Dict[str, np.ndarray], ax: plt.Axes, clipminy: float, clipmaxy: float,
-              title="",
-              color=None, label=None, **kwargs):
+              title="", color=None, label=None, linestyle=None,
+              **kwargs):
     assert all([key in data for key in ['x', 'mean', 'std']]), f'x, mean, std not found in data (keys: {data.keys()})'
-    ax.plot(data['x'], data['mean'], color=color, label=label, **kwargs)
+    ax.plot(data['x'], data['mean'], color=color, label=label, linestyle=linestyle, **kwargs)
     data_minus_std = np.clip(data['mean'] - data['std'], clipminy, clipmaxy)
     data_plus_std = np.clip(data['mean'] + data['std'], clipminy, clipmaxy)
-    ax.fill_between(data['x'], data_minus_std, data_plus_std, alpha=0.25, color=color)
+    ax.fill_between(data['x'], data_minus_std, data_plus_std, alpha=0.15, color=color)
     ax.set_title(title)
 
 
@@ -156,8 +177,10 @@ def plot_secondaries(ax, xlabel, ylabel, hlines, minx, maxx, miny, maxy, show_yt
     ax.set_xlim(minx, maxx)
     ax.set_ylim(miny, maxy)
     # ticks
-    round_maxx = (maxx // 1e6) * 1e6
-    ax.set_xticks(np.linspace(minx, round_maxx, 5))
+    round_maxx = math.ceil(maxx / 5e5) * 5e5
+    nticks = int(round_maxx / 5e5) + 1
+    nticks = min(nticks, 5)     # show max 5 ticks
+    ax.set_xticks(np.linspace(minx, round_maxx, nticks))
     if show_yticks:
         ax.set_yticks(np.linspace(miny, maxy, 5))
     else:
@@ -189,11 +212,12 @@ def main(args):
             title = titles[gby]
             i = list(titles.keys()).index(gby)
             ax = axes[i]
-            color, label = COLORS[reward], REWARD_LABELS[reward]
-            plot_data(data, ax, clipminy=args.clipminy, clipmaxy=args.clipmaxy, title=title, label=label, color=color)
+            color, label, linestyle = COLORS[reward], REWARD_LABELS[reward], LINESTYLES[reward]
+            plot_data(data, ax, clipminy=args.clipminy, clipmaxy=args.clipmaxy, title=title,
+                      label=label, color=color, linestyle=linestyle)
             # update min/max x
             minxs[i] = min(minxs[i], min(data["x"]))
-            maxxs[i] = 1e6 #max(maxxs[i], max(data["x"]))
+            maxxs[i] = XLIMITS[gby]
     # add secodnary stuff
     for i, ax in enumerate(axes):
         if minxs[i] == np.Inf or maxxs[i] == -np.Inf:
