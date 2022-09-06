@@ -10,28 +10,44 @@ import numpy as np
 from matplotlib import animation
 from matplotlib.animation import FuncAnimation
 
-limits = {
-    "horizontal_speed": [0.30, 1.0],
-    "vertical_speed": [-0.1, 0.1],
-    "hull_angle": [-0.08726, 0.08726],
-    "hull_angle_speed": [-0.25, 0.25]
+LIMITS = {
+    "bipedal_walker": {
+        "horizontal_speed": [0.30, 1.0],
+        "vertical_speed": [-0.1, 0.1],
+        "hull_angle": [-0.08726, 0.08726],
+        "hull_angle_speed": [-0.25, 0.25]
+    },
+    "racecar": {
+        "steering_0": [-1, +1],
+        "velx_0": [0.14, 0.71],
+    }
 }
+
 labels = {
-    "horizontal_speed": "Horizontal Velocity",
-    "vertical_speed": "Vertical Velocity",
-    "hull_angle": "Hull Angle",
-    "hull_angle_speed": "Hull Angular Velocity",
+    "bipedal_walker": {
+        "horizontal_speed": "Horizontal Velocity",
+        "vertical_speed": "Vertical Velocity",
+        "hull_angle": "Hull Angle",
+        "hull_angle_speed": "Hull Angular Velocity",
+    },
+    "racecar": {
+        "velx_0": "Forward Velocity",
+        "steering_0": "Steering Angle",
+    },
 }
 show_labels = ["horizontal_speed", "hull_angle", "hull_angle_speed"]
+show_labels = ["velx_0"]
 
 MARGIN = 0.25  # percentage
-BACKWARD_HISTORY = 0.30
+BACKWARD_HISTORY = 1.0 #0.30
 FORWARD_HISTORY = 0.10
 
 COLORS = ['k', 'k', '#e41a1c', '#4daf4a', '#377eb8', '#984ea3', '#a65628', ]
+COLORS = ['k', 'k', 'k', 'k', 'k', 'k', 'k', ]
+
 LINEWIDTH = 5.0
 
-FIGSIZE = (20, 5)
+FIGSIZE = (5, 5)
 LARGESIZE, MEDIUMSIZE, SMALLSIZE = 25, 20, 15
 
 plt.rcParams.update({'font.size': MEDIUMSIZE})
@@ -43,32 +59,46 @@ plt.rcParams.update({'legend.fontsize': MEDIUMSIZE})
 plt.rcParams.update({'figure.titlesize': MEDIUMSIZE})
 
 
-def _convert_array_to_dict(state):
-    vars = "collision,ground_contact_leg0,ground_contact_leg1,horizontal_speed,hull_angle,hull_angle_speed," \
-           "joint0_angle,joint0_angle_speed,joint1_angle,joint1_angle_speed,joint2_angle,joint2_angle_speed," \
-           "joint3_angle,joint3_angle_speed,lidar,vertical_speed"
-    dictionary = {v: s for v, s in zip(vars.split(","), state)}
-    dictionary["lidar"] = state[len(vars.split(",")):]
+def _convert_array_to_dict(state, env):
+    dictionary = {}
+    if env == "bipedal_walker":
+        vars = "collision,ground_contact_leg0,ground_contact_leg1,horizontal_speed,hull_angle,hull_angle_speed," \
+               "joint0_angle,joint0_angle_speed,joint1_angle,joint1_angle_speed,joint2_angle,joint2_angle_speed," \
+               "joint3_angle,joint3_angle_speed,lidar,vertical_speed"
+        dictionary = {v: s for v, s in zip(vars.split(","), state)}
+        dictionary["lidar"] = state[len(vars.split(",")):]
+    elif env == "racecar":
+        action_vars =  "steering_2,speed_2,steering_1,speed_1,steering_0,speed_0"
+        velx_vars = "velx_2,velx_1,velx_0"
+        dictionary = {v: s for v, s in zip(action_vars.split(","), state)}
+        dictionary.update({v: s for v, s in zip(velx_vars.split(","), state[-3:])})
+        dictionary.update({
+            "lidar_2": state[7:7+64],
+            "lidar_1": state[7+64:7+2*64],
+            "lidar_0": state[7+2*64:7+3*64],
+        })
     return dictionary
 
 
 def parse_curve_name(filename: str):
-    if "hrs_pot_nocomf" in filename:
+    if "hrs_pot_nocomf" in filename or "hprs_nocomf":
         return "-Comfort"
-    elif "hrs_pot" in filename:
+    elif "hrs_pot" in filename or "hprs":
         return "+Comfort"
     return "Unknown"
 
 
-def produce_animation(trace: np.ndarray, curve: str, var: str, color="k", save: bool = False, outfile="test.gif"):
+def produce_animation(trace: np.ndarray, env: str, curve: str, var: str, color="k", save: bool = False, outfile="test.gif"):
     fig, ax = plt.subplots(figsize=FIGSIZE)
     # prepare data
     x, yy = [], []
-    values = [_convert_array_to_dict(obs)[var] for obs in trace]
+    values = [_convert_array_to_dict(obs, env)[var] for obs in trace]
     # animate
     n_frames = len(values)
     backward_margin = int(BACKWARD_HISTORY * n_frames)
     forward_margin = int(FORWARD_HISTORY * n_frames)
+
+    limits = LIMITS[env]
     margin = (limits[var][1] - limits[var][0]) * MARGIN
 
     def animate(t):
@@ -89,6 +119,8 @@ def produce_animation(trace: np.ndarray, curve: str, var: str, color="k", save: 
         ax.fill_between(x, limits[var][1], yy, where=above_max, color="red", alpha=0.3)
         ax.set_xlim([max(0, t - backward_margin), min(t + forward_margin, n_frames)])
         ax.set_ylim([limits[var][0] - margin, limits[var][1] + margin])
+        ax.set_ylim(-1, +1)
+        ax.set_xlim(0, 275)
         # ax.set_xlabel("Step", horizontalalignment='right', x=1.0)
         # ax.set_ylabel(labels[var])
 
@@ -104,6 +136,7 @@ def produce_animation(trace: np.ndarray, curve: str, var: str, color="k", save: 
 def main(args):
     traces = []  # data
     curves = args.curves  # name of the curve
+    env = args.env  # name of the env
     for f in args.logfiles:
         data = np.load(str(f))
         traces.append(data["observations"])
@@ -114,9 +147,9 @@ def main(args):
         print(f"[{curve}] starting")
         for j, var in enumerate(show_labels):
             print(f"\t{var}")
-            outfile = f"comfort_plot_{curve}_{labels[var]}_{int(time.time())}.gif"
+            outfile = f"comfort_plot_{curve}_{labels[env][var]}_{int(time.time())}.gif"
             color = COLORS[i]
-            produce_animation(trace, curve, var, color=color, save=args.save, outfile=outfile)
+            produce_animation(trace, env, curve, var, color=color, save=args.save, outfile=outfile)
         tf = time.time()
         print(f"[{curve}] done in: {tf - t0:.2f} seconds")
 
@@ -126,6 +159,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--logfiles", type=pathlib.Path, nargs="+", required=True)
     parser.add_argument("--curves", type=str, nargs="+", required=True)
+    parser.add_argument("--env", type=str, default="bipedal_walker")
     parser.add_argument("-save", action="store_true")
     args = parser.parse_args()
     main(args)
