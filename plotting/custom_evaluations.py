@@ -54,7 +54,9 @@ class TargetSafetyAndComfortEvalFunction(EvaluationFunction):
     comfort_prefix = "c"
     max_steps = {"cart_pole_obst": 401,
                  "bipedal_walker": 1600,
-                 "lunar_lander": 600}
+                 "lunar_lander": 600,
+                 "racecar2": 300,
+                 "racecar": 300}
 
     def __init__(self, name: str):
         self.name = name
@@ -81,7 +83,9 @@ class TargetSafetyAndComfortEvalFunction(EvaluationFunction):
 class NormalizeEvalFunction(EvaluationFunction):
     max_steps = {"cart_pole_obst": 401,
                  "bipedal_walker": 1600,
-                 "lunar_lander": 600}
+                 "lunar_lander": 600,
+                 "racecar2": 300,
+                 "racecar": 300}
 
     def __init__(self, name: str, metric_prefix: str):
         self.name = name

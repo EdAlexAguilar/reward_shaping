@@ -56,11 +56,11 @@ REWARD_LABELS = {
 
 ENV_LABELS = {
     # "cart_pole_obst_fixed_height": "Cartpole",
+    "racecar_drive_delta": "Single-Agent Driving",
+    "racecar2_follow_delta": "Multi-Agent Driving",
     "lunar_lander_land": "Lunar Lander",
     "bipedal_walker_forward": "Bipedal Walker",
     "bipedal_walker_hardcore": "Bipedal Walker (Hardcore)",
-    "racecar_drive_delta": "Single-Agent Driving",
-    "racecar2_follow_delta": "Multi-Agent Driving",
 }
 
 HLINES = {
