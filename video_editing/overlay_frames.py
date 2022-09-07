@@ -53,23 +53,25 @@ def create_overlay_image_from_files(files: List[pathlib.Path]) -> np.ndarray:
 
     # finally combine with first/last frame
     frames = cv2.addWeighted(src1=first_frame, alpha=0.5, src2=last_frame, beta=0.5, gamma=0.0)
-    out = cv2.addWeighted(src1=out, alpha=0.35, src2=frames, beta=0.65, gamma=0.0)
+    out = cv2.addWeighted(src1=out, alpha=0.5, src2=frames, beta=0.5, gamma=0.0)
     return out
 
 
 def main(args):
     for indir in args.indir:
+        print(indir)
 
         files = [f for f in indir.glob("frame*png")]
         files = sorted(files, key=lambda file: int(re.findall(r'\d+', file.stem)[0]))
 
         result_img = create_overlay_image_from_files(files)
 
-        cv2.imshow('result', result_img)
-        cv2.waitKey(0)
+        if args.debug:
+            cv2.imshow('result', result_img)
+            cv2.waitKey(0)
 
         if args.save:
-            outpath = f"output_{time.time()}.jpeg"
+            outpath = f"output_{indir.stem}_{time.time()}.jpeg"
             cv2.imwrite(outpath, result_img)
             print(f"[info] save in {outpath}")
 

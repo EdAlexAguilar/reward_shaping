@@ -8,7 +8,7 @@ import time
 from gym.wrappers.monitoring.video_recorder import VideoRecorder
 from stable_baselines3 import SAC
 
-from plotting.utils import parse_env_task
+from plotting.utils import parse_env_task, parse_reward
 from reward_shaping.training.utils import make_env
 
 
@@ -30,7 +30,7 @@ def record_rollout(model, env, outfile, deterministic=True, render=False):
         rtg += reward
         frame = env.render(mode="rgb_array")
         frames.append(frame)
-    np.savez(outfile, observations=observations, infos=infos, rewards=rewards)
+    np.savez(outfile, observations=observations, infos=infos, rewards=rewards, allow_pickle=True)
     frame_dir = pathlib.Path(outfile)
     frame_dir.mkdir(parents=True, exist_ok=True)
     for i, frame in enumerate(frames):
@@ -55,10 +55,12 @@ def main(args):
     # collect checkpoints
     for i, cpfile in enumerate(args.checkpoints):
         env_name, task_name = parse_env_task(str(cpfile))
+        reward_name = parse_reward(str(cpfile))
         env, env_params = make_env(env_name, task_name, 'eval', eval=True, logdir=None, seed=1)
         model = SAC.load(str(cpfile))
         for ep in range(args.n_episodes):
-            outfile = str(outdir / f'{env_name}_{task_name}_cp{i}_ep{ep + 1}')
+            print(f"\tcheckpoint {i + 1}: episode: {ep + 1}")
+            outfile = str(outdir / f'{env_name}_{task_name}_{reward_name}_cp{i}_ep{ep + 1}')
             steps, reward = record_rollout(model, env, outfile=outfile, deterministic=True, render=args.render)
             print(f"\tcheckpoint {i + 1}: episode: {ep + 1}: steps: {steps}, reward: {reward}")
         with open(str(outdir / f'{env_name}_{task_name}_{i}.txt'), 'w+') as f:
