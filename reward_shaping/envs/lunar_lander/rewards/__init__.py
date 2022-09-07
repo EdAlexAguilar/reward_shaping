@@ -1,7 +1,8 @@
 from reward_shaping.core.helper_fns import DefaultReward
 from reward_shaping.envs.lunar_lander.rewards.baselines import LLEvalConfig
 from reward_shaping.envs.lunar_lander.rewards.potential import LLHierarchicalShapingOnSparseTargetReward, \
-    LLUniformScalarizedMultiObjectivization, LLDecreasingScalarizedMultiObjectivization
+    LLUniformScalarizedMultiObjectivization, LLDecreasingScalarizedMultiObjectivization, \
+    LLHierarchicalShapingOnSparseTargetRewardNoComfort
 from reward_shaping.envs.lunar_lander.rewards.stl_based import LLSTLReward
 
 _registry = {}
@@ -33,6 +34,7 @@ register_reward('morl_dec', reward=LLDecreasingScalarizedMultiObjectivization)
 
 # Hierarchical Potential Shaping
 register_reward('hprs', reward=LLHierarchicalShapingOnSparseTargetReward)
+register_reward('hprs_nocomf', reward=LLHierarchicalShapingOnSparseTargetRewardNoComfort)
 
 # Evaluation
 register_reward('eval', reward=LLEvalConfig)

@@ -58,7 +58,7 @@ ENV_LABELS = {
     # "cart_pole_obst_fixed_height": "Cartpole",
     "racecar_drive_delta": "Single-Agent Driving",
     "racecar2_follow_delta": "Multi-Agent Driving",
-    "lunar_lander_land": "Lunar Lander",
+    "lunar_lander_land": "Lunar Lander + Obstacle",
     "bipedal_walker_forward": "Bipedal Walker",
     "bipedal_walker_hardcore": "Bipedal Walker (Hardcore)",
 }

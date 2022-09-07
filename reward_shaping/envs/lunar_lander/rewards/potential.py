@@ -69,6 +69,28 @@ class LLHierarchicalShapingOnSparseTargetReward(RewardFunction):
         return base_reward + shaping_safety + shaping_target + shaping_comfort
 
 
+class LLHierarchicalShapingOnSparseTargetRewardNoComfort(RewardFunction):
+    def _safety_potential(self, state, info):
+        collision_reward = safety_collision_potential(state, info)
+        exit_reward = safety_exit_potential(state, info)
+        return collision_reward + exit_reward
+
+    def _target_potential(self, state, info):
+        target_reward = target_dist_to_goal_potential(state, info)
+        # hierarchical weights
+        safety_weight = safety_collision_potential(state, info) * safety_exit_potential(state, info)
+        return safety_weight * target_reward
+
+    def __call__(self, state, action=None, next_state=None, info=None) -> float:
+        base_reward = simple_base_reward(next_state, info)
+        if info["done"]:
+            return base_reward
+        # hierarchical shaping
+        shaping_safety = gamma * self._safety_potential(next_state, info) - self._safety_potential(state, info)
+        shaping_target = gamma * self._target_potential(next_state, info) - self._target_potential(state, info)
+        return base_reward + shaping_safety + shaping_target
+
+
 class LLScalarizedMultiObjectivization(RewardFunction):
 
     def __init__(self, weights: List[float], **kwargs):
