@@ -50,7 +50,7 @@ labels = {
         "velocity_x": "Velocity",
         "steering": "Steering Angle",
         "speed": "Speed",
-        "norm_ctrl": r'$\|\| \alpha_t - \alpha_{t-1} \|\|_2$'
+        "norm_ctrl": r'$\| \Delta \alpha \|$'
     },
 }
 show_labels = ["horizontal_speed", "hull_angle", "hull_angle_speed"]
@@ -195,7 +195,7 @@ def produce_static_plot(trace: np.ndarray, env: str, curve: str, var: str, color
     ax.set_xticks([])
     ax.set_yticks([])
     #ax.set_xlabel("Step", horizontalalignment='right', x=1.0)
-    #ax.set_ylabel(labels[env][var])
+    ax.set_ylabel(labels[env][var])
 
     if save:
         file = pathlib.Path(outfile)
