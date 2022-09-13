@@ -64,16 +64,18 @@ def main(args):
         plot_file_info(args)
         return
     # collect checkpoints
+    all_envs = set()
     for regex in args.regex:
         filter = lambda f: "skip" not in str(f) and args.min_steps <= int(
             re.findall(r'\d+', f.stem)[-1]) <= args.max_steps
         files = [f for f in get_files(args.logdir, regex, fileregex=file_regex) if filter(f)]
-        print(f"regex: {regex}, nr files: {len(files)}")
+        print(f"\n\nregex: {regex}, nr files: {len(files)}")
         envs_task_rew_files = group_checkpoints_per_env_task_reward(files)
         #
         results: Dict[
             Tuple[str, str, str], Tuple[int, int]] = {}  # results dict: (env x task x reward x rew x cls) -> succr
         for env_name in envs_task_rew_files:
+            all_envs.add(env_name)
             if not env_name in results:
                 results[env_name] = {}
             for task_name in envs_task_rew_files[env_name]:
@@ -82,7 +84,7 @@ def main(args):
                 for reward_name in envs_task_rew_files[env_name][task_name]:
                     if not reward_name in results[env_name][task_name]:
                         results[env_name][task_name][reward_name] = {}
-                    print(f"\n\n[simulation] env: {env_name}, task: {task_name}, reward: {reward_name}")
+                    print(f"[simulation] env: {env_name}, task: {task_name}, reward: {reward_name}")
                     env, env_params = make_env(env_name, task_name, 'eval', eval=True, logdir=None, seed=0)
                     list_of_metrics = [f"{req}_counter" for req in env.req_labels]
                     # init results
@@ -91,6 +93,7 @@ def main(args):
                     for metric in list_of_metrics:
                         results[env_name][task_name][reward_name][metric] = []
                     for i, cpfile in enumerate(envs_task_rew_files[env_name][task_name][reward_name]):
+                        cp_t0 = time.time()
                         model = SAC.load(str(cpfile))
                         rewards, eplens, metrics = evaluate_policy_with_monitors(model, env,
                                                                                  n_eval_episodes=args.n_episodes,
@@ -103,8 +106,9 @@ def main(args):
                         results[env_name][task_name][reward_name]["ep_lengths"] += [int(l) for l in eplens]
                         for metric in list_of_metrics:
                             results[env_name][task_name][reward_name][metric] += [int(l) for l in metrics[metric]]
+                        elaps = time.time() - cp_t0
                         print(f"\tcheckpoint {i + 1}: nr episodes: {len(rewards)}, " \
-                              f"mean reward: {np.mean(rewards):.5f}, mean lengths: {np.mean(eplens):.5f}")
+                              f"mean reward: {np.mean(rewards):.5f}, mean length: {np.mean(eplens):.5f}, time: {elaps: .5f}")
                     env.close()
         # save
         if args.save:

@@ -45,7 +45,7 @@ LINESTYLES = {
 }
 
 REWARD_LABELS = {
-    'default': 'Default',
+    'default': 'Shaped',
     'tltl': 'TLTL',
     'bhnr': 'BHNR',
     'morl_uni': 'MORL (unif.)',

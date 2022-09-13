@@ -10,7 +10,7 @@ reward=$7
 steps=$8
 novideo=$9
 
-image=luigiberducci/reward_shaping:racecar
+image=luigiberducci/reward_shaping:icra23
 gpus="--gpus all"
 
 debug_prefix="run_n_exps"
