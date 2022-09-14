@@ -27,41 +27,37 @@ To install the dependencies:
 
 We assume you run the code from the project directory and that it is included in the `PYTHONPATH`.
 
-## Run training 
+### Docker image
 
-To train on cartpole (for all the command line options, see `--help`):
+![docker-image](docs/docker_image.png)
+
+We provide a docker-image with a working environment to reproduce this work.
+You can either:
+- pull the image from Dockerhub: `docker pull luigiberducci/reward_shaping:icra23`
+- or, build the image from scratch: `docker build -t reward_shaping .`
+
+To run the container:
 
 ```
-python run_training.py --env cart_pole_obst --task fixed_height \ 
+docker run --rm -it -u $(id -u):$(id -g) \
+           -v $(pwd):/src --gpus all \
+           <image-name> /bin/bash
+```
+
+Then, you can use any of the following scripts from within the container.
+
+## Run training 
+
+To train on the safe driving task in the `racecar` environment (for all the command line options, see `--help`):
+
+```
+python run_training.py --env racecar --task delta_drive \ 
                        --reward hprs --steps 1000000 --expdir my_exp
 ```
 
 This command will start the training for `1M` steps 
 using the reward `hprs` (Hierarchical Potential-based Reward Shaping).
-The results will be stored in the directory `logs/cart_pole_obst/my_exp`.
-
-
-### Run training via Docker
-
-To train via Docker:
-- pull the image from Dockerhub: `docker pull luigiberducci/reward_shaping:icra23`
-- or, build the image: `docker build -t reward_shaping .`
-
-Then start the training:
-
-```
-docker run --name exp_cpole --rm -it \
-	       -u $(id -u):$(id -g) -v $(pwd):/src \
-	       --gpus all <image-name> \
-	       /bin/bash entrypoint.sh my_exp cart_pole_obst fixed_height sac hprs 1000000 1
-```
-
-The entrypoint expects 7+ arguments:
-```
-entrypoint.sh <expdir> <env> <task> <algo> <reward> <steps> <n_seeds> [-no_video]
-```
-
-In alternative, one can directly use the `run_training.py` script from the container.
+The results will be stored in the directory `logs/racecar/my_exp`.
 
 
 ## Play with trained agents
