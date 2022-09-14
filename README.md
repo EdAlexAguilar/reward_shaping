@@ -31,7 +31,8 @@ We assume you run the code from the project directory and that it is included in
 
 ![docker-image](docs/docker_image.png)
 
-We provide a docker-image with a working environment to reproduce this work.
+In alternative to the previous step, 
+we provide a docker-image with a working environment to reproduce this work.
 You can either:
 - pull the image from Dockerhub: `docker pull luigiberducci/reward_shaping:icra23`
 - or, build the image from scratch: `docker build -t reward_shaping .`
