@@ -12,16 +12,16 @@ authors:
     email: edgar.aguilar@ait.ac.at
     affiliation: AIT Austrian Institute for Technology Gmbh
     orcid: 'https://orcid.org/0000-0002-1177-9246'
-  - given-names: Radu
-    family-names: Grosu
-    email: radu.grosu@tuwien.ac.at
-    orcid: 'https://orcid.org/0000-0001-5715-2142'
-    affiliation: TU Wien
   - given-names: Dejan
     family-names: Nickovic
     email: dejan.nickovic@ait.ac.at
     affiliation: AIT Austrian Institute for Technology Gmbh
     orcid: 'https://orcid.org/0000-0001-5468-0396'
+  - given-names: Radu
+    family-names: Grosu
+    email: radu.grosu@tuwien.ac.at
+    orcid: 'https://orcid.org/0000-0001-5715-2142'
+    affiliation: TU Wien
 
 preferred-citation:
   type: article
@@ -36,16 +36,16 @@ preferred-citation:
         email: edgar.aguilar@ait.ac.at
         affiliation: AIT Austrian Institute for Technology Gmbh
         orcid: 'https://orcid.org/0000-0002-1177-9246'
-      - given-names: Radu
-        family-names: Grosu
-        email: radu.grosu@tuwien.ac.at
-        orcid: 'https://orcid.org/0000-0001-5715-2142'
-        affiliation: TU Wien
       - given-names: Dejan
         family-names: Nickovic
         email: dejan.nickovic@ait.ac.at
         affiliation: AIT Austrian Institute for Technology Gmbh
         orcid: 'https://orcid.org/0000-0001-5468-0396'
+      - given-names: Radu
+        family-names: Grosu
+        email: radu.grosu@tuwien.ac.at
+        orcid: 'https://orcid.org/0000-0001-5715-2142'
+        affiliation: TU Wien
   url: "https://arxiv.org/abs/2110.02792"
   journal: 'arXiv'
   year: 2022
