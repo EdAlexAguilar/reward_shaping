@@ -1,37 +1,12 @@
 import argparse
-import json
 import pathlib
-import warnings
-from typing import Dict, Tuple, List
-import re
 
 import numpy as np
 from stable_baselines3 import SAC
 from stable_baselines3.common.evaluation import evaluate_policy
 
 from reward_shaping.training.utils import make_env
-
-
-def parse_env_task(filepath: str):
-    env, task = None, None
-    for env_name in ["cart_pole_obst", "bipedal_walker", "lunar_lander", "racecar2", "racecar"]:
-        if env_name in filepath:
-            env = env_name
-            break
-    for task_name in ["fixed_height", "forward", "hardcore", "land", "drive_delta", "drive", "follow_delta"]:
-        if task_name in filepath:
-            task = task_name
-            break
-    if not env or not task:
-        raise ValueError(f"not able to parse env/task in {filepath}")
-    return env, task
-
-
-def parse_reward(filepath: str):
-    for reward in ["default", "tltl", "bhnr", "morl_uni", "morl_dec", "hprs"]:
-        if reward in filepath:
-            return reward
-    raise ValueError(f"reward not found in {filepath}")
+from utils.utils import parse_env_task, parse_reward
 
 
 def main(args):

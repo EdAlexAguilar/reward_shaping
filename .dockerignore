@@ -1,4 +1,6 @@
 venv
 logs
-*tar
-*json
+**/*tar
+**/*json
+**/*md
+**/.*

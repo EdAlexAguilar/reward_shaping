@@ -5,13 +5,11 @@ import time
 import warnings
 from typing import Dict, List, Any, Callable, Tuple
 
-import matplotlib.axes
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from plotting.custom_evaluations import get_custom_evaluation
-from plotting.utils import get_files, parse_env_task, parse_reward
+from utils.utils import get_files, parse_env_task, parse_reward
 
 FIGSIZE = (17.5, 4)
 LARGESIZE, MEDIUMSIZE, SMALLSIZE = 16, 13, 10
@@ -68,12 +66,12 @@ HLINES = {
 }
 
 XLIMITS = {
-    "cart_pole_obst_fixed_height":  1e6,
-    "lunar_lander_land":            1.5e6,
-    "bipedal_walker_forward":       2e6,
-    "bipedal_walker_hardcore":      3e6,
-    "racecar_drive_delta":          1e6,
-    "racecar2_follow_delta":        1e6,
+    "cart_pole_obst_fixed_height": 1e6,
+    "lunar_lander_land": 1.5e6,
+    "bipedal_walker_forward": 2e6,
+    "bipedal_walker_hardcore": 3e6,
+    "racecar_drive_delta": 1e6,
+    "racecar2_follow_delta": 1e6,
 }
 
 file_regex = "evaluations*.npz"
@@ -141,16 +139,6 @@ def plot_file_info(args):
             print(f"  file: {f.stem}, keys: {keys}")
 
 
-def extend_with_custom_evaluation(evaluations, y):
-    custom_fn = get_custom_evaluation(y)
-    for i in range(len(evaluations)):
-        if y in evaluations[i]:
-            continue
-        env_name, task_name = parse_env_task(evaluations[i]["filepath"])
-        evaluations[i][y] = custom_fn(data=evaluations[i], env_name=env_name)
-    return evaluations
-
-
 def make_gby_extractor(gby: str) -> Tuple[Callable, Dict[str, str]]:
     if gby is None:
         fn = lambda filepath: "all"
@@ -179,7 +167,7 @@ def plot_secondaries(ax, xlabel, ylabel, hlines, minx, maxx, miny, maxy, show_yt
     # ticks
     round_maxx = math.ceil(maxx / 5e5) * 5e5
     nticks = int(round_maxx / 5e5) + 1
-    nticks = min(nticks, 5)     # show max 5 ticks
+    nticks = min(nticks, 5)  # show max 5 ticks
     ax.set_xticks(np.linspace(minx, round_maxx, nticks))
     if show_yticks:
         ax.set_yticks(np.linspace(miny, maxy, 5))
@@ -204,8 +192,6 @@ def main(args):
         if not evaluations_grouped:
             continue
         for i, (gby, evaluations) in enumerate(evaluations_grouped.items()):
-            if any([args.y not in evaluation.keys() for evaluation in evaluations]):
-                evaluations = extend_with_custom_evaluation(evaluations, args.y)
             data = aggregate_evaluations(evaluations, params={'x': args.x, 'y': args.y, 'binning': args.binning})
             # assume all evaluations have same env and reward
             reward = parse_reward(evaluations[0]["filepath"])
