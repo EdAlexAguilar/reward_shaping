@@ -103,7 +103,7 @@ def main(args):
                         results[env_name][task_name][reward_name]["ep_lengths"] += [int(l) for l in eplens]
                         for metric in list_of_metrics:
                             results[env_name][task_name][reward_name][metric] += [int(l) for l in metrics[metric]]
-                        print(f"\tcheckpoint {i + 1}: nr episodes: {len(rewards)}, " \
+                        print(f"\tcheckpoint {i + 1}: {cpfile}, nr episodes: {len(rewards)}, " \
                               f"mean reward: {np.mean(rewards):.5f}, mean lengths: {np.mean(eplens):.5f}")
                     env.close()
         # save

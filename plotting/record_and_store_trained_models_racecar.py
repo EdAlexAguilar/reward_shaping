@@ -3,6 +3,7 @@ import json
 import pathlib
 
 import PIL.Image
+import imageio
 import numpy as np
 import time
 from gym.wrappers.monitoring.video_recorder import VideoRecorder
@@ -33,8 +34,12 @@ def record_rollout(model, env, outfile, deterministic=True, render=False):
     np.savez(outfile, observations=observations, infos=infos, rewards=rewards, allow_pickle=True)
     frame_dir = pathlib.Path(outfile)
     frame_dir.mkdir(parents=True, exist_ok=True)
-    for i, frame in enumerate(frames):
-        PIL.Image.fromarray(frame).save(frame_dir / f"frame_{i}.png")
+
+    with imageio.get_writer(frame_dir / 'movie.gif', mode='I', fps=10) as writer:
+        for i, frame in enumerate(frames):
+            PIL.Image.fromarray(frame).save(frame_dir / f"frame_{i}.png")
+            writer.append_data(frame)
+
     return steps, rtg
 
 
@@ -59,7 +64,7 @@ def main(args):
         env, env_params = make_env(env_name, task_name, 'eval', eval=True, logdir=None, seed=1)
         model = SAC.load(str(cpfile))
         for ep in range(args.n_episodes):
-            print(f"\tcheckpoint {i + 1}: episode: {ep + 1}")
+            print(f"\tcheckpoint {i + 1}: {cpfile}, episode: {ep + 1}")
             outfile = str(outdir / f'{env_name}_{task_name}_{reward_name}_cp{i}_ep{ep + 1}')
             steps, reward = record_rollout(model, env, outfile=outfile, deterministic=True, render=args.render)
             print(f"\tcheckpoint {i + 1}: episode: {ep + 1}: steps: {steps}, reward: {reward}")

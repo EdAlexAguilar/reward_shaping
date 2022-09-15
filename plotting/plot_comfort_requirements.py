@@ -10,7 +10,7 @@ import numpy as np
 from matplotlib import animation
 from matplotlib.animation import FuncAnimation
 
-LIMITS = {
+COMFORT_LIMITS = {
     "bipedal_walker": {
         "horizontal_speed": [0.30, 1.0],
         "vertical_speed": [-0.1, 0.1],
@@ -22,6 +22,11 @@ LIMITS = {
         "speed": [-1, +1],
         "velocity_x": [0.14, 0.71],
         "norm_ctrl": [0.0, 0.25]
+    },
+    "racecar2": {
+        "steering": [-0.25, 0.25],
+        "norm_ctrl": [0.0, +0.25],
+        "distance": [-2.0, -1.5],
     }
 }
 
@@ -36,6 +41,11 @@ YLIMITS = {
         "speed": [-1, +1],
         "velocity_x": [-0.5, +1],
         "norm_ctrl": [-0.25, 1.5]
+    },
+    "racecar2": {
+        "steering": [-1, +1],
+        "norm_ctrl": [-0.25, +1.25],
+        "distance": [-3, -0.5],
     }
 }
 
@@ -52,12 +62,17 @@ labels = {
         "speed": "Speed",
         "norm_ctrl": r'$\| \Delta \alpha \|$'
     },
+    "racecar2": {
+        "steering": "Steering Command",
+        "norm_ctrl": "L2-Norm Control",
+        "distance": "Ego-Leader Distance"
+    }
 }
 show_labels = ["horizontal_speed", "hull_angle", "hull_angle_speed"]
-show_labels = ["velocity_x", "norm_ctrl"]
+show_labels = ["steering", "norm_ctrl", "distance"]
 
 MARGIN = 0.25  # percentage
-BACKWARD_HISTORY = 1.0 #0.30
+BACKWARD_HISTORY = 0.30
 FORWARD_HISTORY = 0.10
 
 COLORS = ['k', 'k', '#e41a1c', '#4daf4a', '#377eb8', '#984ea3', '#a65628', ]
@@ -86,16 +101,17 @@ def _convert_array_to_dict(state, env):
         dictionary = {v: s for v, s in zip(vars.split(","), state)}
         dictionary["lidar"] = state[len(vars.split(",")):]
     elif env == "racecar":
-        action_vars =  "steering_2,speed_2,steering_1,speed_1,steering_0,speed_0"
+        action_vars = "steering_2,speed_2,steering_1,speed_1,steering_0,speed_0"
         velx_vars = "velx_2,velx_1,velx_0"
         dictionary = {v: s for v, s in zip(action_vars.split(","), state)}
         dictionary.update({v: s for v, s in zip(velx_vars.split(","), state[-3:])})
         dictionary.update({
-            "lidar_2": state[7:7+64],
-            "lidar_1": state[7+64:7+2*64],
-            "lidar_0": state[7+2*64:7+3*64],
+            "lidar_2": state[7:7 + 64],
+            "lidar_1": state[7 + 64:7 + 2 * 64],
+            "lidar_0": state[7 + 2 * 64:7 + 3 * 64],
         })
     return dictionary
+
 
 def _convert_state_to_dict(state, env):
     dictionary = {}
@@ -108,6 +124,13 @@ def _convert_state_to_dict(state, env):
             "speed": state["last_actions"][-1][1],
             "norm_ctrl": np.linalg.norm(state["last_actions"][-1][0] - state["last_actions"][-2][0]),
         }
+    elif env == "racecar2":
+        dictionary = {
+            "steering": state["last_actions"][-1][0],
+            "speed": state["last_actions"][-1][1],
+            "norm_ctrl": np.linalg.norm(state["last_actions"][-1] - state["last_actions"][-2]),
+            "distance": state["dist_ego2npc"]
+        }
     return dictionary
 
 
@@ -119,18 +142,21 @@ def parse_curve_name(filename: str):
     return "Unknown"
 
 
-def produce_animation(trace: np.ndarray, env: str, curve: str, var: str, color="k", save: bool = False, outfile="test.gif"):
+def produce_animation(trace: np.ndarray, env: str, curve: str, var: str, color="k", save: bool = False, fps: int = 50,
+                      outfile="test.gif"):
     fig, ax = plt.subplots(figsize=FIGSIZE)
     # prepare data
     x, yy = [], []
-    values = [_convert_array_to_dict(obs, env)[var] for obs in trace]
+    # values = [_convert_array_to_dict(obs, env)[var] for obs in trace]
+    values = [_convert_state_to_dict(info["state"], env)[var] for info in trace]
     # animate
     n_frames = len(values)
     backward_margin = int(BACKWARD_HISTORY * n_frames)
     forward_margin = int(FORWARD_HISTORY * n_frames)
 
-    limits = LIMITS[env]
-    margin = (limits[var][1] - limits[var][0]) * MARGIN
+    comf_limits = COMFORT_LIMITS[env]
+    y_limits = comf_limits #YLIMITS[env]
+    margin = (comf_limits[var][1] - comf_limits[var][0]) * MARGIN
 
     def animate(t):
         ax.clear()
@@ -138,42 +164,41 @@ def produce_animation(trace: np.ndarray, env: str, curve: str, var: str, color="
             x.append(t)
             yy.append(values[t])
             ax.plot(x, yy, label=curve, color=color, linewidth=LINEWIDTH)
-        ax.hlines(limits[var][0], xmin=0, xmax=1000, linewidth=LINEWIDTH)
-        ax.hlines(limits[var][1], xmin=0, xmax=1000, linewidth=LINEWIDTH)
-        within_margin = [limits[var][0] <= y <= limits[var][1] for y in yy]
-        outside_margin = [not(limits[var][0] <= y <= limits[var][1]) for y in yy]
-        above_max = [y > limits[var][1] for y in yy]
-        below_min = [y < limits[var][0] for y in yy]
-        ax.fill_between(x, limits[var][0], limits[var][1], where=within_margin, color="#83c255", alpha=0.3)
-        ax.fill_between(x, limits[var][0], limits[var][1], where=outside_margin, color="red", alpha=0.3)
-        ax.fill_between(x, limits[var][0], yy, where=below_min, color="red", alpha=0.3)
-        ax.fill_between(x, limits[var][1], yy, where=above_max, color="red", alpha=0.3)
+        ax.hlines(comf_limits[var][0], xmin=0, xmax=1000, linewidth=LINEWIDTH)
+        ax.hlines(comf_limits[var][1], xmin=0, xmax=1000, linewidth=LINEWIDTH)
+        within_margin = [comf_limits[var][0] <= y <= comf_limits[var][1] for y in yy]
+        outside_margin = [not (comf_limits[var][0] <= y <= comf_limits[var][1]) for y in yy]
+        above_max = [y > comf_limits[var][1] for y in yy]
+        below_min = [y < comf_limits[var][0] for y in yy]
+        ax.fill_between(x, comf_limits[var][0], comf_limits[var][1], where=within_margin, color="#83c255", alpha=0.3)
+        ax.fill_between(x, comf_limits[var][0], comf_limits[var][1], where=outside_margin, color="red", alpha=0.3)
+        ax.fill_between(x, comf_limits[var][0], yy, where=below_min, color="red", alpha=0.3)
+        ax.fill_between(x, comf_limits[var][1], yy, where=above_max, color="red", alpha=0.3)
         ax.set_xlim([max(0, t - backward_margin), min(t + forward_margin, n_frames)])
-        ax.set_ylim([limits[var][0] - margin, limits[var][1] + margin])
-        ax.set_ylim(-1, +1)
-        ax.set_xlim(0, 275)
-        #ax.set_xlabel("Step", horizontalalignment='right', x=1.0)
-        #ax.set_ylabel(labels[var])
+        ax.set_ylim([y_limits[var][0] - margin, y_limits[var][1] + margin])
+        # ax.set_xlim(0, 275)
+        # ax.set_xlabel("Step", horizontalalignment='right', x=1.0)
+        # ax.set_ylabel(labels[var])
 
     anim = FuncAnimation(fig, animate, frames=n_frames, repeat=False)
     if save:
         file = pathlib.Path(outfile)
-        writergif = animation.FFMpegWriter(fps=50)
+        writergif = animation.FFMpegWriter(fps=fps)
         anim.save(file, writer=writergif)
     else:
         plt.show()
 
 
-def produce_static_plot(trace: np.ndarray, env: str, curve: str, var: str, color="k", save: bool = False, outfile="test.pdf"):
+def produce_static_plot(trace: np.ndarray, env: str, curve: str, var: str, color="k", save: bool = False,
+                        outfile="test.pdf"):
     fig, ax = plt.subplots(figsize=FIGSIZE)
     # prepare data
 
     values = [_convert_state_to_dict(info["state"], env)[var] for info in trace]
     yy = values
 
-    limits = LIMITS[env]
+    limits = COMFORT_LIMITS[env]
     margin = (limits[var][1] - limits[var][0]) * MARGIN
-
 
     ax.clear()
     x = np.arange(0, len(values))
@@ -182,7 +207,7 @@ def produce_static_plot(trace: np.ndarray, env: str, curve: str, var: str, color
     ax.hlines(limits[var][1], xmin=0, xmax=1000, linewidth=LINEWIDTH)
 
     within_margin = [limits[var][0] <= y <= limits[var][1] for y in yy]
-    outside_margin = [not(limits[var][0] <= y <= limits[var][1]) for y in yy]
+    outside_margin = [not (limits[var][0] <= y <= limits[var][1]) for y in yy]
     above_max = [y > limits[var][1] for y in yy]
     below_min = [y < limits[var][0] for y in yy]
     ax.fill_between(x, limits[var][0], limits[var][1], where=within_margin, color="#83c255", alpha=0.4)
@@ -194,7 +219,7 @@ def produce_static_plot(trace: np.ndarray, env: str, curve: str, var: str, color
     ax.set_ylim(YLIMITS[env][var][0], YLIMITS[env][var][1])
     ax.set_xticks([])
     ax.set_yticks([])
-    #ax.set_xlabel("Step", horizontalalignment='right', x=1.0)
+    # ax.set_xlabel("Step", horizontalalignment='right', x=1.0)
     ax.set_ylabel(labels[env][var])
 
     if save:
@@ -210,7 +235,7 @@ def main(args):
     env = args.env  # name of the env
     for f in args.logfiles:
         data = np.load(str(f), allow_pickle=True)
-        #traces.append(data["observations"])
+        # traces.append(data["observations"])
         traces.append(data["infos"])
     assert len(curves) == len(args.logfiles), "nr logfile != nr curve names"
 
@@ -224,7 +249,7 @@ def main(args):
             if args.static:
                 produce_static_plot(trace, env, curve, var, color=color, save=args.save, outfile=f"{outfile}.pdf")
             else:
-                produce_animation(trace, env, curve, var, color=color, save=args.save, outfile=f"{outfile}.gif")
+                produce_animation(trace, env, curve, var, color=color, save=args.save, fps=args.fps, outfile=f"{outfile}.gif")
         tf = time.time()
         print(f"[{curve}] done in: {tf - t0:.2f} seconds")
 
@@ -235,6 +260,7 @@ if __name__ == "__main__":
     parser.add_argument("--logfiles", type=pathlib.Path, nargs="+", required=True)
     parser.add_argument("--curves", type=str, nargs="+", required=True)
     parser.add_argument("--env", type=str, default="bipedal_walker")
+    parser.add_argument("--fps", type=int, default=50, help="fps of output gif")
     parser.add_argument("-save", action="store_true")
     parser.add_argument("-static", action="store_true", help="disable animation, static plot of entire trace")
     args = parser.parse_args()
