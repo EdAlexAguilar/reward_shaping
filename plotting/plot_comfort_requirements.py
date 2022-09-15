@@ -60,7 +60,7 @@ labels = {
         "velocity_x": "Velocity",
         "steering": "Steering Angle",
         "speed": "Speed",
-        "norm_ctrl": r'$\| \Delta \alpha \|$'
+        "norm_ctrl": "L2-Norm Control"
     },
     "racecar2": {
         "steering": "Steering Command",
@@ -68,19 +68,19 @@ labels = {
         "distance": "Ego-Leader Distance"
     }
 }
-show_labels = ["horizontal_speed", "hull_angle", "hull_angle_speed"]
-show_labels = ["steering", "norm_ctrl", "distance"]
+SHOW_LABELS = {
+    "bipedal_walker": ["horizontal_speed", "hull_angle", "hull_angle_speed"],
+    "racecar": ["velocity_x", "steering", "speed", "norm_ctrl"],
+    "racecar2": ["steering", "norm_ctrl", "distance"]
+}
 
 MARGIN = 0.25  # percentage
 BACKWARD_HISTORY = 0.30
 FORWARD_HISTORY = 0.10
 
-COLORS = ['k', 'k', '#e41a1c', '#4daf4a', '#377eb8', '#984ea3', '#a65628', ]
-COLORS = ['k', 'k', 'k', 'k', 'k', 'k', 'k', 'k', 'k', ]
+LINEWIDTH = 5
 
-LINEWIDTH = 4
-
-FIGSIZE = (10, 5)
+FIGSIZE = (20, 5)
 LARGESIZE, MEDIUMSIZE, SMALLSIZE = 25, 20, 15
 
 plt.rcParams.update({'font.size': MEDIUMSIZE})
@@ -122,7 +122,8 @@ def _convert_state_to_dict(state, env):
             "velocity_x": state["velocity_x"][0],
             "steering": state["last_actions"][-1][0],
             "speed": state["last_actions"][-1][1],
-            "norm_ctrl": np.linalg.norm(state["last_actions"][-1][0] - state["last_actions"][-2][0]),
+            "norm_ctrl": np.linalg.norm(state["last_actions"][-1] - state["last_actions"][-2]),
+            "norm_steering": np.linalg.norm(state["last_actions"][-1][0] - state["last_actions"][-2][0]),
         }
     elif env == "racecar2":
         dictionary = {
@@ -147,7 +148,7 @@ def produce_animation(trace: np.ndarray, env: str, curve: str, var: str, color="
     fig, ax = plt.subplots(figsize=FIGSIZE)
     # prepare data
     x, yy = [], []
-    # values = [_convert_array_to_dict(obs, env)[var] for obs in trace]
+    # values = [_convert_array_to_dict(obs, env)[var] for obs in trace]     #TODO: remove it and use state also in bw
     values = [_convert_state_to_dict(info["state"], env)[var] for info in trace]
     # animate
     n_frames = len(values)
@@ -242,9 +243,9 @@ def main(args):
     for i, (trace, curve) in enumerate(zip(traces, curves)):
         t0 = time.time()
         print(f"[{curve}] starting")
-        for j, var in enumerate(show_labels):
+        for j, var in enumerate(SHOW_LABELS[env]):
             print(f"\t{var}")
-            color = COLORS[i]
+            color = 'k'
             outfile = f"comfort_plot_{curve}_{labels[env][var]}_{int(time.time())}"
             if args.static:
                 produce_static_plot(trace, env, curve, var, color=color, save=args.save, outfile=f"{outfile}.pdf")

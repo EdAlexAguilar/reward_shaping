@@ -126,7 +126,7 @@ class MultiAgentRacecarEnv(ChangingTrackMultiAgentRaceEnv):
                 "variable_speed": 0.75,
             },
             "frame_skip": 1,
-            "render": False,
+            "render": True,
             "eval": False,
             "seed": 0,
         }
