@@ -74,4 +74,13 @@ args=(
   "racecar2 follow_delta sac ${logdir} 5 morl_uni ${short_steps} -novideo"
   "racecar2 follow_delta sac ${logdir} 5 morl_dec ${short_steps} -novideo"
   "racecar2 follow_delta sac ${logdir} 5 hprs_nocomf ${short_steps} -novideo"
+  ##
+  ## Highway-env
+  ##
+  "highway_env reach_target ppo ${logdir} 3 default ${short_steps}"
+  "highway_env reach_target ppo ${logdir} 3 hprs ${short_steps}"
+  "highway_env reach_target ppo ${logdir} 3 tltl ${short_steps}"
+  "highway_env reach_target ppo ${logdir} 3 bhnr ${short_steps}"
+  "highway_env reach_target ppo ${logdir} 3 morl_uni ${short_steps}"
+  "highway_env reach_target ppo ${logdir} 3 morl_dec ${short_steps}"
 )
