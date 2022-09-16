@@ -20,7 +20,7 @@ def safety_hard_speed_limit_potential(state, info):
     return 0 if (state['violated_hard_speed_limit'] == 1) else 1
 
 
-def target_reach_destination_potential(state, info):
+def target_reach_potential(state, info):
     assert 'distance_to_target' in state and 'TARGET_DISTANCE' in info
     return 1 - clip_and_norm(state['distance_to_target'], 0, info['TARGET_DISTANCE'])
 
@@ -50,7 +50,6 @@ def simple_base_reward(state, info):
 
 
 class HighwayHierarchicalPotentialShaping(RewardFunction):
-
     '''
         def __init__(self, dt: float):
         self._dt = dt
@@ -62,7 +61,7 @@ class HighwayHierarchicalPotentialShaping(RewardFunction):
         return RSS_reward + hard_speed_limit_reward
 
     def _target_potential(self, state, info):
-        target_reward = target_reach_destination_potential(state, info)
+        target_reward = target_reach_potential(state, info)
         # hierarchical weights
         safety_weight = safety_RSS_potential(state, info) * safety_hard_speed_limit_potential(state, info)
         return safety_weight * target_reward
@@ -74,7 +73,7 @@ class HighwayHierarchicalPotentialShaping(RewardFunction):
         comfort_reward = c1 + c2 + c3
         # hierarchical weights
         safety_weight = safety_RSS_potential(state, info) * safety_hard_speed_limit_potential(state, info)
-        target_weight = target_reach_destination_potential(state, info)
+        target_weight = target_reach_potential(state, info)
         return safety_weight * target_weight * comfort_reward
 
     def __call__(self, state, action=None, next_state=None, info=None) -> float:
@@ -86,18 +85,7 @@ class HighwayHierarchicalPotentialShaping(RewardFunction):
         shaping_target = gamma * self._target_potential(next_state, info) - self._target_potential(state, info)
         shaping_comfort = gamma * self._comfort_potential(next_state, info) - self._comfort_potential(state, info)
 
-        '''
-        print('time_step: ', info['time_step'])
-        print("base_reward: ", base_reward)
-        print("shaping_safety : ", shaping_safety)
-        print("shaping_target :", shaping_target)
-        print("shaping_comfort :", shaping_comfort)
-        print("___________________________________")
-        '''
-
         return base_reward + shaping_safety + shaping_target + shaping_comfort
-
-
 
 
 class HighwayScalarizedMultiObjectivization(RewardFunction):
@@ -113,18 +101,28 @@ class HighwayScalarizedMultiObjectivization(RewardFunction):
             return base_reward
         # evaluate individual shaping functions
         shaping_safedist = gamma * safety_RSS_potential(next_state, info) - safety_RSS_potential(state, info)
-        shaping_hardlim = gamma * safety_hard_speed_limit_potential(next_state, info) - safety_hard_speed_limit_potential(state, info)
-        shaping_target = gamma * target_reach_destination_potential(next_state, info) - target_reach_destination_potential(state, info)
-        shaping_softlim = gamma * comfort_soft_speed_limit_potential(next_state, info) - comfort_soft_speed_limit_potential(state, info)
-        shaping_slwleft = gamma * comfort_no_faster_than_left_potential(next_state, info) - comfort_no_faster_than_left_potential(state, info)
-        shaping_lowspeed = gamma * comfort_speed_lower_bound_potential(next_state, info) - comfort_speed_lower_bound_potential(state, info)
+        shaping_hardlim = gamma * safety_hard_speed_limit_potential(next_state,
+                                                                    info) - safety_hard_speed_limit_potential(state,
+                                                                                                              info)
+        shaping_target = gamma * target_reach_potential(next_state,
+                                                        info) - target_reach_potential(state,
+                                                                                       info)
+        shaping_softlim = gamma * comfort_soft_speed_limit_potential(next_state,
+                                                                     info) - comfort_soft_speed_limit_potential(state,
+                                                                                                                info)
+        shaping_slwleft = gamma * comfort_no_faster_than_left_potential(next_state,
+                                                                        info) - comfort_no_faster_than_left_potential(
+            state, info)
+        shaping_lowspeed = gamma * comfort_speed_lower_bound_potential(next_state,
+                                                                       info) - comfort_speed_lower_bound_potential(
+            state, info)
         # linear scalarization of the multi-objectivized requirements
         reward = base_reward
-        for w, f in zip(self._weights, [shaping_safedist, shaping_hardlim, shaping_target, shaping_softlim, shaping_slwleft,shaping_lowspeed]):
+        for w, f in zip(self._weights,
+                        [shaping_safedist, shaping_hardlim, shaping_target, shaping_softlim, shaping_slwleft,
+                         shaping_lowspeed]):
             reward += w * f
         return reward
-
-
 
 
 class HighwayUniformScalarizedMultiObjectivization(HighwayScalarizedMultiObjectivization):
@@ -144,10 +142,6 @@ class HighwayDecreasingScalarizedMultiObjectivization(HighwayScalarizedMultiObje
             - the sum of target weights is ~ 0.50/1.75
             - the sum of comfort weights is ~ 0.25/1.75
         """
-        weights = np.array([1.0, 1.0, 1.0, 0.5, 0.25, 0.25])
+        weights = np.array([1.0, 1.0, 0.5, 0.25, 0.25, 0.25])
         weights /= np.sum(weights)
         super(HighwayDecreasingScalarizedMultiObjectivization, self).__init__(weights=weights, **kwargs)
-
-
-
-
