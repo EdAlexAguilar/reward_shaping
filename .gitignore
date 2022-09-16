@@ -105,9 +105,9 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
+#.env
 .venv
-env/
+#env/
 venv/
 recording/
 cartpole_videos_and_models/
