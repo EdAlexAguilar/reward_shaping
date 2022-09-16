@@ -19,7 +19,7 @@ def generic_env_test(env_name, task, reward_name):
         while not done:
             action = env.action_space.sample()
             obs, reward, done, info = env.step(action)
-            #print(reward)
+            # print(reward)
             tot_reward += reward
             t += 1
             env.render()
@@ -56,13 +56,13 @@ def generic_env_test_wt_agent(env_name, model, task, reward_name):
     return True
 
 
-def generic_training(env, task, reward):
+def generic_training(env, task, reward, algo: str = "sac"):
     # create training environment
     seed = np.random.randint(0, 1000000)
     train_env, env_params = make_env(env, task, reward, seed=seed)
     eval_env, _ = make_env(env, task, "eval", seed=seed)
     # create agent
-    model = make_agent(env, train_env, reward, "sac", logdir=None)
+    model = make_agent(env, train_env, reward, algo, logdir=None)
     # train
     model.learn(total_timesteps=1000, eval_freq=500, eval_env=eval_env)
     train_env.close()

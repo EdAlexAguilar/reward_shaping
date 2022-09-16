@@ -48,20 +48,20 @@ class TestTrainingLoop(TestCase):
 
     def test_train_default(self):
         for task in tasks:
-            generic_training(env_name, task, 'default')
+            generic_training(env_name, task, 'default', algo="ppo")
 
     def test_train_tltl(self):
         for task in tasks:
-            generic_training(env_name, task, 'tltl')
+            generic_training(env_name, task, 'tltl', algo="ppo")
 
     def test_train_hprs(self):
         for task in tasks:
-            generic_training(env_name, task, 'hprs')
+            generic_training(env_name, task, 'hprs', algo="ppo")
 
     def test_train_morl_uni(self):
         for task in tasks:
-            generic_training(env_name, task, 'morl_uni')
+            generic_training(env_name, task, 'morl_uni', algo="ppo")
 
     def test_train_morl_dec(self):
         for task in tasks:
-            generic_training(env_name, task, 'morl_dec')
+            generic_training(env_name, task, 'morl_dec', algo="ppo")

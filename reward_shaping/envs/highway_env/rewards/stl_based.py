@@ -8,7 +8,7 @@ from reward_shaping.core.configs import TLRewardConfig
 def _get_highway_default_monitoring_variables():
     return ['time', 'max_steps',
             'violated_safe_distance',
-            'violated_hard_speed_limit'
+            'violated_hard_speed_limit',
             'distance_to_target', 'TARGET_DISTANCE_TOL',
             ]
 

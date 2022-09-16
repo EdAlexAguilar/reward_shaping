@@ -1,4 +1,4 @@
-import statistics
+from typing import Dict, Text
 
 import gym
 import numpy as np
@@ -9,12 +9,10 @@ from reward_shaping.envs.highway_env.env_backend.env.action import Action
 from reward_shaping.envs.highway_env.env_backend.env.observation import observation_factory
 from reward_shaping.envs.highway_env.env_backend.road.road import Road, RoadNetwork
 from reward_shaping.envs.highway_env.env_backend.utils import near_split
+from reward_shaping.envs.highway_env.env_backend.vehicle.controller import ControlledVehicle
 from reward_shaping.envs.highway_env.env_backend.vehicle.kinematics import Vehicle
 from reward_shaping.envs.highway_env import highway_utils
 
-from reward_shaping.envs.highway_env import highway_constants as const
-
-from gym import spaces
 from gym.spaces import Box
 
 
@@ -27,7 +25,7 @@ class HighwayEnv(AbstractEnv):
     """
 
     @classmethod
-    def default_config(cls) -> dict:
+    def default_config(self) -> dict:
         config = super().default_config()
         config.update({
             "observation": {
@@ -50,7 +48,8 @@ class HighwayEnv(AbstractEnv):
             # lower speeds according to config["reward_speed_range"].
             "lane_change_reward": 0,  # The reward received at each lane change action.
             "reward_speed_range": [20, 30],
-            "offroad_terminal": False
+            "offroad_terminal": False,
+            "normalize_reward": False,
         })
         return config
 
@@ -91,25 +90,29 @@ class HighwayEnv(AbstractEnv):
         :param action: the last action performed
         :return: the corresponding reward
         """
-        """
+        rewards = self._rewards(action)
+        reward = sum(self.config.get(name, 0) * reward for name, reward in rewards.items())
+        if self.config["normalize_reward"]:
+            reward = utils.lmap(reward,
+                                [self.config["collision_reward"],
+                                 self.config["high_speed_reward"] + self.config["right_lane_reward"]],
+                                [0, 1])
+        reward *= rewards['on_road_reward']
+        return reward
+
+    def _rewards(self, action: Action) -> Dict[Text, float]:
         neighbours = self.road.network.all_side_lanes(self.vehicle.lane_index)
         lane = self.vehicle.target_lane_index[2] if isinstance(self.vehicle, ControlledVehicle) \
             else self.vehicle.lane_index[2]
         # Use forward speed rather than speed, see https://github.com/eleurent/highway-env/issues/268
         forward_speed = self.vehicle.speed * np.cos(self.vehicle.heading)
         scaled_speed = utils.lmap(forward_speed, self.config["reward_speed_range"], [0, 1])
-        reward = \
-            + self.config["collision_reward"] * self.vehicle.crashed \
-            + self.config["right_lane_reward"] * lane / max(len(neighbours) - 1, 1) \
-            + self.config["high_speed_reward"] * np.clip(scaled_speed, 0, 1)
-        reward = utils.lmap(reward,
-                          [self.config["collision_reward"],
-                           self.config["high_speed_reward"] + self.config["right_lane_reward"]],
-                          [0, 1])
-        reward = 0 if not self.vehicle.on_road else reward
-        """
-        reward = 0
-        return reward
+        return {
+            "collision_reward": float(self.vehicle.crashed),
+            "right_lane_reward": lane / max(len(neighbours) - 1, 1),
+            "high_speed_reward": np.clip(scaled_speed, 0, 1),
+            "on_road_reward": float(self.vehicle.on_road)
+        }
 
     def _is_terminal(self) -> bool:
         """The episode is over if the ego vehicle crashed or the time is out."""
@@ -155,23 +158,25 @@ class HighwayEnvHPRS(HighwayEnvFast):
     A variant of highway-v0 designed for HPRS:
     """
 
-    def __init__(self, task, eval=False, seed=0):
+    _params = None
+
+    def __init__(self, **params):
+        self._params = params
         super(HighwayEnvHPRS, self).__init__()
 
-        self.target_distance = const.TARGET_DISTANCE
-        self.target_distance_tol = const.TARGET_DISTANCE_TOL
-        self.soft_speed_limit = const.SOFT_SPEED_LIMIT
-        self.hard_speed_limit = const.HARD_SPEED_LIMIT
-        self.speed_lower_bound = const.SPEED_LOWER_BOUND
-        self.x_limit = const.X_LIMIT
-        self.y_limit = const.Y_LIMIT
-        self.vx_limit = const.VX_LIMIT
-        self.vy_limit = const.VY_LIMIT
+        self.target_distance = self._params["TARGET_DISTANCE"]
+        self.target_distance_tol = self._params["TARGET_DISTANCE_TOL"]
+        self.soft_speed_limit = self._params["SOFT_SPEED_LIMIT"]
+        self.hard_speed_limit = self._params["HARD_SPEED_LIMIT"]
+        self.speed_lower_bound = self._params["SPEED_LOWER_BOUND"]
+        self.x_limit = self._params["X_LIMIT"]
+        self.y_limit = self._params["Y_LIMIT"]
+        self.vx_limit = self._params["VX_LIMIT"]
+        self.vy_limit = self._params["VY_LIMIT"]
 
         self.step_count = 0
         self.max_steps = self.config['duration']
         self.ego_avg_speed = []
-        self.task = task
 
         self.observation_space = gym.spaces.Dict(dict(
             observation=observation_factory(self, self.config["observation"]).space(),
@@ -188,8 +193,7 @@ class HighwayEnvHPRS(HighwayEnvFast):
             step_count=Box(low=0.0, high=np.inf, shape=(1,))
         ))
 
-    @classmethod
-    def default_config(cls) -> dict:
+    def default_config(self) -> dict:
         cfg = super().default_config()
         cfg.update({
             "simulation_frequency": 5,
@@ -201,10 +205,10 @@ class HighwayEnvHPRS(HighwayEnvFast):
                 "type": "Kinematics",
                 "features": ["presence", "x", "y", "vx", "vy"],
                 "features_range": {
-                    "x": [-const.X_LIMIT, const.X_LIMIT],
-                    "y": [-const.Y_LIMIT, const.Y_LIMIT],
-                    "vx": [-const.VX_LIMIT, const.VX_LIMIT],
-                    "vy": [-const.VY_LIMIT, const.VY_LIMIT]
+                    "x": [-self._params["X_LIMIT"], self._params["X_LIMIT"]],
+                    "y": [-self._params["Y_LIMIT"], self._params["Y_LIMIT"]],
+                    "vx": [-self._params["VX_LIMIT"], self._params["VX_LIMIT"]],
+                    "vy": [-self._params["VY_LIMIT"], self._params["VY_LIMIT"]]
                 },
             }
         })
@@ -306,10 +310,10 @@ class HighwayEnvHPRS(HighwayEnvFast):
         obs = []
 
         # denormalized
-        features_range = [[-const.X_LIMIT, const.X_LIMIT],
-                          [-const.Y_LIMIT, const.Y_LIMIT],
-                          [-const.VX_LIMIT, const.VX_LIMIT],
-                          [-const.VY_LIMIT, const.VY_LIMIT]]
+        features_range = [[-self._params["X_LIMIT"], self._params["X_LIMIT"]],
+                          [-self._params["Y_LIMIT"], self._params["Y_LIMIT"]],
+                          [-self._params["VX_LIMIT"], self._params["VX_LIMIT"]],
+                          [-self._params["VY_LIMIT"], self._params["VY_LIMIT"]]]
         for i in range(len(normalized_obs)):
             vehicle_norm_obs = normalized_obs[i]
             vehicle_obs = []
@@ -360,6 +364,8 @@ class HighwayEnvHPRS(HighwayEnvFast):
         distance_to_target = self.get_distance_to_target(obs, info)
         max_velocity_difference_to_left = self.get_max_velocity_difference_to_left(obs, info)
 
+        done = bool(done or reached_target or violated_safe_distance or violated_hard_speed_limit)
+
         state = {
             "observation": normalized_obs,
             "ego_x": obs[0][1],
@@ -372,12 +378,11 @@ class HighwayEnvHPRS(HighwayEnvFast):
             "road_progress": ego_road_progress,
             "distance_to_target": distance_to_target,
             "max_velocity_difference_to_left": max_velocity_difference_to_left,
-            "step_count": self.step_count
+            "step_count": self.step_count,
         }
 
-        done = bool(done or reached_target or violated_safe_distance or violated_hard_speed_limit)
-
-        info['done'] = done
+        info["done"] = done
+        info["default_reward"] = reward
 
         # if info['done']:
         #     print(self.step_count)
@@ -407,7 +412,7 @@ class HighwayEnvHPRS(HighwayEnvFast):
             "violated_safe_distance": 0,
             "violated_hard_speed_limit": 0,
             "road_progress": 0,
-            "distance_to_target": const.TARGET_DISTANCE,
+            "distance_to_target": self._params["TARGET_DISTANCE"],
             "max_velocity_difference_to_left": 0,
             "step_count": self.step_count
         }
