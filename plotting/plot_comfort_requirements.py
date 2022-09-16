@@ -18,10 +18,11 @@ COMFORT_LIMITS = {
         "hull_angle_speed": [-0.25, 0.25]
     },
     "racecar": {
-        "steering": [-.1, +.1],
+        "steering": [-.25, +.25],
         "speed": [-1, +1],
-        "velocity_x": [0.14, 0.71],
-        "norm_ctrl": [0.0, 0.25]
+        "velocity_x": [2.0, 3.0],
+        "norm_ctrl": [0.0, 0.25],
+        "dist2obst": [0.5, 1.0]
     },
     "racecar2": {
         "steering": [-0.25, 0.25],
@@ -39,8 +40,10 @@ YLIMITS = {
     },
     "racecar": {
         "speed": [-1, +1],
-        "velocity_x": [-0.5, +1],
-        "norm_ctrl": [-0.25, 1.5]
+        "steering": [-1, +1],
+        "velocity_x": [0.0, 3.5],
+        "norm_ctrl": [-0.25, 1.5],
+        "dist2obst": [0.0, 1.0],
     },
     "racecar2": {
         "steering": [-1, +1],
@@ -60,7 +63,8 @@ labels = {
         "velocity_x": "Velocity",
         "steering": "Steering Angle",
         "speed": "Speed",
-        "norm_ctrl": "L2-Norm Control"
+        "norm_ctrl": "L2-Norm Control",
+        "dist2obst": "Distance to Walls",
     },
     "racecar2": {
         "steering": "Steering Command",
@@ -70,7 +74,7 @@ labels = {
 }
 SHOW_LABELS = {
     "bipedal_walker": ["horizontal_speed", "hull_angle", "hull_angle_speed"],
-    "racecar": ["velocity_x", "steering", "speed", "norm_ctrl"],
+    "racecar": ["velocity_x", "steering", "norm_ctrl", "dist2obst"],
     "racecar2": ["steering", "norm_ctrl", "distance"]
 }
 
@@ -119,11 +123,11 @@ def _convert_state_to_dict(state, env):
         raise NotImplementedError()
     elif env == "racecar":
         dictionary = {
-            "velocity_x": state["velocity_x"][0],
+            "velocity_x": (1 + state["velocity_x"][0]) / 2 * 3.5,
             "steering": state["last_actions"][-1][0],
-            "speed": state["last_actions"][-1][1],
             "norm_ctrl": np.linalg.norm(state["last_actions"][-1] - state["last_actions"][-2]),
             "norm_steering": np.linalg.norm(state["last_actions"][-1][0] - state["last_actions"][-2][0]),
+            "dist2obst": state["dist2obst"]
         }
     elif env == "racecar2":
         dictionary = {
