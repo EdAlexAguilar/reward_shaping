@@ -229,8 +229,8 @@ class HighwayEnvHPRS(HighwayEnvFast):
             else:
                 d_lon = -float('inf')
                 d_lat = -float('inf')
-            d_lon_safe = highway_utils.safe_long_dist(ego_obs, vehicle_obs)
-            d_lat_safe = highway_utils.safe_lat_dist(ego_obs, vehicle_obs)
+            d_lon_safe = highway_utils.safe_long_dist(ego_obs, vehicle_obs, self._params)
+            d_lat_safe = highway_utils.safe_lat_dist(ego_obs, vehicle_obs, self._params)
             violated = bool(d_lon < d_lon_safe and d_lat < d_lat_safe)
             if violated:
                 # print('lon: ', d_lon, '     -    ', d_lon_safe)
@@ -273,9 +273,9 @@ class HighwayEnvHPRS(HighwayEnvFast):
 
         for i in range(1, len(obs)):
             vehicle_obs = obs[i]
-            if highway_utils.left_lane(vehicle_obs, ego_obs) and \
-                    highway_utils.in_vicinity(vehicle_obs, ego_obs) and \
-                    not highway_utils.behind(vehicle_obs, ego_obs):
+            if highway_utils.left_lane(vehicle_obs, ego_obs, self._params) and \
+                    highway_utils.in_vicinity(vehicle_obs, ego_obs, self._params) and \
+                    not highway_utils.behind(vehicle_obs, ego_obs, self._params):
 
                 vel_dif = ego_obs[3] - vehicle_obs[3]
                 if vel_dif > 0:
