@@ -1,7 +1,9 @@
 import os
 import pathlib
 
+import gym
 import yaml
+from gym.spaces import Discrete, Dict
 from gym.wrappers import FlattenObservation
 from stable_baselines3.common.env_checker import check_env
 
@@ -25,7 +27,8 @@ def make_env(env_name, task, reward, eval=False, logdir=None, seed=0):
     env = make_reward_wrap(env_name, env, env_params, reward)
     env = make_observation_wrap(env_name, env, env_params)
     env = FlattenObservation(env)
-    env = FlattenAction(env)
+    if isinstance(env.action_space, Dict):
+        env = FlattenAction(env)
     check_env(env)
     return env, env_params
 
@@ -95,6 +98,12 @@ def make_base_env(env, task, env_params={}):
 
         specs = [(k, op, build_pred(env_params)) for k, (op, build_pred) in get_all_specs().items()]
         env = RLTask(env=env, requirements=specs)
+    elif env == "highway_env":
+        from reward_shaping.envs.highway_env.highway_env import HighwayEnvHPRS
+        from reward_shaping.envs.highway_env.specs import get_all_specs
+        env = HighwayEnvHPRS(**env_params)
+        specs = [(k, op, build_pred(env_params)) for k, (op, build_pred) in get_all_specs().items()]
+        env = RLTask(env=env, requirements=specs)
     else:
         raise NotImplementedError(f"not implemented env for {env}")
     return env
@@ -151,6 +160,9 @@ def get_reward_conf(env_name, env_params, reward):
     elif env_name == "racecar2":
         from reward_shaping.envs.racecar2 import get_reward
         reward_conf = get_reward(reward)(env_params=env_params)
+    elif env_name == "highway_env":
+        from reward_shaping.envs.highway_env import get_reward
+        reward_conf = get_reward(reward)(env_params=env_params)
     else:
         raise NotImplementedError(f'{reward} not implemented for {env_name}')
     return reward_conf
@@ -196,5 +208,8 @@ def make_observation_wrap(env_name, env, env_params={}):
         else:
             fields = ["last_lidar_64", "last_velocity_x", "last_actions"]
         env = FilterObservationWrapper(env, fields)
-
+    elif env_name == "highway_env":
+        from reward_shaping.envs.wrappers import HighwayFilterObservationWrapper
+        fields = ['observation']
+        env = HighwayFilterObservationWrapper(env, fields)
     return env

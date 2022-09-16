@@ -1,0 +1,2 @@
+task: reach_target
+# dt: 0.2   # 1/env.config["simulation_frequency"] = 1/5 = 0.2

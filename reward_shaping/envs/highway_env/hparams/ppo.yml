@@ -1,0 +1,4 @@
+policy_kwargs: {'net_arch':[256, 256]}
+learning_rate: 0.0005
+batch_size: 32
+gamma: 0.99

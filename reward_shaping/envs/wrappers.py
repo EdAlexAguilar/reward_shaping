@@ -52,6 +52,39 @@ class FilterObservationWrapper(gym.Wrapper):
         return new_obs
 
 
+class HighwayFilterObservationWrapper(gym.Wrapper):
+    # TODO: check this
+    """
+        observation wrapper that filter a single observation and return is without dictionary,
+        all the observable quantities are moved to the info as `state`
+    """
+
+    def __init__(self, env, obs_list=[]):
+        super(HighwayFilterObservationWrapper, self).__init__(env)
+        self._obs_list = obs_list
+        # self.observation_space = self.env.observation_space
+        from reward_shaping.envs.highway_env.env_backend.env.observation import observation_factory
+        self.observation_space = observation_factory(env, env.config["observation"]).space()
+
+    def _filter_obs(self, original_obs):
+        assert 'observation' in self._obs_list
+        new_obs = original_obs['observation']
+        return new_obs
+
+    def step(self, action):
+        original_obs, reward, done, info = super().step(action)
+        new_obs = self._filter_obs(original_obs)
+        # add original state into the info
+        new_info = info
+        new_info['state'] = {name: value for name, value in original_obs.items()}
+        return new_obs, reward, done, new_info
+
+    def reset(self, **kwargs):
+        obs = super().reset(**kwargs)
+        new_obs = self._filter_obs(obs)
+        return new_obs
+
+
 class FlattenAction(gym.ActionWrapper):
     """Action wrapper that flattens the action."""
 
