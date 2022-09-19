@@ -95,7 +95,9 @@ python plot_learning_curves.py  --logdir logs --gby env \
 ## Request logs
 
 If you do not have the compute resources to reproduce the experiments,
-we will be happy to provide the logs of our experiments.
+you can use the logs of our experiments, stored on Zenodo.
 
-We are currently making them available on Zenodo.
 For any issue or request, feel free to contact us.
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7075333.svg)](https://doi.org/10.5281/zenodo.7075333)
+
