@@ -1,6 +1,7 @@
 # Hierarchical Potential-based Reward Shaping
 
 Experiments on automatic reward shaping from formal task specifications.
+This branch is intended to keep the version submitted to ICRA 2023.
 
 [![Watch the video](docs/HPRS.png)](https://youtu.be/PWJxZEhlUj4)
 
