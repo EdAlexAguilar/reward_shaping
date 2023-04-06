@@ -29,7 +29,7 @@ all_scores = {
             "S+T": 0.75,
             "S+T+C": 0.35,
         },
-        "HPRS(ours)": {
+        "HPRS": {
             "S": 0.97,
             "S+T": 0.73,
             "S+T+C": 0.33,
@@ -61,7 +61,7 @@ all_scores = {
             "S+T": 0.81,
             "S+T+C": 0.37,
         },
-        "HPRS(ours)": {
+        "HPRS": {
             "S": 1.00,
             "S+T": 0.99,
             "S+T+C": 0.46,
@@ -93,7 +93,7 @@ all_scores = {
             "S+T": 0.91,
             "S+T+C": 0.91,
         },
-        "HPRS(ours)": {
+        "HPRS": {
             "S": 0.91,
             "S+T": 0.91,
             "S+T+C": 0.89,
@@ -125,7 +125,7 @@ all_scores = {
             "S+T": 0.43,
             "S+T+C": 0.20,
         },
-        "HPRS(ours)": {
+        "HPRS": {
             "S": 0.96,
             "S+T": 0.96,
             "S+T+C": 0.48,
@@ -157,7 +157,7 @@ all_scores = {
             "S+T": 0.03,
             "S+T+C": 0.02,
         },
-        "HPRS(ours)": {
+        "HPRS": {
             "S": 0.85,
             "S+T": 0.85,
             "S+T+C": 0.44,
@@ -165,13 +165,23 @@ all_scores = {
     },
 }
 
-colors = {
-    "Shaped": "#1f77b4",
-    "TLTL": "#ff7f0e",
-    "BHNR": "#2ca02c",
-    "MORL(unif.)": "#d62728",
-    "MORL(decr.)": "#9467bd",
-    "HPRS(ours)": "#8c564b",
+
+COLORS = {
+    'Shaped': '#377eb8',
+    'TLTL': '#4daf4a',
+    'BHNR': '#984ea3',
+    'MORL(unif.)': '#a65628',
+    'MORL(decr.)': '#ff7f00',
+    'HPRS': '#e41a1c',
+}
+
+HATCHES = {
+    'Shaped': '-',
+    'TLTL': 'x',
+    'BHNR': '+',
+    'MORL(unif.)': '.',
+    'MORL(decr.)': 'o',
+    'HPRS': '*',
 }
 
 # plot the above scores into a bar plot
@@ -203,19 +213,31 @@ for i, task_scores in enumerate(scores):
     for j, score in enumerate(task_scores):
         if shapings[j] == "Shaped":
             continue
-        offset = (j - 2.5) * width
+        offset = (j - len(tasks)/2) * width
         rel_score = -1 + score / scores[i][0]
         if i == 0:
-            ax.bar(x[i] + offset, rel_score, width, label=shapings[j], color=colors[shapings[j]])
+            ax.bar(x[i] + offset, rel_score, width, label=shapings[j], color=COLORS[shapings[j]],
+                   edgecolor='black', linewidth=1)
         else:
-            ax.bar(x[i] + offset, rel_score, width, color=colors[shapings[j]])
+            ax.bar(x[i] + offset, rel_score, width, color=COLORS[shapings[j]],
+                   edgecolor='black', linewidth=1)
 
-ax.hlines(0, -0.30, len(tasks), linestyles="dashed", colors="k", label="Shaped")
-ax.set_ylabel('S+T+C Score - Relative to Shaped')
-ax.set_title('Scores by task and reward shaping method')
+ax.hlines(0, -0.50, len(tasks)-0.40, linestyles="dashed", colors="k", label="Shaped")
+
+ax.set_ylim(-1.7, 1.7)
+ax.set_ylabel('Relative Performance to Shaped (%)')
 ax.set_xticks(x)
 ax.set_xticklabels(tasks)
-ax.legend()
+
+# remove box
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+
+# place legend outside of the plot, horizontally centered below
+# more margin from the plot
+handles, labels = ax.get_legend_handles_labels()
+fig.legend(handles, labels, loc='lower center', ncol=len(shapings), bbox_to_anchor=(0.5, 0.0))
+plt.subplots_adjust(bottom=0.2)
 
 if save:
     plt.savefig(f"barplot_scores_{time.time()}.png")
