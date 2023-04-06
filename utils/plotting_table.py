@@ -177,21 +177,32 @@ COLORS = {
 
 HATCHES = {
     'Shaped': '-',
-    'TLTL': 'x',
-    'BHNR': '+',
-    'MORL(unif.)': '.',
-    'MORL(decr.)': 'o',
-    'HPRS': '*',
+    'TLTL': '\\\\',
+    'BHNR': '//',
+    'MORL(unif.)': '-',
+    'MORL(decr.)': '--',
+    'HPRS': 'xx',
 }
+
+LARGESIZE, MEDIUMSIZE, SMALLSIZE = 16, 13, 10
+
+import matplotlib.pyplot as plt
+
+plt.rcParams.update({'font.size': LARGESIZE})
+plt.rcParams.update({'axes.titlesize': LARGESIZE})
+plt.rcParams.update({'axes.labelsize': MEDIUMSIZE})
+plt.rcParams.update({'xtick.labelsize': MEDIUMSIZE})
+plt.rcParams.update({'ytick.labelsize': SMALLSIZE})
+plt.rcParams.update({'legend.fontsize': MEDIUMSIZE})
+plt.rcParams.update({'figure.titlesize': LARGESIZE})
 
 # plot the above scores into a bar plot
 # where each group of bars is a task, each bar is a reward shaping method,
 # and each bar is the score denoted by "S", "S+T", or "S+T+C".
 # normalize the performance as relative w.r.t. the performance of Shaped.
 
-import matplotlib.pyplot as plt
 
-save = False
+save = True
 score_to_show = "S+T+C"
 tasks = list(all_scores.keys())
 shapings = list(all_scores[tasks[0]].keys())
@@ -217,15 +228,15 @@ for i, task_scores in enumerate(scores):
         rel_score = -1 + score / scores[i][0]
         if i == 0:
             ax.bar(x[i] + offset, rel_score, width, label=shapings[j], color=COLORS[shapings[j]],
-                   edgecolor='black', linewidth=1)
+                   edgecolor='black', linewidth=1, hatch=HATCHES[shapings[j]])
         else:
             ax.bar(x[i] + offset, rel_score, width, color=COLORS[shapings[j]],
-                   edgecolor='black', linewidth=1)
+                   edgecolor='black', linewidth=1, hatch=HATCHES[shapings[j]])
 
 ax.hlines(0, -0.50, len(tasks)-0.40, linestyles="dashed", colors="k", label="Shaped")
 
 ax.set_ylim(-1.7, 1.7)
-ax.set_ylabel('Relative Performance to Shaped (%)')
+ax.set_ylabel('Rel. Performance to Shaped (%)')
 ax.set_xticks(x)
 ax.set_xticklabels(tasks)
 
@@ -240,6 +251,6 @@ fig.legend(handles, labels, loc='lower center', ncol=len(shapings), bbox_to_anch
 plt.subplots_adjust(bottom=0.2)
 
 if save:
-    plt.savefig(f"barplot_scores_{time.time()}.png")
+    plt.savefig(f"barplot_scores_{time.time()}.pdf", bbox_inches='tight')
 else:
     plt.show()
