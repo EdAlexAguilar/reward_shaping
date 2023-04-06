@@ -29,7 +29,7 @@ We assume you run the code from the project directory and that it is included in
 
 ### Docker image
 
-![docker-image](docs/docker_image.png)
+![docker-image](docs/docker_image_header.png)
 
 In alternative to the previous step, 
 we provide a docker-image with a working environment to reproduce this work.
