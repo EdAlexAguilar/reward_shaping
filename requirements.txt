@@ -1,9 +1,8 @@
-# TODO: check update versions of numpy, sb3 does not break anything
 gym[box2d]<0.22.0
 pyglet~=1.5.19
 h5py~=3.1.0
 matplotlib~=3.4.3
-numpy~=1.23.1
+numpy~=1.23.1   # TODO: check update versions of numpy, sb3 does not break anything
 stable-baselines3~=1.5.0
 moviepy~=1.0.3
 PyYAML~=5.4.1
