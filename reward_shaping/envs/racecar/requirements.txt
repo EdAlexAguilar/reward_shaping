@@ -1,2 +1,2 @@
--e git+https://github.com/luigiberducci/racecar_gym.git@icra23#egg=racecar_gym
+-e git+https://github.com/luigiberducci/racecar_gym.git@submission#egg=racecar_gym
 cloudpickle==2.1.0
