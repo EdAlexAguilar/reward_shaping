@@ -1,9 +1,6 @@
-import time
 from unittest import TestCase
-import matplotlib.pyplot as plt
 
 from reward_shaping.core.helper_fns import monitor_mtl_filtering_episode
-from reward_shaping.test.test import generic_env_test, generic_training, generic_env_test_wt_agent
 
 env_name = "cart_pole_obst"
 task = "fixed_height"
