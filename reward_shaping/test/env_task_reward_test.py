@@ -8,7 +8,8 @@ from reward_shaping.training.utils import make_env, make_agent
 env_tasks = {
     "cart_pole_obst": ["fixed_height"],
     "lunar_lander": ["land"],
-    "racecar": ["drive_delta", "drive"],
+    "racecar": ["drive", "drive_delta"],
+    "racecar2": ["follow", "follow_delta"],
     "bipedal_walker": ["forward", "hardcore"]
 }
 rewards = ["default", "eval", "tltl", "hprs", "morl_uni", "morl_dec", "bhnr"]
