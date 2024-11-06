@@ -10,6 +10,11 @@ source $DIR/init_exp_list.sh
 
 for exp in "$@"
 do
+  if [ $exp -lt 1 ] || [ $exp -gt ${#args[@]} ]; then
+    echo "[$debug_prefix] Invalid exp: exp_$exp, expected range: [1, ${#args[@]}]. Skipping..."
+    continue
+  fi
+
   index=$(($exp-1))
   n_args=$(echo ${args[$index]} | wc -w)
   #
