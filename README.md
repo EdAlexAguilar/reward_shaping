@@ -56,6 +56,15 @@ docker run --name exp_cpole --rm -it \
 	       /bin/bash entrypoint.sh my_exp cart_pole_obst fixed_height sac hprs 2000000 1
 ```
 
+#### Run training with SLURM and Singularity
+
+If working on a scientific cluster with SLURM, you can perform the following steps:
+1. Build the singularity image from the docker hub: 
+```
+singularity build reward_shaping.sif docker://luigiberducci/reward_shaping:latest
+```
+2. Run a slurm script, such as `scripts/start_slurm_exps.sh`
+3. Launch the slurm script.
 
 ## Play with trained agents
 
