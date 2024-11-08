@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from plotting.custom_evaluations import get_custom_evaluation
+from plotting.custom_evaluation_functions import get_custom_evaluation
 from plotting.utils import get_files, parse_env_task, parse_reward
 
 FIGSIZE = (17.5, 4)
@@ -56,8 +56,8 @@ REWARD_LABELS = {
 
 ENV_LABELS = {
     # "cart_pole_obst_fixed_height": "Cartpole",
-    "racecar_drive_delta": "Single-Agent Driving",
-    "racecar2_follow_delta": "Multi-Agent Driving",
+    "racecar_drive_delta": "Safe Driving",
+    "racecar2_follow_delta": "Follow Leading Vehicle",
     "lunar_lander_land": "Lunar Lander + Obstacle",
     "bipedal_walker_forward": "Bipedal Walker",
     "bipedal_walker_hardcore": "Bipedal Walker (Hardcore)",
@@ -75,6 +75,7 @@ XLIMITS = {
     "racecar_drive_delta":          1e6,
     "racecar2_follow_delta":        1e6,
 }
+XLIMITS["all"] = max(XLIMITS.values())
 
 file_regex = "evaluations*.npz"
 
@@ -94,7 +95,7 @@ def get_evaluations(logdir: pathlib.Path, regex: str, gby: Callable) -> Dict[str
         else:
             evaluations[group] = [data]
     if len(evaluations) == 0:
-        warnings.warn(f"cannot find any file for `{logdir}/{regex}/evaluations.npz`", UserWarning)
+        warnings.warn(f"No file matching `{logdir}/{regex}/{file_regex}`", UserWarning)
     return evaluations
 
 
@@ -227,10 +228,10 @@ def main(args):
                              minx=minxs[i], maxx=maxxs[i], miny=args.miny, maxy=args.maxy, show_yticks=True)
         elif i == len(axes) - 1:
             plot_secondaries(ax, xlabel="Steps", ylabel="", hlines=args.hlines,
-                             minx=minxs[i], maxx=maxxs[i], miny=args.miny, maxy=args.maxy, show_yticks=False)
+                             minx=minxs[i], maxx=maxxs[i], miny=args.miny, maxy=args.maxy, show_yticks=True)
         else:
             plot_secondaries(ax, xlabel="", ylabel="", hlines=args.hlines,
-                             minx=minxs[i], maxx=maxxs[i], miny=args.miny, maxy=args.maxy, show_yticks=False)
+                             minx=minxs[i], maxx=maxxs[i], miny=args.miny, maxy=args.maxy, show_yticks=True)
     if args.legend:
         handles, labels = axes[0].get_legend_handles_labels()
         fig.legend(handles, labels, loc="lower center", ncol=len(handles), framealpha=1.0)
@@ -247,10 +248,11 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--logdir", type=pathlib.Path, required=True)
-    parser.add_argument("--regex", type=str, default="**", nargs="+",
-                        help="for each regex, group data for `{logdir}/{regex}/evaluations*.npz`")
-    parser.add_argument("--binning", type=int, default=15000)
+    parser.add_argument("--logdir", type=pathlib.Path, required=True,
+                        help="The base directory where the logs are stored, possibly with subdirectories (e.g. logs/).")
+    parser.add_argument("--regex", type=str, nargs="+", default=["**"],
+                        help="Regex to group the data in one line for each `{logdir}/{regex}/evaluations*.npz`")
+    parser.add_argument("--binning", type=int, default=40000)
     parser.add_argument("--gby", choices=["env", "reward"], default=None)
     parser.add_argument("--x", type=str, default="timesteps")
     parser.add_argument("--y", type=str, default="results")
@@ -259,7 +261,7 @@ if __name__ == "__main__":
     parser.add_argument("--maxy", type=float, default=2.0, help="y higher limit")
     parser.add_argument("--clipminy", type=float, default=0.0, help="clip y below this value")
     parser.add_argument("--clipmaxy", type=float, default=np.Inf, help="clip y data above this value")
-    parser.add_argument("-save", action="store_true")
+    parser.add_argument("--save", "-save", "-s", action="store_true")
     parser.add_argument("-legend", action="store_true")
     parser.add_argument("-info", action="store_true")
     args = parser.parse_args()
