@@ -1,1 +1,3 @@
 -e git+https://github.com/luigiberducci/racecar_gym.git@submission#egg=racecar_gym
+# To resume trained models from the submission
+cloudpickle==2.1.0
