@@ -95,6 +95,17 @@ class CPOHierarchicalPotentialShaping(RewardFunction):
         shaping_target = gamma * self._target_potential(next_state, info) - self._target_potential(state, info)
         shaping_comfort = gamma * self._comfort_potential(next_state, info) - self._comfort_potential(state, info)
         return base_reward + shaping_safety + shaping_target + shaping_comfort
+    
+class CPOHierarchicalPotentialShapingNoComfort(CPOHierarchicalPotentialShaping):    
+
+    def __call__(self, state, action=None, next_state=None, info=None) -> float:
+        base_reward = simple_base_reward(next_state, info)
+        if info["done"]:
+            return base_reward
+        # hierarchical shaping function
+        shaping_safety = gamma * self._safety_potential(next_state, info) - self._safety_potential(state, info)
+        shaping_target = gamma * self._target_potential(next_state, info) - self._target_potential(state, info)
+        return base_reward + shaping_safety + shaping_target
 
 
 class CPOScalarizedMultiObjectivization(RewardFunction):

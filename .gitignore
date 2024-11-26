@@ -145,7 +145,7 @@ cartpole_models/
 
 # Others
 .*
-logs/*
+logs*/*
 /run_experiment.sh
 *tar
 *json

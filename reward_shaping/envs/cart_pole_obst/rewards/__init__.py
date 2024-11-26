@@ -1,5 +1,5 @@
 from reward_shaping.envs.cart_pole_obst.rewards.baselines import CPOSparseReward, CPOEvalConfig
-from reward_shaping.envs.cart_pole_obst.rewards.potential import CPOHierarchicalPotentialShaping, \
+from reward_shaping.envs.cart_pole_obst.rewards.potential import CPOHierarchicalPotentialShaping, CPOHierarchicalPotentialShapingNoComfort, \
     CPOUniformScalarizedMultiObjectivization, CPODecreasingScalarizedMultiObjectivization
 from reward_shaping.envs.cart_pole_obst.rewards.stl_based import CPOSTLReward
 
@@ -28,6 +28,7 @@ register_reward('morl_dec', reward=CPODecreasingScalarizedMultiObjectivization)
 
 # Hierarchical Potential Shaping
 register_reward('hprs', reward=CPOHierarchicalPotentialShaping)
+register_reward('hprs_nocomf', reward=CPOHierarchicalPotentialShapingNoComfort)
 
 # Evaluation
 register_reward('eval', reward=CPOEvalConfig)
